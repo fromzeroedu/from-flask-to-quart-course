@@ -70,7 +70,7 @@ Make sure you have at least Python 3.7 installed by doing `python3 --version` on
 
 So run the example and you will see slowly, but surely, all the plates come out.
 
-{lang=bash,line-numbers=off}
+{lang=bash}
 ```
 $ python3 sync.py
 Getting Pasta order

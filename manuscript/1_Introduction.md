@@ -35,25 +35,3 @@ You will also need a computer where you can run this code, or use an online deve
 No matter what platform you use, you will need Python version 3.7 or higher installed
 
 And with that, let’s talk about the real benefits that Asynchronous applications offer you and your users.
-
-## Roadmap and Requirements
-Let’s take a look at what we will be covering on this course. 
-
-First, we’ll explore the fundamental concepts behind async programming, including coroutines and tasks and look at some of the common pitfalls you will face writing these applications.
-
-We will then get introduced to Quart, the asynchronous version of the popular Flask library and build a basic counter application that will serve as an easy introduction to the concepts.
-
-Then, we will build a more complex Quart application called “QuartFeed”, which will mimic the popular FriendFeed social networking site that was ahead of its time thanks to its dynamic flow and amazing interactivity, leveraging the Server Sent Events protocol.
-
-Next, we will build “Qchat”, a MongoDB powered chat application using web sockets on the javascript side.
-
-Finally, we will explore how to build an API service, based on our previous “Pet Store” example in the API course, using the async paradigm.
-
-In order to get the most out of this course, you will need to have a solid knowledge of the Python language as well as the Flask framework. As you know, I have excellent courses that can teach you everything you need to get the preparation for this course.
-
-You will also need a computer where you can run this code, or use an online development platform, like PythonAnywhere or Cloud9. I won’t cover those platforms in this course, as I teach how to use these resources on my “From Zero to Flask” course.
-
-No matter what platform you use, you will need Python version 3.7 or higher installed
-
-And with that, let’s talk about the real benefits that Asynchronous applications offer you and your users.
-
