@@ -86,7 +86,7 @@ Those lamb chops take a long time for sure!
 ## Our First Async Program
 So now, we’ll convert this program to use the `asyncio` library and get a feel of how to write this code asynchronously. So let’s copy the `sync.py` file on a new file called `coros.py` with the following code.
 
-{lang=python,line-numbers=on}
+{lang=python,line-numbers=off}
 ```
 import asyncio
 import time
@@ -317,7 +317,7 @@ Whenever you see this error, you know there was a coroutine that wasn’t awaite
 ### Never Retrieved Results
 Another pitfall is that we complete our coroutine while an inner coroutine is still executing. What happens to the result of that inner coroutine? We might get an error when Python does its garbage collection.
 
-For example, look at this code[^1]:
+For example, look at this code:
 
 {lang=python,line-numbers=on}
 ```
@@ -349,5 +349,3 @@ What happens here is that the `main` coroutine is executed, but since the task i
 So now if you see a `not consumed` error, you know what to look for in your code.
 
 Again, these issues become easier to deal with once you practice coding with asynchronous patterns, so don’t be afraid and just jump into the water. The benefits far outweigh the pitfalls.
-
-[^1]:	https://github.com/esfoobar/fztq-examples/blob/master/cook-and-waiter/exception.py
