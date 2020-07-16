@@ -42,7 +42,7 @@ Let’s now go ahead and code the waiter and cook example using our first async 
 ## The Waiter and the Cook - Our First Async Project
 So let’s try and code the waiter and cook example using regular synchronous Python. This is what it could look like:
 
-{lang=python,line-numbers=on}
+{lang=python,line-numbers=off}
 ```
 import time
 
@@ -70,7 +70,7 @@ Make sure you have at least Python 3.7 installed by doing `python3 --version` on
 
 So run the example and you will see slowly, but surely, all the plates come out.
 
-{lang=bash}
+{lang=bash,line-numbers=off}
 ```
 $ python3 sync.py
 Getting Pasta order
@@ -119,7 +119,7 @@ _Run_ also takes care of the cleanup, so when the whole code is run, it will gra
 
 These changes are not enough to make our code asynchronous, though. We need to tell `asyncio` what functions and what tasks will be run asynchronously. So let’s change the`waiter` function as follows.
 
-{lang=python}
+{lang=python,line-numbers=off}
 ```
 async def waiter() -> None:
     await cook("Pasta", 8)
@@ -135,7 +135,7 @@ Just remember that if you have any `await` tasks, you need to define that functi
 
 You might be wondering, “what about the cook function?”. Well, we need to make that asynchronous as well, so we could change it to the following.
 
-{lang=python}
+{lang=python,line-numbers=off}
 ```
 async def cook(order, time_to_prepare):
     print(f'Getting {order} order')
@@ -145,7 +145,7 @@ async def cook(order, time_to_prepare):
 
 Here’s an issue though. If we use the regular `time.sleep` function, it will block the whole execution, rendering the asynchronous program useless. In this case we need to use asyncio’s `sleep` function instead.
 
-{lang=python}
+{lang=python,line-numbers=off}
 ```
 async def cook(order, time_to_prepare):
     print(f'Getting {order} order')
@@ -157,7 +157,7 @@ Now we’re guaranteeing that while the `cook` function is asleep for those numb
 
 Now if we run the program we get the following:
 
-{lang=bash}
+{lang=bash,line-numbers=off}
 ```
 $ python3 coros.py
 Getting Pasta order
