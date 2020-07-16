@@ -171,3 +171,183 @@ Lamb Chops ready
 But wait, there’s no difference with the synchronous execution. You were expecting this to run faster right? Well, that’s one of the misconceptions about asynchronous code, that it runs faster. But this program is better already in a way that you can’t really tell with this usage.
 
 If we were running this program as part of a website, we could be able to serve hundreds or thousands of visitors at the same time on the same server without any time outs. If we ran the synchronous code instead, we could only serve maybe a dozen of users before the others would start to get timeout errors since the server’s CPU would get overwhelmed.
+
+## Coroutines and Tasks
+
+### Coroutines
+Both the `waiter` and the `cook` functions are transformed when we put the `async` keyword in front of their definition. From that point on, we call these functions “coroutines”. 
+
+If you try to execute a coroutine directly, you will get a coroutine message, but the code won’t be executed. We can try that out by running a Python shell and importing  the `cook` function from the `coros` file. First, comment the `asyncio.run` command so that the code isn’t executed and save the file.
+
+{lang=python,line-numbers=off}
+```
+# asyncio.run(waiter())
+```
+
+Then open a Python terminal and do;
+
+{lang=python,line-numbers=off}
+```
+$ python3
+>>> from coros import cook
+>>> cook('Pasta', 8)
+<coroutine object cook at 0x10f367dc8>
+```
+
+Coroutines can only be executed using  a running loop or awaiting on them from another coroutine.
+
+There’s a third way we can execute a coroutine and we’ll see how to do that next.
+
+### Tasks
+We can run multiple coroutines by using tasks. So go ahead and copy the `coros.py` file into a file we’ll call `tasks.py` and write the following:
+
+{lang=python,line-numbers=on}
+```
+import asyncio
+
+async def waiter():
+    task1 = asyncio.create_task(cook('Pasta', 8))
+    task2 = asyncio.create_task(cook('Caesar Salad', 3))
+    task3 = asyncio.create_task(cook('Lamb Chops', 16))
+
+    await task1
+    await task2
+    await task3      
+
+async def cook(order, time_to_prepare):
+    print(f'Getting {order} order')
+    await asyncio.sleep(time_to_prepare)
+    print(order, 'ready')
+
+asyncio.run(waiter())
+```
+
+What we’re doing here is creating three tasks with the different orders. Tasks give us two benefits that we don’t get when we just await an expression: first, tasks are used to schedule coroutines concurrently, and second, tasks can be cancelled while we’re waiting them to finish.
+
+So in the above code when we await the three tasks, the three `cook` coroutines are running at the same time, so the execution is quite different. Go ahead and run the code.
+
+{lang=bash,line-numbers=off}
+```
+$ python3 tasks.py
+Getting Pasta order
+Getting Caesar Salad order
+Getting Lamb Chops order
+Caesar Salad ready
+Pasta ready
+Lamb Chops ready
+```
+
+This looks more like what we were expecting before in terms of efficiency: the waiter puts all orders one after the other, and the dishes that are quicker to prepare are completed first by the cook.
+
+## Common Pitfalls
+As you start making the transition to developing with asynchronous patterns, there are some things you need to be on the lookout for. Some of the common ones I encounter often are the following.
+
+### Calling a Blocking Function from an Coroutine
+One of the most dangerous ones is the introduction of a synchronous function inside an asynchronous one.
+
+An example we just saw was using the synchronous `time.sleep` function inside of the asynchronous `cook` function. Using the regular sleep library would have blocked our whole code.
+
+Go ahead and try it. Add the `import time` at the top of the `coros.py` file and then add the synchronous sleep function:
+
+{lang=python,line-numbers=on}
+```
+async def cook(order, time_to_prepare):
+    print(f'Getting {order} order')
+    await time.sleep(time_to_prepare)
+    print(order, 'ready')
+```
+
+When you execute that we get this very cryptic error:
+
+{lang=bash,line-numbers=off}
+```
+Traceback (most recent call last):
+  File "coros.py", line 16, in <module>
+    asyncio.run(waiter())
+  File "/usr/local/Cellar/python/3.7.2_2/Frameworks/Python.framework/Versions/3.7/lib/python3.7/asyncio/runners.py", line 43, in run
+    return loop.run_until_complete(main)
+  File "/usr/local/Cellar/python/3.7.2_2/Frameworks/Python.framework/Versions/3.7/lib/python3.7/asyncio/base_events.py", line 584, in run_until_complete
+    return future.result()
+  File "coros.py", line 7, in waiter
+    await cook('Pasta', 8)
+  File "coros.py", line 13, in cook
+    await time.sleep(time_to_prepare)
+TypeError: object NoneType can't be used in 'await' expression
+```
+
+Say what? This error seems very strange at first. 
+
+What’s actually happening is that time.sleep() is not an _awaitable_ object and thus, It returns `None` back to the caller, so you get the exception after 8 seconds and not immediately.
+
+On the other hand, the `asyncio.sleep` is a coroutine itself, which means it returns an awaitable or coroutine object that then can be bookmarked by the loop so that it can go ahead and pick up other requests until the sleep is done.
+
+This time we got lucky. The danger of the synchronous or blocking functions is that sometimes they block our code silently and we don’t see any visible errors, because they’re not bubbled up to the caller.
+
+So always remember that if you are inside a coroutine and calling an external function, that that function needs to also be a coroutine.
+
+### Not Waiting for a Coroutine to Complete
+First, let’s undo the `time.sleep` code back to using `asyncio.sleep` and then change the second cook call on `coros.py` taking out the `await`:
+
+{lang=python,line-numbers=on}
+```
+import asyncio
+	
+	async def waiter():
+		await cook('Pasta', 8)
+		cook('Caesar Salad', 3)  # Change this line
+		await cook('Lamb Chops', 16)
+	
+	async def cook(order, time_to_prepare):
+		print(f'Getting {order} order')
+		await asyncio.sleep(time_to_prepare)
+		print(order, 'ready')
+	
+	asyncio.run(waiter())
+```
+
+If you try to execute this code, you will see the following error:
+
+{lang=bash,line-numbers=off}
+```
+coros.py:5: RuntimeWarning: coroutine 'cook' was never awaited
+```
+
+Whenever you see this error, you know there was a coroutine that wasn’t awaited. Sometimes, it’s not that clear cut and you may need to do some digging.
+
+### Never Retrieved Results
+Another pitfall is that we complete our coroutine while an inner coroutine is still executing. What happens to the result of that inner coroutine? We might get an error when Python does its garbage collection.
+
+For example, look at this code[^1]:
+
+{lang=python,line-numbers=on}
+```
+import asyncio
+
+async def executed():
+    asyncio.sleep(15)
+    print("I am executed")
+
+async def main():
+    asyncio.create_task(executed())
+
+asyncio.run(main())
+```
+
+When we run this, we get the following:
+
+{lang=bash,line-numbers=off}
+```
+$ python3 never_retrieved.py 
+never_retrieved.py:5: RuntimeWarning: coroutine 'sleep' was never awaited
+  asyncio.sleep(15)
+RuntimeWarning: Enable tracemalloc to get the object allocation traceback
+I am executed
+```
+
+What happens here is that the `main` coroutine is executed, but since the task inside is never awaited, the execution ends, and the `asyncio.sleep` coroutine never has a chance to be run.
+
+So now if you see a `not consumed` error, you know what to look for in your code.
+
+Again, these issues become easier to deal with once you practice coding with asynchronous patterns, so don’t be afraid and just jump into the water. The benefits far outweigh the pitfalls.
+
+[^1]:	https://github.com/esfoobar/fztq-examples/blob/master/cook-and-waiter/exception.py
