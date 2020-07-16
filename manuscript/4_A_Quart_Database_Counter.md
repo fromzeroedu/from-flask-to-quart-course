@@ -103,7 +103,7 @@ export PIPENV_VENV_IN_PROJECT="enabled"
 
  In Windows 10, just edit your System Environment variables and set it. You can find them by typing `env` on your Windows search and click on the “Edit the System Environment Variables”.
 
-![Figure 4.2.1](4.2.1.png)
+![Figure 4.2.1](images/4.2.1.png)
 
 Then click on the “Environment Variables” button on the lower right.
 
