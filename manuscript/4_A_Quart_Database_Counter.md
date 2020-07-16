@@ -9,7 +9,7 @@ But before we start writing the application, we need to understand one of the ma
 ## ORMs and Async
 For our original Flask MySQL boilerplate application, we used SQLAlchemy, the Python Database ORM or Object Relational Mapper.  However, for async projects we can’t use the same library without some form of penalization.
 
-Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it does I/O. This will mean it cannot handle much concurrent load — only a couple of concurrent requests ([ref](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83)).
+Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it does I/O. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
 
 There’s also some issues that I won’t go into in too much detail, having to do with the overhead of how Python handles MySQL connections and the type of locking your transactions can do. I suggest you read [this blog post](http://techspot.zzzeek.org/2015/02/15/asynchronous-python-and-databases/) from Mike Bayer, the author of SQLAlchemy if you want to learn more about the subject. 
 
@@ -46,7 +46,7 @@ First, the `QUART_APP` will be small kickstarter `manage.py` file that creates a
 
 Next  the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
 
-The next five variables, `DB_USERNAME`, `DB\_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. The `MYSQL_ROOT_PASSWORD` is needed so that our test utility can create the test database and destroy it on demand.
+The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. The `MYSQL_ROOT_PASSWORD` is needed so that our test utility can create the test database and destroy it on demand.
 
 Save the file[^1].
 
@@ -81,7 +81,7 @@ Installing setuptools, pip, wheel...
 done.
 Running virtualenv with interpreter /usr/local/bin/python3
 
-✔ Successfully created virtual environment!
+Successfully created virtual environment!
 Virtualenv location: /opt/quart-mysql-boilerplate/.venv
 Creating a Pipfile for this project…
 Pipfile.lock not found, creating…
@@ -89,7 +89,7 @@ Locking [dev-packages] dependencies…
 Locking [packages] dependencies…
 Updated Pipfile.lock (a65489)!
 Installing dependencies from Pipfile.lock (a65489)…
-  🐍   ▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉▉ 0/0 — 00:00:00
+0/0 — 00:00:00
 To activate this project's virtualenv, run pipenv shell.
 Alternatively, run a command inside the virtualenv with pipenv run.
 ```
@@ -103,7 +103,7 @@ export PIPENV_VENV_IN_PROJECT="enabled"
 
  In Windows 10, just edit your System Environment variables and set it. You can find them by typing `env` on your Windows search and click on the “Edit the System Environment Variables”.
 
-![](Screen%20Shot%202019-09-15%20at%202.09.20%20PM.png)
+![Figure 4.2.1](4.2.1.png)
 
 Then click on the “Environment Variables” button on the lower right.
 
