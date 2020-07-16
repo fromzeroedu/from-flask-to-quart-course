@@ -107,11 +107,11 @@ export PIPENV_VENV_IN_PROJECT="enabled"
 
 Then click on the “Environment Variables” button on the lower right.
 
-![](Screen%20Shot%202019-09-15%20at%202.09.46%20PM.png)
+![Figure 4.2.2](images/4.2.2.png)
 
 Click the “New” button, add the `PIPENV_VENV_IN_PROJECT` variable and set the value to “enabled”.
 
-![](Screen%20Shot%202019-09-15%20at%202.11.36%20PM.png)
+![Figure 4.2.3](images/4.2.3.png)
 
 Now let’s go ahead and install Quart and `python-dotenv`.
 
