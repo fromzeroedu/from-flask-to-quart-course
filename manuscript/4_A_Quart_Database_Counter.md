@@ -126,3 +126,101 @@ We’re now ready to start setting up MySQL and Alembic migrations.
 [^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-1/.quartenv
 
 [^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-1/settings.py
+
+## Setting up MySQL
+
+Let’s now start to setup our MySQL server to connect to our application.
+
+The following sections describe how to install MySQL locally and setup the counter database for Windows and Mac. Skip to the lesson that applies to you. 
+
+If you want to use Docker, check out the lesson at the end of this section.
+
+### Installing MySQL on Mac with Homebrew
+Thanks to Homebrew installing MySQL on the Mac is pretty simple.  
+
+ If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
+
+Just do the following:
+`brew install -y mysql`
+
+If you want MySQL to launch automatically whenever you power on your Mac, you can do: `brew services start mysql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `mysql.server start` and stopping with `mysql.server stop`.
+
+Let’s check if mysql is working. Start the server by doing `mysql.server start` and then logging in using `mysql -uroot`. Exit using `exit;`
+
+Now secure the installation by doing: `mysql_secure_installation`. MySQL offers a “validate password” plugin, but we won’t use that. Just type “n” and then enter a password. I will use “rootpass” as my root password. 
+
+I will also remove the anonymous user and remove the ability to remote root login. I will also remove the test database and reload the privileges.
+
+### Setting up a user, password and database for the application
+It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
+
+In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
+
+So, login to MySQL with your root user and password:
+`mysql -uroot -prootpass`
+
+Create the database:
+`CREATE DATABASE counter;`
+
+And now create the user and password:
+`CREATE USER 'counter_app'@'%' IDENTIFIED BY 'mypassword';`
+
+Allow the user full access to the database:
+`GRANT ALL PRIVILEGES ON counter.* TO 'counter_app'@'%';`
+
+And reload the privileges:
+`FLUSH PRIVILEGES;`
+
+Now exit using `CTRL-D` and try to login using the new app user:
+`mysql -ucounter_app -pmypassword`
+
+If you are able to login, you’re in good shape. Now try to use the `counter` database:
+`USE counter;`
+
+If you don’t get an error, we’re good. Now logout using `exit;`
+
+## Installing MySQL on Windows 10 with Chocolatey
+Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL. 
+
+If you don’t have Chocolatey, please follow the instructions [on their page].
+
+Open a PowerShell as an administrator and type:
+`choco install -y mariadb`
+
+Now close the PowerShell application completely and open a new, regular session.
+
+Let’s check if mysql is working. Log in using `mysql -uroot`. Exit using `exit;`
+
+Secure the installation by creating a root password. I will use “rootpass”.  Type: `mysqladmin --user=root password "rootpass"` and press enter.
+
+Now try logging in using `mysql -uroot -prootpass`.
+
+If you login, it means everything is working. Exit using `CTRL-C`.
+
+### Setting up a user, password and database for the application
+It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
+
+In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
+
+So, login to MySQL with your root user and password:
+`mysql -uroot -prootpass`
+
+Create the database:
+`CREATE DATABASE counter;`
+
+And now create the user and password:
+`CREATE USER 'counter_app'@'%' IDENTIFIED BY 'mypassword';`
+
+Allow the user full access to the database:
+`GRANT ALL PRIVILEGES ON counter.* TO 'counter_app'@'%';`
+
+And reload the privileges:
+`FLUSH PRIVILEGES;`
+
+Now exit using `CTRL-C` and try to login using the new app user:
+`mysql -ucounter_app -pmypassword`
+
+If you are able to login, you’re in good shape. Now try to use the `counter` database:
+`USE counter;`
+
+If you don’t get an error, we’re good. Now logout using `exit;`
