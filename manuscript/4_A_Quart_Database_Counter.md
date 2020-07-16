@@ -182,7 +182,7 @@ If you don’t get an error, we’re good. Now logout using `exit;`
 ## Installing MySQL on Windows 10 with Chocolatey
 Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL. 
 
-If you don’t have Chocolatey, please follow the instructions [on their page].
+If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
 
 Open a PowerShell as an administrator and type:
 `choco install -y mariadb`
@@ -200,7 +200,7 @@ If you login, it means everything is working. Exit using `CTRL-C`.
 ### Setting up a user, password and database for the application
 It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
 
-In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
+In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter_app” and the password “mypassword”.
 
 So, login to MySQL with your root user and password:
 `mysql -uroot -prootpass`
