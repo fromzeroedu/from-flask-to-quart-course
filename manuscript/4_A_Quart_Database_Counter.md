@@ -68,7 +68,7 @@ As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and lo
 
 We’ll now initialize our `pipenv` environment using the `python 3.7` initialization to guarantee we have the right Python version in the `Pipfile`.
 
-{lang=bash,line-numbers=on}
+{lang=bash,line-numbers=off}
 ```
 $ pipenv install --python 3.7
 Creating a virtualenv for this project…
