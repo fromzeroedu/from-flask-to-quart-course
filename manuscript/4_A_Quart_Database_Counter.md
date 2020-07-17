@@ -422,3 +422,101 @@ Save the file[^5] and let’s go ahead and start with the database migration con
 [^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/application.py
 
 [^5]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/manage.py
+
+## Configuring Alembic Migrations
+We’re now going to install Alembic to be able to do database migrations. If you’re not familiar with migrations, it’s just a way to track model changes in your codebase, so that other team members and the different environments can keep up to date as you change your database schema.
+
+So we’ll install Alembic by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ pipenv install alembic
+```
+
+We will now initialize the migration setup which will create both an `alembic.ini` and a `migrations` folder.
+
+So do:
+
+{lang=bash,line-numbers=off}
+```
+$ pipenv run alembic init migrations
+```
+
+If you do an `ls` you’ll see the `alembic.ini` file and the `migrations` folder[^1].
+
+We need to tell `alembic` three things. 
+- First, we need it to use our environment variables to connect to the database.
+- Second we need to tell it what models our application uses and finally,
+- We need to tell it how to connect to the database.
+
+So let’s begin setting up the environment variables in the `migrations/env.py` file.
+
+Add the following at the top before `logging.config`:
+
+{lang=python,line-numbers=on}
+```
+import os, sys
+from dotenv import load_dotenv
+from pathlib import Path
+```
+
+We’ll need all these libraries for the next step.
+
+Then add this under `from alembic import context` on line 10:
+
+{lang=python,line-numbers=on,starting-line-number=12}
+```
+# Path ops
+parent = Path(__file__).resolve().parents[1]
+load_dotenv(os.path.join(parent, ".quartenv"))
+sys.path.append(str(parent))
+```
+
+The `parent` variable will figure out the parent folder so that we can fetch the `.quartenv` file location and pass it to the `python-dotenv` and finally we add that parent folder to the `sys.path` so that Alembic has access to it.
+
+Then on line 35 right  before the `run_migrations_offline` function, let’s add the following:
+
+{lang=python,line-numbers=on,starting-line-number=35}
+```
+section = config.config_ini_section
+config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
+config.set_section_option(section, "DB_PASSWORD", os.environ.get("DB_PASSWORD"))
+config.set_section_option(section, "DB_HOST", os.environ.get("DB_HOST"))
+config.set_section_option(section, "DATABASE_NAME", os.environ.get("DATABASE_NAME"))
+```
+
+We’re giving the `alembic.ini` file, which we’ll edit in a little bit, access to the environment variables.
+
+Now we can move to step 2, tell Alembic what models we have in our application. So on line 25 let’s replace that whole block with the following:
+
+{lang=python,line-numbers=on,starting-line-number=25}
+```
+# import all application models here
+from counter.models import metadata as CounterMetadata
+
+# and then add them here as a list
+target_metadata = [CounterMetadata]
+```
+
+This is very important to remember: any new models you add subsequently, you need to add them here.
+
+Save the file[^2].
+
+With all that in place, we’ll finally move to the last step: tell Alembic how to connect to the database.
+
+Open the `alembic.ini` file and change `sqlalchemy.url` on line 38 like this. 
+
+{lang=python,line-numbers=on,starting-line-number=38}
+```
+sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s
+```
+
+These variables are coming from the `env.py` we edited earlier. Save the file[^3].
+
+And with this, we’re ready to run our first migration.
+
+[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/tree/step-4
+
+[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/env.py
+
+[^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/alembic.ini
