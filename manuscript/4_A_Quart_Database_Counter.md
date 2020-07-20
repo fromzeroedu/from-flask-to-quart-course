@@ -649,3 +649,348 @@ If you open `localhost:5000` you will see the first number of our counter:
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
 
 [^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/versions/2abbbb3287d2\_create\_counter\_table.py
+
+## Testing our Counter Application
+It’s great that we have a running application, but we know that any application needs good tests to insure it won’t break with new development.
+
+In our synchronous applications we had used `unittest`, but for asynchronous applications, I’ve found that `pytest` is a better fit. `Pytest` also has an `asyncio` library that will allow us to test our code better.
+
+So let’s begin by adding those libraries to the application. So just do:
+
+{lang=bash,line-numbers=off}
+```
+$ pipenv install pytest pytest-asyncio
+```
+
+Ok, with that out of the way let’s see how `pytest` works.
+
+The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them. 
+
+The cool thing about theses fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
+
+These fixtures can live in the same test files that use them or you can put them in a special file called `conftest`. Any `conftest` fixtures on a parent directory are available to the tests in the child directories. You’ll get the hang of it as you start building your tests.
+
+The other difference with `unittest` is that `pytest` doesn’t require classes, although they can still be used.
+
+So let’s create our first `conftest` file. Create it on the root application folder.
+
+First, we’ll add the necessary imports we’ll use.
+
+{lang=python,line-numbers=on}
+```
+import pytest
+import asyncio
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+
+load_dotenv(".quartenv")
+
+from application import create_app
+```
+
+Make sure to place the `load_dotenv` command before the `create_app` factory instantiation so that the environment variables are set.
+
+We will now create the database instantiation part of our test, so let’s write that:
+
+{lang=python,line-numbers=on,starting-line-number=13}
+```
+@pytest.mark.asyncio
+@pytest.fixture(scope="module")
+async def create_db():
+    print("Creating db")
+    db_name = os.environ["DATABASE_NAME"] + "_test"
+    db_host = os.environ["DB_HOST"]
+    db_root_password = os.environ["MYSQL_ROOT_PASSWORD"]
+    if db_root_password:
+        db_username = "root"
+        db_password = db_root_password
+    else:
+        db_username = os.environ["DB_USERNAME"]
+        db_password = os.environ["DB_PASSWORD"]
+
+    db_uri = "mysql+pymysql://%s:%s@%s:3306" % (db_username, db_password, db_host)
+
+    engine = create_engine(db_uri)
+    conn = engine.connect()
+    conn.execute("CREATE DATABASE " + db_name)
+    conn.execute("COMMIT")
+    conn.close()
+
+    yield {
+        "DB_USERNAME": db_username,
+        "DB_PASSWORD": db_password,
+        "DB_HOST": db_host,
+        "DATABASE_NAME": db_name,
+        "DB_URI": db_uri,
+        "TESTING": True,
+    }
+
+    print("Destroying db")
+    engine = create_engine(db_uri)
+    conn = engine.connect()
+    conn.execute("DROP DATABASE " + db_name)
+    conn.execute("COMMIT")
+    conn.close()
+```
+
+First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture. 
+
+We also need to tell `pytest` that this is a module-level fixture, which means it will be run only once across any modules that import it, and since this `conftest` is in the root folder of the application, it means it will only be run once for all our tests, and that makes sense: we only need to create the test database once.
+
+We then load the credentials from the `dotenv` file. Notice how we have an if/else block that uses the root password if it’s present. If you took my Flask course, you know this is necessary for cloud development IDEs like PythonAnywhere where we don’t have root access. We then connect to the database and create the test database.
+
+Now here’s something you will see often with `pytest` fixtures and that’s the use of the `yield` statement. We’re going to yield the application settings to the next test or fixture that includes it.
+
+Essentially what yield does is to send the control back to the calling test, and you can define what data you want to share with it here. Once the test is completed, the rest of the commands below the yield are executed, so we will write the database cleanup commands in here. We’ll put some print statements to see the order of operations when we run the tests so we can have a better picture of how the fixture is executed.
+
+Next, let’s create the Quart application itself.
+
+{lang=python,line-numbers=on,starting-line-number=55}
+```
+@pytest.fixture(scope="module")
+async def create_test_app(create_db):
+    app = create_app(**create_db)
+    await app.startup()
+    yield app
+    await app.shutdown()
+```
+
+This also needs to be a module-level fixture and we will inject the `create_db` fixture to it as a dependency. That’s right, you can inject fixtures in other fixtures — but again, remember to limit the number of fixture layers to keep your tests manageable, like I mentioned earlier.
+
+We then create an instance of the factory `create_app` function and then call the Quart app method `startup` which will run the `before_serving` decorated function, which in our app establishes the database connection.
+
+{lang=python,line-numbers=on,starting-line-number=22}
+```
+    @app.before_serving
+    async def create_db_conn():
+        print("Starting app")
+        app.sac = await sa_connection()
+```
+
+We then yield the app itself to the calling test and once the tests are done, we do the `shutdown` method of the Quart app which calls the `after_serving` function in our `application.py`.
+
+{lang=python,line-numbers=on,starting-line-number=27}
+```
+    @app.after_serving
+    async def close_db_conn():
+        print("Closing down app")
+        await app.sac.close()
+```
+
+One thing I want you to notice, in the instantiation of the `create_app` we are passing the `create_db` fixture returned with a double asterisk in front of it:
+
+{lang=python,line-numbers=on,starting-line-number=57}
+```
+app = create_app(**create_db)
+```
+
+The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
+
+{lang=python,line-numbers=on,starting-line-number=13}
+```
+    # apply overrides for tests
+    app.config.update(config_overrides)
+```
+
+This is exactly why, so that we can instantiate test apps with different configuration settings. The double asterisk in Python essentially passes the variables returned by `create_db` as a keyword argument list, so it’s the same as writing the following:
+
+{lang=python,line-numbers=on,starting-line-number=57}
+```
+app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB_PASSWORD']...)
+```
+
+We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
+
+{lang=python,line-numbers=on,starting-line-number=63}
+```
+@pytest.fixture
+def create_test_client(create_test_app):
+	print("Creating test client")
+    return create_test_app.test_client()
+```
+
+We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
+
+We don’t need to yield anything in this case since we don’t need to run any cleanups after the test is done. Also notice this is not a module-level fixture which means it will be executed with every test that calls it.
+
+Save the file[^1].
+
+Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+import pytest
+from quart import current_app
+from sqlalchemy import create_engine, select
+
+from counter.models import counter_table, metadata as CounterMetadata
+
+
+@pytest.fixture(scope="module")
+def create_all(create_db):
+	print("Creating Counter Tables")
+    engine = create_engine(create_db["DB_URI"] + "/" + create_db["DATABASE_NAME"])
+    CounterMetadata.bind = engine
+    CounterMetadata.create_all()
+
+```
+
+First we do the necessary imports. We’re going to need the counter models to create the database tables as well as access to their metadata.
+
+So first let’s create a fixture that we’ll only need on this test which is to create the counter tables. We will make it a module-level fixture so that it can access the `create_db` properties (which is also a module level fixture).
+
+To do that we create an engine, but notice we will use the dictionary object passed in the yield statement in `create_db` instead of using the actual settings, since this is this test’s custom settings.
+
+We then bind that engine to the `CounterMetadata` object and finally execute the `create_all` method, which will create the counter tables on the database.
+
+Finally we’re ready to create our very first test, so let’s keep it simple. We want to be able to see that the counter is started when we first hit the page.
+
+{lang=python,line-numbers=on,starting-line-number=17}
+```
+@pytest.mark.asyncio
+async def test_initial_response(create_test_client, create_all):
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 1" in str(body)
+```
+
+We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need both the `create_test_client` fixture as well as the `create_counter_tables` fixture. We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
+
+Save the file[^2] and run the test using `pipenv run pytest`.
+
+{lang=bash,line-numbers=onoff}
+```
+$ pipenv run pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
+rootdir: /opt/quart-mysql-boilerplate
+plugins: asyncio-0.10.0
+collected 1 item
+
+counter/test_counter.py E                                                [100%]
+
+==================================== ERRORS ====================================
+___________________ ERROR at setup of test_initial_response ____________________
+ScopeMismatch: You tried to access the 'function' scoped fixture 'event_loop' with a 'module' scoped request object, involved factories
+counter/test_counter.py:9:  def create_counter_tables(create_db)
+conftest.py:13:  def create_db(event_loop)
+.venv/lib/python3.7/site-packages/pytest_asyncio/plugin.py:204:  def event_loop(request)
+=========================== 1 error in 0.02 seconds ============================
+```
+
+It fails!
+
+What’s the problem? The issue here is that `pytest` has a built-in function-level event loop that’s not persisted across functions, so we need to grab an event loop at the very top so that this one is persisted. Let’s add it on the `conftest` file.
+
+{lang=python,line-numbers=on,starting-line-number=14}
+```
+@pytest.fixture(scope="module")
+def event_loop(request):
+    loop = asyncio.get_event_loop()
+    yield loop
+    loop.close()
+```
+
+Save the file[^3] and run the test again.
+
+{lang=bash,line-numbers=on}
+```
+$ pipenv run pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
+rootdir: /opt/quart-mysql-boilerplate
+plugins: asyncio-0.10.0
+collected 1 item
+
+counter/test_counter.py .                                                [100%]
+
+=========================== 1 passed in 0.19 seconds ===========================
+```
+
+Perfect! We now get a green line and the test passed label.
+
+But if you notice, the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
+
+{lang=bash,line-numbers=on}
+```
+ pipenv run pytest -s
+============================= test session starts ==============================
+platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
+rootdir: /opt/quart-mysql-boilerplate
+plugins: asyncio-0.10.0
+collected 1 item
+
+counter/test_counter.py Creating db
+Creating Counter Tables
+Starting app
+Creating test client
+.Closing down app
+Destroying db
+
+
+=========================== 1 passed in 0.11 seconds ===========================
+```
+
+This gives us a good insight of when things are called and the order of operations of our fixtures. Notice that the “Starting app” and “Closing down app” are coming from the `application.py` print statements.
+
+We’ll add just one more test to mark this part complete. I want to evaluate if I hit the page a second time, I get the number two in the counter.
+
+{lang=python,line-numbers=on,starting-line-number=24}
+```
+@pytest.mark.asyncio
+async def test_second_response(
+    create_test_app, create_test_client, create_counter_tables
+):
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 2" in str(body)
+```
+
+We’ll mark the test as async and we will also need the fixtures we used in the previous test as well as the `create_test_app` fixture itself, since we’ll be interacting with the application context.
+
+First, we generate a response from the homepage and check if we get the “Counter: 2” label. Something you will notice different here as compared to the `unittest` library behavior we saw in the past is that the database is _not_ reset between tests. We would have to manually do that by calling the `CounterMetadata.drop_all()` method.
+
+Let’s  now check if the database has the right value. To do that, we need to interact with the models, which means we will  need an app context. We’ll do that with the following:
+
+{lang=python,line-numbers=on,starting-line-number=33}
+```
+    async with create_test_app.app_context():
+        conn = current_app.sac
+        counter_query = select([counter_table.c.count])
+        result = await conn.execute(counter_query)
+        result_row = await result.first()
+        count = result_row[counter_table.c.count]
+        assert count == 2
+```
+
+First we create an async context with the `with` Python keyword. Inside the block we can now get the  Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
+
+Save the file[^4] and run the tests.
+
+{lang=bash,line-numbers=on}
+```
+$ pipenv run pytest
+============================= test session starts ==============================
+platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
+rootdir: /opt/quart-mysql-boilerplate
+plugins: asyncio-0.10.0
+collected 2 items
+
+counter/test_counter.py ..                                               [100%]
+
+=========================== 2 passed in 0.13 seconds ===========================
+```
+
+Looks good!
+
+And with that we have a working MySQL based Quart application with testing. We can use this as a boilerplate for any project that uses Quart and MySQL.
+
+[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/conftest.py
+
+[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
+
+[^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
+
+[^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
+
