@@ -994,3 +994,43 @@ And with that we have a working MySQL based Quart application with testing. We c
 
 [^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
 
+## Docker Setup
+Another way to work on the application is by using Docker. There are many benefits of working with Docker that I won't go into, but I would like to show you how to setup our Quart counter application in a Docker environment.
+
+The first thing we need to do is setup the `Dockerfile`. The Dockerfile looks like this:
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+FROM python:3.7.3-slim
+
+# Install pipenv
+RUN pip install pipenv
+
+# Make a local directory
+RUN mkdir /counter_app
+
+# Set "counter_app" as the working directory from which CMD, RUN, ADD references
+WORKDIR /counter_app
+
+# Now copy all the files in this directory to /counter_app
+ADD . .
+
+# Install pipenv
+RUN pipenv install
+
+# Listen to port 5000 at runtime
+EXPOSE 5000
+
+# Define our command to be run when launching the container
+CMD pipenv run quart run --host 0.0.0.0
+```
+
+First we need to define a Python image. For that we will use The `python:3.7.3-slim` image which includes a simple Debian Linux OS and no other packages installed.
+
+Next we install `pipenv`, since it's not included in the image.
+
+We then create the `counter_app` directory and set it as the default location for the code.
+
+Right after that, we copy the contents of the local directory into the `counter_app` directory using the `ADD` command.
+
+Once all the code in is place, we run `pipenv install`, open the `5000` port and invoke the `quart run` command.
