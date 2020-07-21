@@ -1104,7 +1104,7 @@ Next we'll define the MySQL database docker instance:
 
 This is file is pretty much self-explanatory. We will use the MySQL 5.7 image, instruct the container to always restart, put a name for it and open port 3306 to the host.
 
-(Save the file)[https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml]. We're now ready to test the Docker environment.
+[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml). We're now ready to test the Docker environment.
 
 One word of caution before you continue, if you have installed the packages locally using `pipenv`, make sure to delete the `.venv` folder before you build the containers, otherwise the packages will be copied to the container on the `ADD` step and `pipenv` won't be able to lock the packages.
 
