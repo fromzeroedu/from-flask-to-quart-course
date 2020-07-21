@@ -1,4 +1,4 @@
-# A Quart Database Counter
+# A Quart Database Counter <!-- 4.1 -->
 
 As you have seen in my other courses, I like to make real database driven applications using either MySQL or MongoDB.
 
@@ -6,7 +6,7 @@ In the next few lessons, we’ll build a counter app that will be a good boilerp
 
 But before we start writing the application, we need to understand one of the many quirks we’ll see when working with asynchronous applications, and this one is related to database ORMs. 
 
-## ORMs and Async
+## ORMs and Async <!-- 4.1 -->
 For our original Flask MySQL boilerplate application, we used SQLAlchemy, the Python Database ORM or Object Relational Mapper.  However, for async projects we can’t use the same library without some form of penalization.
 
 Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it does I/O. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
@@ -19,7 +19,7 @@ We’ll also be using the `aiomyql` package to connect to MySQL asynchronously.
 
 So let’s go ahead and start coding our Quart MySQL boilerplate.
 
-## Initial Setup
+## Initial Setup <!-- 4.2 -->
 So let’s go ahead and start setting up our Quart MySQL boilerplate application. Like I’ve done in other courses, we’re going to build a counter application that stores a counter in MySQL and increases it by one every time you reload the page. This will allow us to see how a typical Quart MySQL application is laid out.
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood, but Flask-Migrations won’t work with Quart since it uses the ORM component. Even though it’s a bit more complicated to set it up the first time, we will be using this boilerplate when we create other MySQL Quart applications down the road, so we won’t have to repeat the setup from scratch again.
@@ -127,7 +127,7 @@ We’re now ready to start setting up MySQL and Alembic migrations.
 
 [^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-1/settings.py
 
-## Setting up MySQL
+## Setting up MySQL <!-- 4.3 -->
 
 Let’s now start to setup our MySQL server to connect to our application.
 
@@ -135,7 +135,7 @@ The following sections describe how to install MySQL locally and setup the count
 
 If you want to use Docker, check out the lesson at the end of this section.
 
-### Installing MySQL on Mac with Homebrew
+### Installing MySQL on Mac with Homebrew <!-- 4.4 -->
 Thanks to Homebrew installing MySQL on the Mac is pretty simple.  
 
  If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
@@ -151,7 +151,7 @@ Now secure the installation by doing: `mysql_secure_installation`. MySQL offers 
 
 I will also remove the anonymous user and remove the ability to remote root login. I will also remove the test database and reload the privileges.
 
-### Setting up a user, password and database for the application
+### Setting up a user, password and database for the application 
 It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
 
 In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
@@ -179,7 +179,7 @@ If you are able to login, you’re in good shape. Now try to use the `counter` d
 
 If you don’t get an error, we’re good. Now logout using `exit;`
 
-## Installing MySQL on Windows 10 with Chocolatey
+## Installing MySQL on Windows 10 with Chocolatey <!-- 4.5 -->
 Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL. 
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
@@ -225,7 +225,7 @@ If you are able to login, you’re in good shape. Now try to use the `counter` d
 
 If you don’t get an error, we’re good. Now logout using `exit;`
 
-## Application Setup
+## Application Setup <!-- 4.6 -->
 At this point we’re ready to start building our Quart counter application. You should have MySQL server up and running with your counter database and user.
 
 We’ll install a couple of database packages we will use. The first is `aiomysql`,  a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
@@ -423,7 +423,7 @@ Save the file[^5] and let’s go ahead and start with the database migration con
 
 [^5]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/manage.py
 
-## Configuring Alembic Migrations
+## Configuring Alembic Migrations <!-- 4.7 -->
 We’re now going to install Alembic to be able to do database migrations. If you’re not familiar with migrations, it’s just a way to track model changes in your codebase, so that other team members and the different environments can keep up to date as you change your database schema.
 
 So we’ll install Alembic by doing:
@@ -521,7 +521,7 @@ And with this, we’re ready to run our first migration.
 
 [^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/alembic.ini
 
-## Our First Migration
+## Our First Migration <!-- 4.8 -->
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
@@ -650,7 +650,7 @@ Refreshing the page will increase the counter value. And there you have it, your
 
 [^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/versions/2abbbb3287d2\_create\_counter\_table.py
 
-## Testing our Counter Application
+## Testing our Counter Application <!-- 4.9 -->
 It’s great that we have a running application, but we know that any application needs good tests to insure it won’t break with new development.
 
 In our synchronous applications we had used `unittest`, but for asynchronous applications, I’ve found that `pytest` is a better fit. `Pytest` also has an `asyncio` library that will allow us to test our code better.
@@ -994,7 +994,7 @@ And with that we have a working MySQL based Quart application with testing. We c
 
 [^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
 
-## Docker Setup <!-- 4.9 -->
+## Docker Setup <!-- 4.10 -->
 Another way to work on the application is by using Docker. There are many benefits of working with Docker that I won't go into, but I would like to show you how to setup our Quart counter application in a Docker environment.
 
 The first thing we need to do is setup the `Dockerfile`. The Dockerfile looks like this:
@@ -1025,7 +1025,7 @@ EXPOSE 5000
 CMD pipenv run quart run --host 0.0.0.0
 ```
 
-First we need to define a Python image. For that we will use The `python:3.7.3-slim` image which includes a simple Debian Linux OS and no other packages installed.
+First we need to define a Python image. For that we will use the `python:3.7.3-slim` image which includes a simple Debian Linux OS and no other packages installed.
 
 Next we install `pipenv`, since it's not included in the image.
 
