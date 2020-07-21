@@ -859,7 +859,7 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 
 Save the file[^2] and run the test using `pipenv run pytest`.
 
-{lang=bash,line-numbers=onoff}
+{lang=bash,line-numbers=off}
 ```
 $ pipenv run pytest
 ============================= test session starts ==============================
@@ -894,7 +894,7 @@ def event_loop(request):
 
 Save the file[^3] and run the test again.
 
-{lang=bash,line-numbers=on}
+{lang=bash,line-numbers=off}
 ```
 $ pipenv run pytest
 ============================= test session starts ==============================
@@ -912,7 +912,7 @@ Perfect! We now get a green line and the test passed label.
 
 But if you notice, the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
 
-{lang=bash,line-numbers=on}
+{lang=bash,line-numbers=off}
 ```
  pipenv run pytest -s
 ============================= test session starts ==============================
@@ -994,7 +994,7 @@ And with that we have a working MySQL based Quart application with testing. We c
 
 [^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
 
-## Docker Setup
+## Docker Setup <!-- 4.9 -->
 Another way to work on the application is by using Docker. There are many benefits of working with Docker that I won't go into, but I would like to show you how to setup our Quart counter application in a Docker environment.
 
 The first thing we need to do is setup the `Dockerfile`. The Dockerfile looks like this:
