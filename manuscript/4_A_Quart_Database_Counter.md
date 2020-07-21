@@ -1034,3 +1034,7 @@ We then create the `counter_app` directory and set it as the default location fo
 Right after that, we copy the contents of the local directory into the `counter_app` directory using the `ADD` command.
 
 Once all the code in is place, we run `pipenv install`, open the `5000` port and invoke the `quart run` command.
+
+[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/Dockerfile).
+
+Now we need to create a `docker-compose` file that will build up both our application instance as well as the MySQL instance.
