@@ -6,7 +6,7 @@
 - `ensure_future` vs `create_task` [stack overflow discussion](https://stackoverflow.com/questions/36342899/asyncio-ensure-future-vs-baseeventloop-create-task-vs-simple-coroutine)
 	- “If you know that you have a coroutine and you want it to be scheduled, the correct API to use is create\_task(). The only time when you should be calling ensure\_future() is when you are providing an API (like most of asyncio's own APIs) that accepts either a coroutine or a Future and you need to do something to it that requires you to have a Future”
 - [3x faster Flask apps](https://hackernoon.com/3x-faster-than-flask-8e89bfbe8e4f)
-	- ![](0.1.1.png)
+	- ![](images/0.1.1.png)
 - [Quart: An ASGI alternative to Flask](https://www.youtube.com/watch?v=t8-Y7Kivuu0)
 
 # Udemy Landing Page
