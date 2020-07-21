@@ -1038,3 +1038,98 @@ Once all the code in is place, we run `pipenv install`, open the `5000` port and
 [Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/Dockerfile).
 
 Now we need to create a `docker-compose` file that will build up both our application instance as well as the MySQL instance.
+
+We will create the services using the following `docker-compose.yml` file:
+
+{lang=yml,line-numbers=on,starting-line-number=1}
+```
+version: "2"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/counter_app
+    links:
+      - db:mysql
+    container_name: counterappmysql_web_1
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+    environment:
+      PORT: 5000
+      SECRET_KEY: "you-will-never-guess"
+      DEBUG: 1 # can't pass True here, but 1 works
+      MYSQL_ROOT_PASSWORD: rootpass
+      DB_USERNAME: counter_user
+      DB_PASSWORD: counter_password
+      DB_HOST: mysql
+      DATABASE_NAME: counter
+```
+
+First we describe the Docker Compose file version as "2". We then start defining the services, which are essentially the containers that will be running at the same time.
+
+The first service is the web application which we are calling `web`. We instruct Docker Compose to build the container using the `Dockerfile` in the same directory using the `build .` statement.
+
+Next we open up port 5000 both in the host as well as in the container, as this will be the port that Quart is assigned to listen on.
+
+Then we mount the current directory as volume inside the container, which will be called `counter_app`.
+
+The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `mysql`.
+
+We then assign the name of the container to be `counterappmysql_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
+
+The next two statements, `stdin_open` abd `tty` are added so that we can do Python Debugger and examine it from outside the container.
+
+The rest of the file is the environment variables. As you can see they are the same ones defined on the `.quartenv` file.
+
+Next we'll define the MySQL database docker instance:
+
+{lang=yml,line-numbers=on,starting-line-number=25}
+```
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: counterappmysql_db_1
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: counter_user
+      MYSQL_PASSWORD: counter_password
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: counter
+```
+
+This is file is pretty much self-explanatory. We will use the MySQL 5.7 image, instruct the container to always restart, put a name for it and open port 3306 to the host.
+
+(Save the file)[https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml]. We're now ready to test the Docker environment.
+
+One word of caution before you continue, if you have installed the packages locally using `pipenv`, make sure to delete the `.venv` folder before you build the containers, otherwise the packages will be copied to the container on the `ADD` step and `pipenv` won't be able to lock the packages.
+
+Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
+
+To start the environment, type `docker-compose up --build`. You will see the MySQL image and the Quart container being built. After a few seconds you should see that the container is up and running.
+
+However, if you hit the `http://localhost:5000` URL on your browser, you will get an error. This is because the tables haven't been created. To do that we will need to run a migration.
+
+So press `CTRL-C` to stop the containers and run the following command:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose run --rm web pipenv run alembic upgrade head
+```
+
+The containers should be brought up and the migration should execute.
+
+Restart the Docker environment with `docker-compose up` and hit `http://localhost:5000`. You should now be able to see the Counter title with the numnber "1". If you you reload the page, the counter should increment.
+
+Finally, to run the tests, you can do:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose run --rm web pipenv run pytest -s
+```
+
+And that's it! You have your Quart MySQL boilerplate application up and running. If you make any changes to the code, the container should automatically restart and pick up the changes.
