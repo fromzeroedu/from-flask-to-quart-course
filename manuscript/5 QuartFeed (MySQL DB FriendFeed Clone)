@@ -11,7 +11,7 @@ Server Sent Events, or SSEs, or EventSource (in Javascript), are an extension to
 
 By default, the server sends updates with a `data` payload. You can also have an `event` type, which by default is `message`, but could be things like `add` or `remove`. Additionally it has an `id` parameter.
 
-For our FriendFeed we’ll have the event type to be either `post`, which is a new post, `like` if some one liked the post and `comment` if it’s a comment to a `post`.
+For our FriendFeed clone we’ll have the event type to be either `post`, which is a new post, `like` if some one liked the post and `comment` if it’s a comment to a `post`.
 
 For a more complex version or exercise to students, we could also have `groups`, which could be distinct `/sse` endpoints and `like` events for comments.
 
@@ -281,3 +281,9 @@ Create a simple profile user view so that you can follow other users:
 - added updated field to feed table
 - get the latest 10 posts from feed order by desc updated
 - user image url method (`image_url_from_image_ts`)
+
+# Template Literals (step-12)
+
+- Create template literal for the whole section
+- Pass the full information on the context
+- Do a proper for loop for messages
