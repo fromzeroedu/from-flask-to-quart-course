@@ -41,42 +41,47 @@ For a more complex version or exercise to students, we could also have `groups`,
 	- Update `application.py` blueprint imports on line 16 and 20 to `user_app`
 	- Erase the `conftest` and `test_counter` files. We’ll create testing later.
 	- 
+	
 - Start the app to see if things are working so far
 	
 - `pipenv run quart run` and open `/registration`
 	
 - Alembic
+	
+	- Note: If you are using Docker, you do ` docker-compose run --rm web pipenv run alembic revision --autogenerate -m "create user cursor table"`
+		
 	- Remove existing `migrations`
 	- `pipenv run alembic init migrations`
 	- Edit the `alembic.ini` script and add the `sqlalchemy.url` from `settings` on line 38. These setting vars will come from the `env.py` we’ll write later:
-		
-		- `sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s`
+	
+	  - `sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s`
 	- Edit the `env.py` in migrations on line 27:
-		```python
-			section = config.config_ini_section
-			config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
-			config.set_section_option(section, "DB_PASSWORD", os.environ.get("DB_PASSWORD"))
-			config.set_section_option(section, "DB_HOST", os.environ.get("DB_HOST"))
-			config.set_section_option(section, "DATABASE_NAME", os.environ.get("DATABASE_NAME"))
-		```
+	  ```python
+	  	section = config.config_ini_section
+	  	config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
+	  	config.set_section_option(section, "DB_PASSWORD", os.environ.get("DB_PASSWORD"))
+	  	config.set_section_option(section, "DB_HOST", os.environ.get("DB_HOST"))
+	  	config.set_section_option(section, "DATABASE_NAME", os.environ.get("DATABASE_NAME"))
+	  ```
 	- Add the following at the top (before `logging.config`:
-		```python
-			import os, sys
-			from dotenv import load_dotenv
-			from pathlib import Path
-		```
+	  ```python
+	  	import os, sys
+	  	from dotenv import load_dotenv
+	  	from pathlib import Path
+	  ```
 	- Then add this under `from alembic import context`:
-		```python
-			# Path ops
-			parent = Path(__file__).resolve().parents[1]
-			load_dotenv(os.path.join(parent, ".quartenv"))
-			sys.path.append(str(parent))
-		```
+	  ```python
+	  	# Path ops
+	  	parent = Path(__file__).resolve().parents[1]
+	  	load_dotenv(os.path.join(parent, ".quartenv"))
+	  	sys.path.append(str(parent))
+	  ```
 	- Finally we need to add a metadata object on line 29 (where it says `target_metadata=None`).  The import needs to happen here after the `sys.path.append` above:
-		```python
-			from user.models import metadata as UserMetadata
-			target_metadata = [UserMetadata]
-		```
+	  ```python
+	  	from user.models import metadata as UserMetadata
+	  	target_metadata = [UserMetadata]
+	  ```
+	
 - We’re ready now to create the application structure
 	
 - Migration Execution
@@ -285,5 +290,6 @@ Create a simple profile user view so that you can follow other users:
 # Template Literals (step-12)
 
 - Create template literal for the whole section
-- Pass the full information on the context
-- Do a proper for loop for messages
+- Pass the full post information on the context
+- To print the actual statement: `print(stmt.compile(compile_kwargs={"literal_binds": True}))`
+- NOTE: I've noticed that if you do code changes while the Quart application is running and the SSE page is open, erratic behavior can appear. Make sure to do the code changes, save, then stop and start Docker and do a HARD RELOAD of the browser page
