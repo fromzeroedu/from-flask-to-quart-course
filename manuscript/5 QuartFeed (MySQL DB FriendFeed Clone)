@@ -286,6 +286,7 @@ Create a simple profile user view so that you can follow other users:
 - added updated field to feed table
 - get the latest 10 posts from feed order by desc updated
 - user image url method (`image_url_from_image_ts`)
+- IMPORTANT: This step just prints out the events to the JS Console, no templating yet. The initial render does work on the home page
 
 # Template Literals (step-12)
 
