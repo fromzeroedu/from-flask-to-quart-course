@@ -294,3 +294,11 @@ Create a simple profile user view so that you can follow other users:
 - Pass the full post information on the context
 - To print the actual statement: `print(stmt.compile(compile_kwargs={"literal_binds": True}))`
 - NOTE: I've noticed that if you do code changes while the Quart application is running and the SSE page is open, erratic behavior can appear. Make sure to do the code changes, save, then stop and start Docker and do a HARD RELOAD of the browser page
+
+# Databases Migration (step-13)
+
+- Moved database connectivity over to [databases](https://www.encode.io/databases/)
+- Testing and migrations updates
+
+# Comments (step-14)
+
