@@ -306,3 +306,12 @@ Create a simple profile user view so that you can follow other users:
 - Post comment to backend
 - Get comments query and add to context
 - Render new comments from SSE
+
+# Likes (step-15)
+
+- Post likes to backend
+- 
+
+# Post Tests (step-16)
+
+- Test posts. comments and likes
