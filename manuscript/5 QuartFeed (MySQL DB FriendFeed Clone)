@@ -1,4 +1,7 @@
+
+
 # Server Sent Events (SSE)
+
 - [Quart Tutorial](https://pgjones.gitlab.io/quart/broadcast_tutorial.html)
 - [Code Sample](https://gitlab.com/pgjones/quart/tree/master/examples/broadcast)
 - [EventSource Javascript Reference](https://www.w3.org/TR/eventsource/)
@@ -310,7 +313,7 @@ Create a simple profile user view so that you can follow other users:
 # Likes (step-15)
 
 - Post likes to backend
-- 
+- Finish frontend
 
 # Post Tests (step-16)
 
