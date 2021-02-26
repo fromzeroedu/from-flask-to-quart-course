@@ -1,12 +1,6 @@
 
 
-# Server Sent Events (SSE)
-
-- [Quart Tutorial](https://pgjones.gitlab.io/quart/broadcast_tutorial.html)
-- [Code Sample](https://gitlab.com/pgjones/quart/tree/master/examples/broadcast)
-- [EventSource Javascript Reference](https://www.w3.org/TR/eventsource/)
-- Not supported by Internet Explorer only
-- [Good overall description](https://javascript.info/server-sent-events)
+# QuartFeed, an SSE appplication using MySQL <!-- 5.1 -->
 
 
 ## Introduction
@@ -18,7 +12,7 @@ For our FriendFeed clone we’ll have the event type to be either `post`, which 
 
 For a more complex version or exercise to students, we could also have `groups`, which could be distinct `/sse` endpoints and `like` events for comments.
 
-# Setup (step-0)
+## Setup (step-0)
 - Git clone/fork [https://github.com/esfoobar/quart-mysql-boilerplate](https://github.com/esfoobar/quart-mysql-boilerplate)
 
 - Pipenv install requirements: `pipenv install`

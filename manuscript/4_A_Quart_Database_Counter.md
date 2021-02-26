@@ -1,4 +1,4 @@
-# A Quart Database Counter <!-- 4.1 -->
+# A Quart Database Counter <!-- 4 -->
 
 As you have seen in my other courses, I like to make real database driven applications using either MySQL or MongoDB.
 
