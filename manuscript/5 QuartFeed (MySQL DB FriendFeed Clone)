@@ -1,10 +1,10 @@
 
 
-# QuartFeed, an SSE appplication using MySQL <!-- 5.1 -->
+# QuartFeed, an SSE appplication using MySQL <!-- 5 -->
 
 
-## Introduction
-Server Sent Events, or SSEs, or EventSource (in Javascript), are an extension to HTTP that allow a client to keep a connection open to a server thereby allowing the server to send events to the client as it chooses.
+## Introduction <!-- 5.1 -->
+Server Sent Events, or SSEs, or EventSource (in Javascript), are an extension to HTTP that allow a client to keep a connection open to a server, thereby allowing the server to send events to the client as it chooses.
 
 By default, the server sends updates with a `data` payload. You can also have an `event` type, which by default is `message`, but could be things like `add` or `remove`. Additionally it has an `id` parameter.
 
