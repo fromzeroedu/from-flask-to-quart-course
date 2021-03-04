@@ -1,5 +1,6 @@
 # Using Websockets
 - Quart websockets [tutorial](https://pgjones.gitlab.io/quart/tutorials/websocket_tutorial.html#websocket-tutorial)
+= Quart websockets [deeper dive](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html)
 - [Motor with Asyncio](https://motor.readthedocs.io/en/stable/tutorial-asyncio.html)
   - [Tutorial with Ayncio](https://motor.readthedocs.io/en/stable/tutorial-asyncio.html)
 
