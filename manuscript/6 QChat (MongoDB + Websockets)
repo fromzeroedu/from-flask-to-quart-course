@@ -1,6 +1,21 @@
 # Using Websockets
 - Quart websockets [tutorial](https://pgjones.gitlab.io/quart/tutorials/websocket_tutorial.html#websocket-tutorial)
-= Quart websockets [deeper dive](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html)
+- Quart websockets [deeper dive](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html)
 - [Motor with Asyncio](https://motor.readthedocs.io/en/stable/tutorial-asyncio.html)
   - [Tutorial with Ayncio](https://motor.readthedocs.io/en/stable/tutorial-asyncio.html)
 
+## Initial Setup (step-0)
+
+- Basic "Hello World" setup
+
+## User Crud (step-1)
+
+- Login and registration
+
+## User tests (step-2)
+
+- Full tests
+
+## Websocket initial setup (step-3)
+
+- Get websocket initial form
