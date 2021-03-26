@@ -21,6 +21,14 @@
 - Get websocket initial form
 - Problem is that first user to get to the message, deletes it
 
-## Websocket initial setup (step-3)
+## User Cursors  (step-4)
 
-- Get websocket initial form
+- Work out a solution to have an initial history of the messages and a cursor per user
+
+## Presence  (step-5)
+
+- Have another websocket for presence and maybe update their status? (idle, active)
+
+## Rooms  (step-6)
+
+- Create the concept of rooms
