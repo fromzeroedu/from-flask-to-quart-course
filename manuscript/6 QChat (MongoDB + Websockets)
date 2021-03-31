@@ -25,10 +25,16 @@
 
 - Work out a solution to have an initial history of the messages and a cursor per user
 
-## Presence  (step-5)
+## Look and Feel  (step-5)
+
+- Setup the navbar and profile images
+- Separate the JS into its own file with the message template
+
+## Presence  (step-6)
 
 - Have another websocket for presence and maybe update their status? (idle, active)
+- [Detecting disconnection](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#detecting-disconnection)
 
-## Rooms  (step-6)
+## Rooms  (step-7)
 
 - Create the concept of rooms
