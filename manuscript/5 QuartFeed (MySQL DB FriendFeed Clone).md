@@ -311,6 +311,5 @@ Create a simple profile user view so that you can follow other users:
 - Post likes to backend
 - Finish frontend
 
-# Post Tests (step-16)
-
 - Test posts. comments and likes
+
