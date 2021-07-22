@@ -28,7 +28,7 @@
 
 ## Look and Feel (step-5)
 
-- Use Flexbox ([following this tutorial](https://medium.com/quick-code/building-a-chat-application-using-flexbox-e6936c3057ef))
+- Use Flexbox ([following this tutorial](https://medium.com/quick-code/building-a-chat-application-using-flexbox-e6936c3057ef)) and [this codepen](https://codepen.io/Abhitalks/pen/ZbjNvQ/)
 - Setup the navbar and profile images
 - Separate the JS into its own file with the message template
 
