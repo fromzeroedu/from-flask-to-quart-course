@@ -37,6 +37,7 @@
 - Have another websocket for presence and maybe update their status? (idle, active)
 - [Detecting disconnection](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#detecting-disconnection)
 
-## Rooms (step-7)
+## Testing (step-7)
 
-- Create the concept of rooms
+- Write tests
+- [Testing Websockets](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#testing-websockets)
