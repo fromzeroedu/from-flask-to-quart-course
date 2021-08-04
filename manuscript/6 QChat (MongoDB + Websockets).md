@@ -8,6 +8,7 @@
 ## Initial Setup (step-0)
 
 - Basic "Hello World" setup
+- Important! Renamed home_app to chat_app om step-6
 
 ## User Crud (step-1)
 
@@ -34,6 +35,7 @@
 
 ## Presence (step-6)
 
+- Important! Renamed home_app to chat_app
 - Have another websocket for presence and maybe update their status? (idle, active)
 - [Detecting disconnection](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#detecting-disconnection)
 
