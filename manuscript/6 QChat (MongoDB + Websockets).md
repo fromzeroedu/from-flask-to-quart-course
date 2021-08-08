@@ -33,13 +33,19 @@
 - Setup the navbar and profile images
 - Separate the JS into its own file with the message template
 
-## Presence (step-6)
+## Chat and User Model Refactor (step-6)
+
+- Important! Renamed home_app to chat_app
+- Created a proper chat model (before it was wirting messages directly on the chat views.py)
+- Refactored user models as well
+
+## Presence (step-7)
 
 - Important! Renamed home_app to chat_app
 - Have another websocket for presence and maybe update their status? (idle, active)
 - [Detecting disconnection](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#detecting-disconnection)
 
-## Testing (step-7)
+## Testing (step-8)
 
 - Write tests
 - [Testing Websockets](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#testing-websockets)
