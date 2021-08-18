@@ -41,11 +41,10 @@
 
 ## Presence (step-7)
 
-- Important! Renamed home_app to chat_app
 - Have another websocket for presence and maybe update their status? (idle, active)
 - [Detecting disconnection](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#detecting-disconnection)
 
 ## Testing (step-8)
 
-- Write tests
+- Write tests for messages
 - [Testing Websockets](https://pgjones.gitlab.io/quart/how_to_guides/websockets.html#testing-websockets)
