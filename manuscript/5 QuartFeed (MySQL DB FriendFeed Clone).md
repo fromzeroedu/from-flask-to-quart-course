@@ -15,7 +15,7 @@ For our FriendFeed clone we’ll have the event type to be either `post`, which 
 For a more complex version or exercise to students, we could also have `groups`, which could be distinct `/sse` endpoints and `like` events for comments.
 
 ## Setup (step-0) <!-- 5.2 -->
-- Git clone/fork [https://github.com/esfoobar/quart-mysql-boilerplate](https://github.com/esfoobar/quart-mysql-boilerplate)
+- Git clone/fork [https://github.com/fromzeroedu/quart-mysql-boilerplate](https://github.com/fromzeroedu/quart-mysql-boilerplate)
 
 - Pipenv install requirements: `pipenv install`
 
@@ -128,7 +128,7 @@ And now we’ll save the user on the database.
 
 Implement Login and Logout using sessions and update navbar.
 
-### Testing User Registration and User Login (step-5) <!-- 5.7 -->
+## Testing User Registration and User Login (step-5) <!-- 5.7 -->
 
 Add the `create_all` method from the `test_counter` file and make it use the UserMetadata from the user model
 
