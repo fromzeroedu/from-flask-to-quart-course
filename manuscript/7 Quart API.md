@@ -13,4 +13,4 @@
     - Delete the migration folder
     - Run `poetry run alembic init migrations`
     - Copy the `env.py.bak` to the `/migrations` folder
-    - Run `pipenv run alembic revision --autogenerate -m "create qapi tables"`
+    - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
