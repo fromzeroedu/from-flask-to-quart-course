@@ -7,10 +7,10 @@
 - Explain the overall structure of the counter app
 
 ## API Auth (step-1)
-- Add the views, models, expaling the Quart MethodView
+- Add the views, models for the app API routes, expaling the Quart MethodView
 - We need to reinit alembic
     - Backup the `migrations/env.py` to the root folder as `env.py.bak`
     - Delete the migration folder
     - Run `poetry run alembic init migrations`
     - Copy the `env.py.bak` to the `/migrations` folder
-    
+    - Run `pipenv run alembic revision --autogenerate -m "create qapi tables"`
