@@ -14,3 +14,11 @@
     - Run `poetry run alembic init migrations`
     - Copy the `env.py.bak` to the `/migrations` folder
     - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
+- Added tests
+
+## Store endpoint (step-2)
+- Create models
+- Create schemas
+- Create app decorator
+- Create routes
+- Create views
