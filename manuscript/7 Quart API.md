@@ -14,9 +14,13 @@
     - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
 - Added tests
 
-## Store endpoint (step-2)
-- Create models
-- Create schemas
-- Create app decorator
-- Create routes
-- Create views
+## Store POST endpoint (step-2)
+- Create model
+- Create schema
+- Create POST route
+- Create POST view
+- Auth decorator
+- Test
+
+## Store GET endpoint (step-3)
+- Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
