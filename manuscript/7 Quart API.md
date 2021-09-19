@@ -13,7 +13,7 @@
     - Copy the `env.py.bak` to the `/migrations` folder
     - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
 - Added tests EXCEPT token expired test
-    - That one is added on Store GET store (step-3) below
+    - That one is added on Store GET stores (step-4) below
 
 ## Store POST endpoint (step-2)
 - Create model
@@ -27,8 +27,8 @@
 - Add route for specific store
 - Add view for specific store
 - Add store GET test
-- Add app token expire text
 
 ## Store GET stores endpoint (step-4)
 - Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
 - Fixtures
+- Add app token expire test
