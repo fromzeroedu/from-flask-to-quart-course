@@ -24,3 +24,5 @@
 
 ## Store GET endpoint (step-3)
 - Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
+- Add route for specific store
+- Add view for specific store
