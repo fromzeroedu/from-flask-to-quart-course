@@ -30,5 +30,5 @@
 
 ## Store GET stores endpoint (step-4)
 - Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
-- Fixtures
-- Add app token expire test
+- Tests
+    - Add app token expire test
