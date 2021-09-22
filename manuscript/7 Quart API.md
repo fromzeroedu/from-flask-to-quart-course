@@ -29,7 +29,7 @@
 - Add store GET test
 
 ## Store GET stores endpoint (step-4)
-- Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
+- Add routes and View
+- Pagination
 - Tests
     - Add app token expire test
-- Add type returns to utils/paginate
