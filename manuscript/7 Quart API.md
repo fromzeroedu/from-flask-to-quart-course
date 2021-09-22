@@ -32,3 +32,4 @@
 - Pagination (see [this](https://github.com/wizeline/sqlalchemy-pagination/blob/master/sqlalchemy_pagination/__init__.py))
 - Tests
     - Add app token expire test
+- Add type returns to utils/paginate
