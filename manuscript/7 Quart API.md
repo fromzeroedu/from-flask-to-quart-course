@@ -34,6 +34,10 @@
 - Tests
     - Add app token expire test
 
-
 ## Store PUT endpoint (step-5)
-- Add routes and View
+- Add routes and view
+- Tests
+
+## Store DELETE endpoint (step-6)
+- Add routes and view
+- Tests
