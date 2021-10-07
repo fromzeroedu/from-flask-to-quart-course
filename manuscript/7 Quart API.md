@@ -41,3 +41,9 @@
 ## Store DELETE endpoint (step-6)
 - Add routes and view
 - Tests
+
+## Pet POST endpoint (step-7)
+- Create model with foreign key
+- Create schema with load-only store id
+- Create POST route
+- Create POST view
