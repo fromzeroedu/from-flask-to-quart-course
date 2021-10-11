@@ -44,6 +44,7 @@
 
 ## Pet POST endpoint (step-7)
 - Create model with foreign key
+- Do alembic revision
 - Create schema with load-only store id
 - Create POST route
 - Create POST view
