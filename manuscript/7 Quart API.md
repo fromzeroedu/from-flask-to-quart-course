@@ -13,7 +13,8 @@
     - Copy the `env.py.bak` to the `/migrations` folder
     - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
 - Added tests EXCEPT token expired test
-    - That one is added on Store GET stores (step-4) below
+    - The token expired test is added on Store GET stores (step-4) below
+    - Pleae note that I created a test fixtures folder with common pytest functions
 
 ## Store POST endpoint (step-2)
 - Create model
