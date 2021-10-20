@@ -53,4 +53,4 @@
 
 ## Pet GET endpoint (step-8)
 - Write the individual pet endpoint
-- For the pets in a store, add to the store endpoint to follow best practices, as there is no use case of all pets across the company because a pet can't exist without a store [ref](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Best-Practices-for-Sub-and-Nested-Resources/)
+- For the pets in a store, add to the store endpoint to follow best practices [ref](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Best-Practices-for-Sub-and-Nested-Resources/)
