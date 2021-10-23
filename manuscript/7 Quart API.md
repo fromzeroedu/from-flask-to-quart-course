@@ -14,7 +14,7 @@
     - Run `poetry run alembic revision --autogenerate -m "create qapi tables"`
 - Added tests EXCEPT token expired test
     - The token expired test is added on Store GET stores (step-4) below
-    - Pleae note that I created a test fixtures folder with common pytest functions
+    - Pleae note that I created a test folder with a fixtures folder inside with common pytest functions
 
 ## Store POST endpoint (step-2)
 - Create model
@@ -52,5 +52,6 @@
 - Tests
 
 ## Pet GET endpoint (step-8)
-- Write the individual pet endpoint
+- Write the individual pet endpoint and get all pets endpoint
 - For the pets in a store, add to the store endpoint to follow best practices [ref](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Best-Practices-for-Sub-and-Nested-Resources/)
+- Tests
