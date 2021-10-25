@@ -1,6 +1,7 @@
-# Introduction
+# Introduction <!-- 1 -->
 
-## Welcome to the course
+## Welcome to the course <!-- 1.1 -->
+
 Hi and welcome to “From Flask to Quart”. My name is Jorge Escobar and I’m super excited to introduce you to a new dimension in the world of Python Web Development. I’m talking about Asynchronous Python development.
 
 Introduced with Python version 3.7, the Asynchronous I/O library, also called “asyncio”, allows developers to write code that runs concurrently as opposed to sequentially, which translates into a higher throughput of your application in situations where response time and speed are really important.
@@ -15,8 +16,9 @@ We will also explore some of the frontend communication channels that leverage y
 
 So let’s begin our journey to the new world of async Python web development!
 
-## Roadmap and Requirements
-Let’s take a look at what we will be covering on this course. 
+## Roadmap and Requirements <!-- 1.2 -->
+
+Let’s take a look at what we will be covering on this course.
 
 First, we’ll explore the fundamental concepts behind async programming, including coroutines and tasks and look at some of the common pitfalls you will face writing these applications.
 
