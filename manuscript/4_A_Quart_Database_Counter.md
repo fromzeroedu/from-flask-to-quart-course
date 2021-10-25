@@ -1,54 +1,57 @@
 # A Quart Database Counter <!-- 4 -->
 
-As you have seen in my other courses, I like to make real database driven applications using either MySQL or MongoDB.
+## ORMs and Async <!-- 4.1 -->
 
-In the next few lessons, we’ll build a counter app that will be a good boilerplate application for your Mysql-based Quart projects. I will take the concepts from my [Flask MySQL Boilerplate app](https://github.com/fromzeroedu/flask-mysql-boilerplate) but make it asynchronous and of course, use Quart.
+In the next few lessons, we’ll build a counter app that will be a good boilerplate application for your Postgres-based Quart projects.
 
 But before we start writing the application, we need to understand one of the many quirks we’ll see when working with asynchronous applications, and this one is related to database ORMs. 
 
-## ORMs and Async <!-- 4.1 -->
-For our original Flask MySQL boilerplate application, we used SQLAlchemy, the Python Database ORM or Object Relational Mapper.  However, for async projects we can’t use the same library without some form of penalization.
+For our original Flask MySQL boilerplate application, we used SQLAlchemy ORM, the Python Database Object Relational Mapper. However, for async projects we can’t use the same library without some form of penalization.
 
 Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it does I/O. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
 
-There’s also some issues that I won’t go into in too much detail, having to do with the overhead of how Python handles MySQL connections and the type of locking your transactions can do. I suggest you read [this blog post](http://techspot.zzzeek.org/2015/02/15/asynchronous-python-and-databases/) from Mike Bayer, the author of SQLAlchemy if you want to learn more about the subject. 
+There’s also some issues that I won’t go into in too much detail, having to do with the overhead of how Python handles database connections and the type of locking your transactions can do. I suggest you read [this blog post](http://techspot.zzzeek.org/2015/02/15/asynchronous-python-and-databases/) from Mike Bayer, the author of SQLAlchemy if you want to learn more about the subject. 
 
 However, we don’t need to go back to using raw SQL queries in our codebase. It just happens that we can use the SQLAlchemy Core package from SQLAlchemy, which allows us to express queries in a nice way without the ORM overhead.
 
-We’ll also be using the `aiomyql` package to connect to MySQL asynchronously.
+We’ll also be using the [`databases`](https://www.encode.io/databases/) package to connect to Postgres asynchronously.
 
-So let’s go ahead and start coding our Quart MySQL boilerplate.
+So let’s go ahead and start coding our Quart Postgres counter application.
 
 ## Initial Setup <!-- 4.2 -->
-So let’s go ahead and start setting up our Quart MySQL boilerplate application. Like I’ve done in other courses, we’re going to build a counter application that stores a counter in MySQL and increases it by one every time you reload the page. This will allow us to see how a typical Quart MySQL application is laid out.
 
-One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood, but Flask-Migrations won’t work with Quart since it uses the ORM component. Even though it’s a bit more complicated to set it up the first time, we will be using this boilerplate when we create other MySQL Quart applications down the road, so we won’t have to repeat the setup from scratch again.
+So let’s go ahead and start setting up our Quart Postgres counter application. Like I’ve done in other courses, we’re going to build a counter application that stores a counter in the database and increases it by one every time you reload the page. This will allow us to see how a typical Quart database application is laid out.
+
+One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood, but Flask-Migrations won’t work with Quart since it uses the ORM component. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
 So let’s begin by creating the Quart environment variables that will be loaded to our environment by `python-dotenv`. 
 
-Make sure to create the project’s folder. I’ll call mine `quart-mysql-boilerplate`. Once that’s done, change the directory inside that folder.
+
+
+
+
+
 
 So create the `.quartenv` file and type the following code:
 
-{lang=bash,line-numbers=off}
+{lang=python,line-numbers=on}
 ```
 QUART_APP='manage.py'
 QUART_ENV=development
 SECRET_KEY='my_secret_key'
-DB_USERNAME=counter_user
-DB_PASSWORD=counter_password
+DB_USERNAME=app_user
+DB_PASSWORD=app_password
 DB_HOST=localhost
 DATABASE_NAME=counter
-MYSQL_ROOT_PASSWORD=rootpass
 ```
 
 First, the `QUART_APP` will be small kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course. 
 
 Next  the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
 
-The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. The `MYSQL_ROOT_PASSWORD` is needed so that our test utility can create the test database and destroy it on demand.
+The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database.
 
-Save the file[^1].
+Save the file.
 
 We’ll now need to create a `settings.py` file, so we’ll use very similar variables from the `.quartenv` with the following format:
 
@@ -61,12 +64,11 @@ DB_USERNAME = os.environ["DB_USERNAME"]
 DB_PASSWORD = os.environ["DB_PASSWORD"]
 DB_HOST = os.environ["DB_HOST"]
 DATABASE_NAME = os.environ["DATABASE_NAME"]
-MYSQL_ROOT_PASSWORD = os.environ["MYSQL_ROOT_PASSWORD"]
 ```
 
-As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file[^2].
+As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
 
-We’ll now initialize our `pipenv` environment using the `python 3.7` initialization to guarantee we have the right Python version in the `Pipfile`.
+We’ll now initialize our Poetry setup.
 
 {lang=bash,line-numbers=off}
 ```
@@ -151,7 +153,7 @@ Now secure the installation by doing: `mysql_secure_installation`. MySQL offers 
 
 I will also remove the anonymous user and remove the ability to remote root login. I will also remove the test database and reload the privileges.
 
-### Setting up a user, password and database for the application 
+#### Setting up a user, password and database for the application 
 It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
 
 In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
@@ -179,7 +181,7 @@ If you are able to login, you’re in good shape. Now try to use the `counter` d
 
 If you don’t get an error, we’re good. Now logout using `exit;`
 
-## Installing MySQL on Windows 10 with Chocolatey <!-- 4.5 -->
+### Installing MySQL on Windows 10 with Chocolatey <!-- 4.5 -->
 Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL. 
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
@@ -197,7 +199,7 @@ Now try logging in using `mysql -uroot -prootpass`.
 
 If you login, it means everything is working. Exit using `CTRL-C`.
 
-### Setting up a user, password and database for the application
+#### Setting up a user, password and database for the application
 It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
 
 In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter_app” and the password “mypassword”.
@@ -225,7 +227,7 @@ If you are able to login, you’re in good shape. Now try to use the `counter` d
 
 If you don’t get an error, we’re good. Now logout using `exit;`
 
-## Application Setup <!-- 4.6 -->
+ ## Application Setup <!-- 4.6 -->
 At this point we’re ready to start building our Quart counter application. You should have MySQL server up and running with your counter database and user.
 
 We’ll install a couple of database packages we will use. The first is `aiomysql`,  a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
