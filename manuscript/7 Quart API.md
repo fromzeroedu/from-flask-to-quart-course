@@ -55,3 +55,7 @@
 - Write the individual pet endpoint and get all pets endpoint
 - For the pets in a store, add to the store endpoint to follow best practices [ref](https://www.moesif.com/blog/technical/api-design/REST-API-Design-Best-Practices-for-Sub-and-Nested-Resources/)
 - Tests
+
+## Pet PUT and DELETE (step-9)
+- Endpoints
+- Tests
