@@ -10,7 +10,7 @@ So for the asynchronous capabilities of Python, there have been some frameworks 
 
 However, most of them are implemented in their own unique way, which is not a huge deal if you're just learning web development but it's a drag if you already know your way around an existing framework.
 
-Which brings us to Quart. This wonderful new project has built most of the existing Flask API and converted it to asynchronous operations, allowing us to develop using  the Flask libraries we already know and lets us focus on implementing the asynchronous part.
+Which brings us to Quart. This wonderful new project has built most of the existing Flask API and converted it to asynchronous operations, allowing us to develop using the Flask libraries we already know and lets us focus on implementing the asynchronous part.
 
 So let's go over the pros of using Quart as an asynchronous choice for our web development.
 
@@ -44,19 +44,22 @@ Check if you have Poetry installed by typing `poetry --version` in your terminal
 
 To create or first Quart application folder, we will use Poetry to set that up for us. So navigate to the folder where you keep your Python applications. It can be your user's home directory or a completely different directory. Just do a `cd` to it.
 
-Go inside the directory and then do: `poetry new quart-hello`. `Poetry` will create a few folders inside. Navigate inside the application folder by doing `cd quart-hello`.
+Next, let's create a folder for our Quart project, with `mkdir quart-hello` and type `cd quart-hello` to start the process.
 
-We want to create the virtual environment that Poetry will use, so type `poetry shell`. Poetry will create the virtual environment folder in your User directory and enable it automatically.
+Now we'll initialize this folder to be a Poetry project, so type `poetry init -n`. This will create a `pyproject.toml` inside with some initial values. This file tracks all the project's dependencies.
 
-Now let's install `Quart` by doing `poetry add quart`. Poetry will add Quart and a bunch of other dependencies.
+Next, we want to create the virtual environment that Poetry will use, so type `poetry shell`. Poetry will create the virtual environment folder in your User directory and enable it automatically.
 
-Now open your favorite code editor and create a file called `hello.py` inside the `quart-hello` app folder.
+We now install `Quart` by doing `poetry add quart`. Poetry will add Quart and a bunch of other dependencies.
+
+Open your favorite code editor and create a file called `hello.py` in the root folder.
 
 If you ware using Visual Studio Code, enable the Poetry-created Python interpreter by clicking on the bottom and selecting the one that has `quart-hello` on the description.
 
 We'll write the following code in `hello.py`:
 
 {lang=python,line-numbers=on}
+
 ```
 from quart import Quart
 
@@ -79,18 +82,20 @@ Finally we need to make the app start with `app.run()`.
 
 Save the file.
 
-Before we can run it, we need to  define some environment variables, just like we did with Flask. In order for that to work, we're going to install the `python-dotenv` library, which allows us to  create an `env` file to be loaded when Quart runs. So on the terminal: `poetry add python-dotenv` and then create a `.quartenv` file like follows:
+Before we can run it, we need to define some environment variables, just like we did with Flask. In order for that to work, we're going to install the `python-dotenv` library, which allows us to create an `env` file to be loaded when Quart runs. So on the terminal: `poetry add python-dotenv` and then create a `.quartenv` file in the root folder as follows:
 
 {lang=python,line-numbers=on}
+
 ```
-QUART_APP='hello.py'
+QUART_APP='quart_hello.hello'
 QUART_ENV=development
 SECRET_KEY='my_secret_key'
 ```
 
-We're now ready to run our first Quart app. Just type: `pipenv run quart`. You will be notified that the application is running on port 5000.
+We're now ready to run our first Quart app. Just type: `poetry run quart`. You will be notified that the application is running on port 5000.
 
 {lang=bash,line-numbers=off}
+
 ```
 Running on http://127.0.0.1:5000 (CTRL + C to quit)
 ```
@@ -102,6 +107,7 @@ Now let's create a template instead of returning the string directly to the user
 For that, we'll create a template folder so that we can render the page more dynamically with a context. So create a `templates` folder and inside create the `hello.html` file as follows:
 
 {lang=html,line-numbers=on}
+
 ```
 <html>
   <header>
@@ -116,6 +122,7 @@ For that, we'll create a template folder so that we can render the page more dyn
 Now change the `hello.py` file with the following code:
 
 {lang=python,line-numbers=off}
+
 ```
 @app.route("/")
 async def hello():
@@ -130,6 +137,7 @@ If you said that `render_template` is a coroutine, you are right. Rendering a te
 Try taking out the `await` keyword and run the application. You will get the following error:
 
 {lang=python,line-numbers=off}
+
 ```
 coroutine 'render_template' was never awaited
 ```
