@@ -87,7 +87,7 @@ Before we can run it, we need to define some environment variables, just like we
 {lang=python,line-numbers=on}
 
 ```
-QUART_APP='quart_hello.hello'
+QUART_APP='hello'
 QUART_ENV=development
 SECRET_KEY='my_secret_key'
 ```
@@ -119,9 +119,17 @@ For that, we'll create a template folder so that we can render the page more dyn
 </html>
 ```
 
-Now change the `hello.py` file with the following code:
+In the `hello.py` file add `render_template` to the Quart import on line 1:
 
-{lang=python,line-numbers=off}
+{lang=python,line-numbers=on,starting-line-number=1}
+
+```
+from quart import Quart, render_template
+```
+
+And change the `hello` function as follows:
+
+{lang=python,line-numbers=on,starting-line-number=6}
 
 ```
 @app.route("/")
@@ -134,12 +142,12 @@ Did you notice that? For the first time we're using the `await` keyword. Why do 
 
 If you said that `render_template` is a coroutine, you are right. Rendering a template can take some time, so Quart hands that off to a coroutine so that it can service other requests until the template is rendered.
 
-Try taking out the `await` keyword and run the application. You will get the following error:
+Try taking out the `await` keyword, run the application and reload the page in the browser. You will get the following error:
 
 {lang=python,line-numbers=off}
 
 ```
-coroutine 'render_template' was never awaited
+TypeError: 'coroutine' object is not iterable
 ```
 
 As you can see by now, things are not so different from what this application would look like in Flask. Of course, this is a very simple app, so, as we make things more complex, you will definitely start to see the differences.
