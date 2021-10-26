@@ -26,12 +26,6 @@ One new thing we’ll use here is Alembic for database migrations. Alembic is wh
 
 So let’s begin by creating the Quart environment variables that will be loaded to our environment by `python-dotenv`. 
 
-
-
-
-
-
-
 So create the `.quartenv` file and type the following code:
 
 {lang=python,line-numbers=on}

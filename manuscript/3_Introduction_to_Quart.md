@@ -36,8 +36,6 @@ And with that, let's go ahead and install Quart.
 
 ## Installing Quart and Hello World <!-- 3.2 -->
 
-So enough theory, let's actually start writing some code.
-
 In this lesson we're going to install Quart. Make sure you have at least Python 3.7 installed. If you don't, you can go ahead and check my video on how to do that for [Windows](https://youtu.be/NlTQcfaRmds) or [Mac](https://youtu.be/p4gz9Y78ECs).
 
 Next, we're going to install the Poetry package manager. Poetry allows us to handle package management for our Python applications and replaces the previous `virtualenv` workflow. It's better than using a `requirements.txt` because it tracks package dependencies in more detail, avoiding the issues we had sometimes where package upgrades would break our application.
