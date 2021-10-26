@@ -54,8 +54,6 @@ We now install `Quart` by doing `poetry add quart`. Poetry will add Quart and a 
 
 Open your favorite code editor and create a file called `hello.py` in the root folder.
 
-If you ware using Visual Studio Code, enable the Poetry-created Python interpreter by clicking on the bottom and selecting the one that has `quart-hello` on the description.
-
 We'll write the following code in `hello.py`:
 
 {lang=python,line-numbers=on}
