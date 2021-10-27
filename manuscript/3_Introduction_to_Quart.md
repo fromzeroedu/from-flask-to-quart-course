@@ -46,7 +46,7 @@ To create or first Quart application folder, we will use Poetry to set that up f
 
 Next, let's create a folder for our Quart project, with `mkdir quart-hello` and type `cd quart-hello` to start the process.
 
-Now we'll initialize this folder to be a Poetry project, so type `poetry init -n`. This will create a `pyproject.toml` inside with some initial values. This file tracks all the project's dependencies.
+Now we'll initialize this folder to be a Poetry project. Poetry has an `init` module that can ask some details about the project, but for this time, we'll just initialize it with a simple configuration, so type `poetry init -n`. This will create a `pyproject.toml` without too much information.
 
 Next, we want to create the virtual environment that Poetry will use, so type `poetry shell`. Poetry will create the virtual environment folder in your User directory and enable it automatically.
 

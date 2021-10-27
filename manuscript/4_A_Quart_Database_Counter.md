@@ -4,15 +4,13 @@
 
 In the next few lessons, we’ll build a counter app that will be a good boilerplate application for your Postgres-based Quart projects.
 
-But before we start writing the application, we need to understand one of the many quirks we’ll see when working with asynchronous applications, and this one is related to database ORMs. 
+But before we start writing the application, we need to understand one of the many quirks we’ll see when working with asynchronous applications, and this one is related to database ORMs.
 
-For our original Flask MySQL boilerplate application, we used SQLAlchemy ORM, the Python Database Object Relational Mapper. However, for async projects we can’t use the same library without some form of penalization.
+For our original Flask database boilerplate application, we used SQLAlchemy ORM, the Python Database Object Relational Mapper. However, for async projects we can’t use the same library without some form of penalization.
 
-Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it does I/O. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
+Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it reads or writes. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
 
-There’s also some issues that I won’t go into in too much detail, having to do with the overhead of how Python handles database connections and the type of locking your transactions can do. I suggest you read [this blog post](http://techspot.zzzeek.org/2015/02/15/asynchronous-python-and-databases/) from Mike Bayer, the author of SQLAlchemy if you want to learn more about the subject. 
-
-However, we don’t need to go back to using raw SQL queries in our codebase. It just happens that we can use the SQLAlchemy Core package from SQLAlchemy, which allows us to express queries in a nice way without the ORM overhead.
+However, we don’t need to go back to using raw SQL queries in our codebase. It just happens that we can use the SQLAlchemy Core package from SQLAlchemy, which allows us to express queries in a nice way without sacrificing performance.
 
 We’ll also be using the [`databases`](https://www.encode.io/databases/) package to connect to Postgres asynchronously.
 
@@ -20,15 +18,24 @@ So let’s go ahead and start coding our Quart Postgres counter application.
 
 ## Initial Setup <!-- 4.2 -->
 
-So let’s go ahead and start setting up our Quart Postgres counter application. Like I’ve done in other courses, we’re going to build a counter application that stores a counter in the database and increases it by one every time you reload the page. This will allow us to see how a typical Quart database application is laid out.
+So let’s go ahead and start setting up our Quart counter application. Like I’ve done in other courses, we’re going to build a web application that stores a counter in the database and increases it by one every time you reload the page. This will allow us to see how a typical Quart database application is laid out.
 
-One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood, but Flask-Migrations won’t work with Quart since it uses the ORM component. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
+One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
-So let’s begin by creating the Quart environment variables that will be loaded to our environment by `python-dotenv`. 
+Start by creating the folder for the project. I'll name mine `quart-postgres-boilerplate`. Change to that directory.
+
+Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env.
+
+So do: `poetry init -n --name quart-postgres-boilerplate --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+
+This will write the `pyproject` but won't install the packages. To do so, type `poetry install` and create the virtualenv by typing `poetry shell`.
+
+Now let's create the Quart environment variables that will be loaded to our environment by `python-dotenv`.
 
 So create the `.quartenv` file and type the following code:
 
 {lang=python,line-numbers=on}
+
 ```
 QUART_APP='manage.py'
 QUART_ENV=development
@@ -36,20 +43,21 @@ SECRET_KEY='my_secret_key'
 DB_USERNAME=app_user
 DB_PASSWORD=app_password
 DB_HOST=localhost
-DATABASE_NAME=counter
+DATABASE_NAME=app
 ```
 
-First, the `QUART_APP` will be small kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course. 
+First, the `QUART_APP` will be small kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course.
 
-Next  the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
+Next the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
 
-The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database.
+The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. We'll use a generic `app` prefix for the user, password and database so that we don't have to worry when we use the same code for other applications.
 
 Save the file.
 
 We’ll now need to create a `settings.py` file, so we’ll use very similar variables from the `.quartenv` with the following format:
 
 {lang=python,line-numbers=on}
+
 ```
 import os
 
@@ -62,121 +70,51 @@ DATABASE_NAME = os.environ["DATABASE_NAME"]
 
 As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
 
-We’ll now initialize our Poetry setup.
+## Setting up Postgres <!-- 4.3 -->
 
-{lang=bash,line-numbers=off}
-```
-$ pipenv install --python 3.7
-Creating a virtualenv for this project…
-Pipfile: /opt/quart-mysql-boilerplate/Pipfile
-Using /usr/local/bin/python3 (3.7.3) to create virtualenv…
-⠼ Creating virtual environment...Using base prefix '/usr/local/Cellar/python/3.7.3/Frameworks/Python.framework/Versions/3.7'
-New python executable in /opt/quart-mysql-boilerplate/.venv/bin/python3.7
-Also creating executable in /opt/quart-mysql-boilerplate/.venv/bin/python
-Installing setuptools, pip, wheel...
-done.
-Running virtualenv with interpreter /usr/local/bin/python3
+We now need a Postgres database server to connect to our application.
 
-Successfully created virtual environment!
-Virtualenv location: /opt/quart-mysql-boilerplate/.venv
-Creating a Pipfile for this project…
-Pipfile.lock not found, creating…
-Locking [dev-packages] dependencies…
-Locking [packages] dependencies…
-Updated Pipfile.lock (a65489)!
-Installing dependencies from Pipfile.lock (a65489)…
-0/0 — 00:00:00
-To activate this project's virtualenv, run pipenv shell.
-Alternatively, run a command inside the virtualenv with pipenv run.
-```
-
-You might notice that the virtual environment that `Pipenv` created was located inside my working directory. This is not the default behavior, but I like to have the `venv` directory alongside my code, without committing it. To make that your default behavior, you need to set an environment variable in your host with the name `PIPENV_VENV_IN_PROJECT` set to `enabled`. On Mac you can add it to your `bash_profile` like this:
-
-{lang=python,line-numbers=off}
-```
-export PIPENV_VENV_IN_PROJECT="enabled"
-```
-
- In Windows 10, just edit your System Environment variables and set it. You can find them by typing `env` on your Windows search and click on the “Edit the System Environment Variables”.
-
-![Figure 4.2.1](images/4.2.1.png)
-
-Then click on the “Environment Variables” button on the lower right.
-
-![Figure 4.2.2](images/4.2.2.png)
-
-Click the “New” button, add the `PIPENV_VENV_IN_PROJECT` variable and set the value to “enabled”.
-
-![Figure 4.2.3](images/4.2.3.png)
-
-Now let’s go ahead and install Quart and `python-dotenv`.
-
-{lang=bash,line-numbers=off}
-```
-$ pipenv install quart python-dotenv 
-```
-
-We’re now ready to start setting up MySQL and Alembic migrations.
-
-
-[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-1/.quartenv
-
-[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-1/settings.py
-
-## Setting up MySQL <!-- 4.3 -->
-
-Let’s now start to setup our MySQL server to connect to our application.
-
-The following sections describe how to install MySQL locally and setup the counter database for Windows and Mac. Skip to the lesson that applies to you. 
+The following sections describe how to install Postgres locally for Windows and Mac. Skip to the lesson that applies to you.
 
 If you want to use Docker, check out the lesson at the end of this section.
 
-### Installing MySQL on Mac with Homebrew <!-- 4.4 -->
-Thanks to Homebrew installing MySQL on the Mac is pretty simple.  
+### Installing Postgres on Mac with Homebrew <!-- 4.3.1 -->
 
- If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
+Thanks to Homebrew installing MySQL on the Mac is pretty simple.
+
+If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
 
 Just do the following:
-`brew install -y mysql`
+`brew install postgresql`
 
-If you want MySQL to launch automatically whenever you power on your Mac, you can do: `brew services start mysql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `mysql.server start` and stopping with `mysql.server stop`.
+If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
 
-Let’s check if mysql is working. Start the server by doing `mysql.server start` and then logging in using `mysql -uroot`. Exit using `exit;`
+Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
 
-Now secure the installation by doing: `mysql_secure_installation`. MySQL offers a “validate password” plugin, but we won’t use that. Just type “n” and then enter a password. I will use “rootpass” as my root password. 
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
 
-I will also remove the anonymous user and remove the ability to remote root login. I will also remove the test database and reload the privileges.
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
 
-#### Setting up a user, password and database for the application 
-It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
+So, login to Postgres with your root user:
+`psql postgres`.
 
-In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter\_app” and the password “mypassword”.
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
 
-So, login to MySQL with your root user and password:
-`mysql -uroot -prootpass`
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
 
-Create the database:
-`CREATE DATABASE counter;`
+Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
 
-And now create the user and password:
-`CREATE USER 'counter_app'@'%' IDENTIFIED BY 'mypassword';`
+Next, we'll create the app database: `CREATE DATABASE app;`.
 
-Allow the user full access to the database:
-`GRANT ALL PRIVILEGES ON counter.* TO 'counter_app'@'%';`
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
 
-And reload the privileges:
-`FLUSH PRIVILEGES;`
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
 
-Now exit using `CTRL-D` and try to login using the new app user:
-`mysql -ucounter_app -pmypassword`
+Logout using `\q`
 
-If you are able to login, you’re in good shape. Now try to use the `counter` database:
-`USE counter;`
+### Installing MySQL on Windows 10 with Chocolatey <!-- 4.3.2 -->
 
-If you don’t get an error, we’re good. Now logout using `exit;`
-
-### Installing MySQL on Windows 10 with Chocolatey <!-- 4.5 -->
-Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL. 
+Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL.
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
 
@@ -187,14 +125,13 @@ Now close the PowerShell application completely and open a new, regular session.
 
 Let’s check if mysql is working. Log in using `mysql -uroot`. Exit using `exit;`
 
-Secure the installation by creating a root password. I will use “rootpass”.  Type: `mysqladmin --user=root password "rootpass"` and press enter.
+Secure the installation by creating a root password. I will use “rootpass”. Type: `mysqladmin --user=root password "rootpass"` and press enter.
 
 Now try logging in using `mysql -uroot -prootpass`.
 
 If you login, it means everything is working. Exit using `CTRL-C`.
 
-#### Setting up a user, password and database for the application
-It’s a good practice to create the database with a specific user and password and not use the root user from the application. 
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
 
 In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter_app” and the password “mypassword”.
 
@@ -221,16 +158,18 @@ If you are able to login, you’re in good shape. Now try to use the `counter` d
 
 If you don’t get an error, we’re good. Now logout using `exit;`
 
- ## Application Setup <!-- 4.6 -->
+## Application Setup <!-- 4.4 -->
+
 At this point we’re ready to start building our Quart counter application. You should have MySQL server up and running with your counter database and user.
 
-We’ll install a couple of database packages we will use. The first is `aiomysql`,  a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
+We’ll install a couple of database packages we will use. The first is `aiomysql`, a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
 
 The second, as we mentioned, is the SQLAlchemy library, but even though we’ll install the whole package, we’ll be using the Core module for our application.
 
 So go ahead and do:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv install aiomysql sqlalchemy
 ```
@@ -238,6 +177,7 @@ $ pipenv install aiomysql sqlalchemy
 Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
 
 {lang=python,line-numbers=on}
+
 ```
 from aiomysql.sa import create_engine
 from quart import current_app
@@ -256,17 +196,18 @@ async def sa_connection():
 
 First we will import the `create_engine` from the SqlAlchemy, or `sa` package inside `aiomysql`. We’ll also need to import the `current_app` from `quart`.
 
-Think of the `current_app` as  the currently running instance of the Quart application. We’ll need it to read the settings that we’ve set for the database connection. Sp let’s create the engine using the user, password, host and database from those settings. We finally acquire the connection and return it to the caller.
+Think of the `current_app` as the currently running instance of the Quart application. We’ll need it to read the settings that we’ve set for the database connection. Sp let’s create the engine using the user, password, host and database from those settings. We finally acquire the connection and return it to the caller.
 
 Save the file[^1].
 
-Now let’s go ahead and create our first and only blueprint of the application, the  `counter` module.
+Now let’s go ahead and create our first and only blueprint of the application, the `counter` module.
 
 First, create the `counter` folder and inside create the empty `__init__.py` to declare it a module.
 
-Then create the `models.py` file with the following contents: 
+Then create the `models.py` file with the following contents:
 
 {lang=python,line-numbers=on}
+
 ```
 from sqlalchemy import Table, Column, Integer, MetaData
 
@@ -284,11 +225,12 @@ We’ll begin by importing some modules from `sqlalchemy`. The names might sound
 
 So let’s get the metadata out of the way first. Then, we define our `counter_table` as a table consisting of two columns: our `id` which will be the primary key and `count` which will hold the current counter of the application. Notice we also define the table with the `metadata` instance.
 
-Save the file[^2]. 
+Save the file[^2].
 
 Now let’s go ahead and build the `views.py` file which will be our main controller and blueprint.
 
 {lang=python,line-numbers=on}
+
 ```
 from quart import Blueprint, current_app
 from sqlalchemy.sql import select
@@ -333,7 +275,7 @@ We then feed the result of the query to the `result` variable, but notice the us
 
 We’ll also set an internal variable of `count` to `None`.
 
-We then get to the main forking point of the script. If we don’t get any results from the query, it means it’s the first time we’re running the application, so we’ll build an insert statement, setting the value of the `count` column to `1`. We’ll then `await` the insert statement and store the results in the `result` variable and finally commit it to the database, again using an `await` operation.  Since this is the first time we run the application, we can safely say that the `count` variable is `1`.
+We then get to the main forking point of the script. If we don’t get any results from the query, it means it’s the first time we’re running the application, so we’ll build an insert statement, setting the value of the `count` column to `1`. We’ll then `await` the insert statement and store the results in the `result` variable and finally commit it to the database, again using an `await` operation. Since this is the first time we run the application, we can safely say that the `count` variable is `1`.
 
 Now if do get a result from the select query, we will fetch the first row of the result. We then add `1` to the contents of the `count` column and store it in the local `count` variable. We then build an update statement with the value of the local `count` variable, execute it and commit it.
 
@@ -346,6 +288,7 @@ Save the file[^3].
 Next we’ll create the application factory, as we’ve done in the past in my Flask course. Call this file `application.py`.
 
 {lang=python,line-numbers=on}
+
 ```
 from quart import Quart
 
@@ -401,6 +344,7 @@ We’re almost done with the core application. We just need to create the bootst
 This is a simple file. We just need to import the `create_app` function and then execute it and store it in a variable called `app`.
 
 {lang=python,line-numbers=on}
+
 ```
 from application import create_app
 
@@ -409,22 +353,20 @@ app = create_app()
 
 Save the file[^5] and let’s go ahead and start with the database migration configuration.
 
-[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-2/db.py
+[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-2/db.py
+[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/models.py
+[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/views.py
+[^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/application.py
+[^5]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/manage.py
 
-[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/models.py
+## Configuring Alembic Migrations <!-- 4.5 -->
 
-[^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/views.py
-
-[^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/application.py
-
-[^5]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/manage.py
-
-## Configuring Alembic Migrations <!-- 4.7 -->
 We’re now going to install Alembic to be able to do database migrations. If you’re not familiar with migrations, it’s just a way to track model changes in your codebase, so that other team members and the different environments can keep up to date as you change your database schema.
 
 So we’ll install Alembic by doing:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv install alembic
 ```
@@ -434,13 +376,15 @@ We will now initialize the migration setup which will create both an `alembic.in
 So do:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run alembic init migrations
 ```
 
 If you do an `ls` you’ll see the `alembic.ini` file and the `migrations` folder[^1].
 
-We need to tell `alembic` three things. 
+We need to tell `alembic` three things.
+
 - First, we need it to use our environment variables to connect to the database.
 - Second we need to tell it what models our application uses and finally,
 - We need to tell it how to connect to the database.
@@ -450,6 +394,7 @@ So let’s begin setting up the environment variables in the `migrations/env.py`
 Add the following at the top before `logging.config`:
 
 {lang=python,line-numbers=on}
+
 ```
 import os, sys
 from dotenv import load_dotenv
@@ -461,6 +406,7 @@ We’ll need all these libraries for the next step.
 Then add this under `from alembic import context` on line 10:
 
 {lang=python,line-numbers=on,starting-line-number=12}
+
 ```
 # Path ops
 parent = Path(__file__).resolve().parents[1]
@@ -470,9 +416,10 @@ sys.path.append(str(parent))
 
 The `parent` variable will figure out the parent folder so that we can fetch the `.quartenv` file location and pass it to the `python-dotenv` and finally we add that parent folder to the `sys.path` so that Alembic has access to it.
 
-Then on line 35 right  before the `run_migrations_offline` function, let’s add the following:
+Then on line 35 right before the `run_migrations_offline` function, let’s add the following:
 
 {lang=python,line-numbers=on,starting-line-number=35}
+
 ```
 section = config.config_ini_section
 config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
@@ -486,6 +433,7 @@ We’re giving the `alembic.ini` file, which we’ll edit in a little bit, acces
 Now we can move to step 2, tell Alembic what models we have in our application. So on line 25 let’s replace that whole block with the following:
 
 {lang=python,line-numbers=on,starting-line-number=25}
+
 ```
 # import all application models here
 from counter.models import metadata as CounterMetadata
@@ -500,9 +448,10 @@ Save the file[^2].
 
 With all that in place, we’ll finally move to the last step: tell Alembic how to connect to the database.
 
-Open the `alembic.ini` file and change `sqlalchemy.url` on line 38 like this. 
+Open the `alembic.ini` file and change `sqlalchemy.url` on line 38 like this.
 
 {lang=python,line-numbers=on,starting-line-number=38}
+
 ```
 sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s
 ```
@@ -511,19 +460,18 @@ These variables are coming from the `env.py` we edited earlier. Save the file[^3
 
 And with this, we’re ready to run our first migration.
 
-[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/tree/step-4
+[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/tree/step-4
+[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/env.py
+[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/alembic.ini
 
-[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/env.py
-
-[^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/alembic.ini
-
-## Our First Migration <!-- 4.8 -->
+## Our First Migration <!-- 4.6 -->
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
 So we’ll create our first “migration commit”, by running:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run alembic revision --autogenerate -m "create counter table"
 ```
@@ -533,6 +481,7 @@ Thanks to the `target_metadata` setting we added earlier, Alembic can view the s
 Make sure your MySQL server is up and running, then execute the command and you should see something like the following:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run alembic revision --autogenerate -m "create counter table"
 INFO  [alembic.runtime.migration] Context impl MySQLImpl.
@@ -545,11 +494,12 @@ INFO  [alembic.autogenerate.compare] Detected added table 'counter'
 Check that a new `versions` file[^1] was created and take a look:
 
 {lang=python,line-numbers=on}
+
 ```
 """create counter table
 
 Revision ID: 2abbbb3287d2
-Revises: 
+Revises:
 Create Date: 2019-09-19 10:46:47.608330
 
 """
@@ -585,6 +535,7 @@ As you can see, there are three sections: one that holds what revision this is a
 This looks good to me, so let’s apply these changes on the database by doing:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run alembic upgrade head
 INFO  [alembic.runtime.migration] Context impl MySQLImpl.
@@ -595,6 +546,7 @@ INFO  [alembic.runtime.migration] Running upgrade  -> 2abbbb3287d2, create count
 Great, it went smoothly which means the tables were created. We can log in into MySQL and check the tables.
 
 {lang=mysql,line-numbers=off}
+
 ```
 mysql> use counter;
 mysql> show tables;
@@ -610,6 +562,7 @@ mysql> show tables;
 We can see the counter table was created, but notice there’s an `alembic_version` table. This table holds the current migration version.
 
 {lang=mysql,line-numbers=off}
+
 ```
 mysql> select * from alembic_version;
 +--------------+
@@ -623,6 +576,7 @@ mysql> select * from alembic_version;
 That hash matches with our latest revision value:
 
 {lang=python,line-numbers=off}
+
 ```
 # revision identifiers, used by Alembic.
 revision = '2abbbb3287d2'
@@ -631,6 +585,7 @@ revision = '2abbbb3287d2'
 Exit the MySQL server and we should be ready to run our application. Just do:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run quart run
 Running on http://127.0.0.1:5000 (CTRL + C to quit)
@@ -644,9 +599,10 @@ If you open `localhost:5000` you will see the first number of our counter:
 
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
 
-[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/versions/2abbbb3287d2\_create\_counter\_table.py
+[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/versions/2abbbb3287d2\_create\_counter\_table.py
 
-## Testing our Counter Application <!-- 4.9 -->
+## Testing our Counter Application <!-- 4.7 -->
+
 It’s great that we have a running application, but we know that any application needs good tests to insure it won’t break with new development.
 
 In our synchronous applications we had used `unittest`, but for asynchronous applications, I’ve found that `pytest` is a better fit. `Pytest` also has an `asyncio` library that will allow us to test our code better.
@@ -654,13 +610,14 @@ In our synchronous applications we had used `unittest`, but for asynchronous app
 So let’s begin by adding those libraries to the application. So just do:
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv install pytest pytest-asyncio
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
 
-The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them. 
+The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
 
 The cool thing about theses fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
 
@@ -673,6 +630,7 @@ So let’s create our first `conftest` file. Create it on the root application f
 First, we’ll add the necessary imports we’ll use.
 
 {lang=python,line-numbers=on}
+
 ```
 import pytest
 import asyncio
@@ -690,6 +648,7 @@ Make sure to place the `load_dotenv` command before the `create_app` factory ins
 We will now create the database instantiation part of our test, so let’s write that:
 
 {lang=python,line-numbers=on,starting-line-number=13}
+
 ```
 @pytest.mark.asyncio
 @pytest.fixture(scope="module")
@@ -730,7 +689,7 @@ async def create_db():
     conn.close()
 ```
 
-First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture. 
+First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
 
 We also need to tell `pytest` that this is a module-level fixture, which means it will be run only once across any modules that import it, and since this `conftest` is in the root folder of the application, it means it will only be run once for all our tests, and that makes sense: we only need to create the test database once.
 
@@ -743,6 +702,7 @@ Essentially what yield does is to send the control back to the calling test, and
 Next, let’s create the Quart application itself.
 
 {lang=python,line-numbers=on,starting-line-number=55}
+
 ```
 @pytest.fixture(scope="module")
 async def create_test_app(create_db):
@@ -757,6 +717,7 @@ This also needs to be a module-level fixture and we will inject the `create_db` 
 We then create an instance of the factory `create_app` function and then call the Quart app method `startup` which will run the `before_serving` decorated function, which in our app establishes the database connection.
 
 {lang=python,line-numbers=on,starting-line-number=22}
+
 ```
     @app.before_serving
     async def create_db_conn():
@@ -767,6 +728,7 @@ We then create an instance of the factory `create_app` function and then call th
 We then yield the app itself to the calling test and once the tests are done, we do the `shutdown` method of the Quart app which calls the `after_serving` function in our `application.py`.
 
 {lang=python,line-numbers=on,starting-line-number=27}
+
 ```
     @app.after_serving
     async def close_db_conn():
@@ -777,6 +739,7 @@ We then yield the app itself to the calling test and once the tests are done, we
 One thing I want you to notice, in the instantiation of the `create_app` we are passing the `create_db` fixture returned with a double asterisk in front of it:
 
 {lang=python,line-numbers=on,starting-line-number=57}
+
 ```
 app = create_app(**create_db)
 ```
@@ -784,6 +747,7 @@ app = create_app(**create_db)
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
 
 {lang=python,line-numbers=on,starting-line-number=13}
+
 ```
     # apply overrides for tests
     app.config.update(config_overrides)
@@ -792,6 +756,7 @@ The way this works is that the `create_db` fixture is returning a dictionary of 
 This is exactly why, so that we can instantiate test apps with different configuration settings. The double asterisk in Python essentially passes the variables returned by `create_db` as a keyword argument list, so it’s the same as writing the following:
 
 {lang=python,line-numbers=on,starting-line-number=57}
+
 ```
 app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB_PASSWORD']...)
 ```
@@ -799,6 +764,7 @@ app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
 {lang=python,line-numbers=on,starting-line-number=63}
+
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
@@ -815,6 +781,7 @@ Save the file[^1].
 Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
 
 {lang=python,line-numbers=on,starting-line-number=1}
+
 ```
 import pytest
 from quart import current_app
@@ -843,6 +810,7 @@ We then bind that engine to the `CounterMetadata` object and finally execute the
 Finally we’re ready to create our very first test, so let’s keep it simple. We want to be able to see that the counter is started when we first hit the page.
 
 {lang=python,line-numbers=on,starting-line-number=17}
+
 ```
 @pytest.mark.asyncio
 async def test_initial_response(create_test_client, create_all):
@@ -856,6 +824,7 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 Save the file[^2] and run the test using `pipenv run pytest`.
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run pytest
 ============================= test session starts ==============================
@@ -880,6 +849,7 @@ It fails!
 What’s the problem? The issue here is that `pytest` has a built-in function-level event loop that’s not persisted across functions, so we need to grab an event loop at the very top so that this one is persisted. Let’s add it on the `conftest` file.
 
 {lang=python,line-numbers=on,starting-line-number=14}
+
 ```
 @pytest.fixture(scope="module")
 def event_loop(request):
@@ -891,6 +861,7 @@ def event_loop(request):
 Save the file[^3] and run the test again.
 
 {lang=bash,line-numbers=off}
+
 ```
 $ pipenv run pytest
 ============================= test session starts ==============================
@@ -909,6 +880,7 @@ Perfect! We now get a green line and the test passed label.
 But if you notice, the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
 
 {lang=bash,line-numbers=off}
+
 ```
  pipenv run pytest -s
 ============================= test session starts ==============================
@@ -933,6 +905,7 @@ This gives us a good insight of when things are called and the order of operatio
 We’ll add just one more test to mark this part complete. I want to evaluate if I hit the page a second time, I get the number two in the counter.
 
 {lang=python,line-numbers=on,starting-line-number=24}
+
 ```
 @pytest.mark.asyncio
 async def test_second_response(
@@ -947,9 +920,10 @@ We’ll mark the test as async and we will also need the fixtures we used in the
 
 First, we generate a response from the homepage and check if we get the “Counter: 2” label. Something you will notice different here as compared to the `unittest` library behavior we saw in the past is that the database is _not_ reset between tests. We would have to manually do that by calling the `CounterMetadata.drop_all()` method.
 
-Let’s  now check if the database has the right value. To do that, we need to interact with the models, which means we will  need an app context. We’ll do that with the following:
+Let’s now check if the database has the right value. To do that, we need to interact with the models, which means we will need an app context. We’ll do that with the following:
 
 {lang=python,line-numbers=on,starting-line-number=33}
+
 ```
     async with create_test_app.app_context():
         conn = current_app.sac
@@ -960,11 +934,12 @@ Let’s  now check if the database has the right value. To do that, we need to i
         assert count == 2
 ```
 
-First we create an async context with the `with` Python keyword. Inside the block we can now get the  Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
+First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
 
 Save the file[^4] and run the tests.
 
 {lang=bash,line-numbers=on}
+
 ```
 $ pipenv run pytest
 ============================= test session starts ==============================
@@ -982,20 +957,19 @@ Looks good!
 
 And with that we have a working MySQL based Quart application with testing. We can use this as a boilerplate for any project that uses Quart and MySQL.
 
-[^1]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/conftest.py
+[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/conftest.py
+[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
+[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
+[^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
 
-[^2]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
+## Docker Setup <!-- 4.8 -->
 
-[^3]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
-
-[^4]:	https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
-
-## Docker Setup <!-- 4.10 -->
 Another way to work on the application is by using Docker. There are many benefits of working with Docker that I won't go into, but I would like to show you how to setup our Quart counter application in a Docker environment.
 
 The first thing we need to do is setup the `Dockerfile`. The Dockerfile looks like this:
 
 {lang=python,line-numbers=on,starting-line-number=1}
+
 ```
 FROM python:3.7.3-slim
 
@@ -1038,6 +1012,7 @@ Now we need to create a `docker-compose` file that will build up both our applic
 We will create the services using the following `docker-compose.yml` file:
 
 {lang=yml,line-numbers=on,starting-line-number=1}
+
 ```
 version: "2"
 services:
@@ -1084,6 +1059,7 @@ The rest of the file is the environment variables. As you can see they are the s
 Next we'll define the MySQL database docker instance:
 
 {lang=yml,line-numbers=on,starting-line-number=25}
+
 ```
   db:
     image: mysql:5.7
@@ -1113,6 +1089,7 @@ However, if you hit the `http://localhost:5000` URL on your browser, you will ge
 So press `CTRL-C` to stop the containers and run the following command:
 
 {lang=bash,line-numbers=off}
+
 ```
 docker-compose run --rm web pipenv run alembic upgrade head
 ```
@@ -1124,6 +1101,7 @@ Restart the Docker environment with `docker-compose up` and hit `http://localhos
 Finally, to run the tests, you can do:
 
 {lang=bash,line-numbers=off}
+
 ```
 docker-compose run --rm web pipenv run pytest -s
 ```
