@@ -112,24 +112,20 @@ You can now connect to the database using `\connect app;` or `\c app` and list t
 
 Logout using `\q`
 
-### Installing MySQL on Windows 10 with Chocolatey <!-- 4.3.2 -->
+### Installing Postgres on Windows with Chocolatey <!-- 4.3.2 -->
 
-Thanks to Chocolatey, installing MySQL on Windows is pretty simple. We will install the MariaDB package which works exactly like MySQL.
+Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
 
 Open a PowerShell as an administrator and type:
-`choco install -y mariadb`
+`choco install postgresql --params '/Password:rootpass`
+
+To login to Postgres use: psql postgres postgres
 
 Now close the PowerShell application completely and open a new, regular session.
 
-Let’s check if mysql is working. Log in using `mysql -uroot`. Exit using `exit;`
-
-Secure the installation by creating a root password. I will use “rootpass”. Type: `mysqladmin --user=root password "rootpass"` and press enter.
-
-Now try logging in using `mysql -uroot -prootpass`.
-
-If you login, it means everything is working. Exit using `CTRL-C`.
+Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`
 
 It’s a good practice to create the database with a specific user and password and not use the root user from the application.
 
