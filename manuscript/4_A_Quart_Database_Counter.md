@@ -16,7 +16,309 @@ We’ll also be using the [`databases`](https://www.encode.io/databases/) packag
 
 So let’s go ahead and start coding our Quart Postgres counter application.
 
-## Initial Setup <!-- 4.2 -->
+## Our Development Environment <!-- 4.2 -->
+
+We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
+
+We have two main choices: develop locally or on the cloud.
+
+For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
+
+We can also develop locally using Docker, which is host OS agnostic.
+
+For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay around $5 dollars per month.
+
+Skip to the one that works for you.
+
+### Installing Postgres on Mac with Homebrew <!-- 4.2.1 -->
+
+Thanks to Homebrew installing MySQL on the Mac is pretty simple.
+
+If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
+
+Just do the following:
+`brew install postgresql`
+
+If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
+
+Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with your root user:
+`psql postgres`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`
+
+### Installing Postgres on Windows with Chocolatey <!-- 4.2.2 -->
+
+Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
+
+If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
+
+Open a PowerShell as an administrator and type:
+`choco install postgresql --params '/Password:rootpass`. In this case we're creating root password of "rootpass", but select any password you'd like.
+
+Now close the PowerShell application completely and open a new, regular session.
+
+Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`.
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with your root user:
+`psql postgres postgres`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`.
+
+### Installing Postgres on WSL <!-- 4.2.3-->
+
+In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows.
+
+In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
+
+Installing WSL requires Windows 10 version 2004, and it's really easy, just open an administrator Powershell and type the following command: `wsl --install`.
+
+After that, you need to select a Linux distribution to install. You can see a list of the distributions by typing: `wsl --list --online`.
+
+I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu:20.04`. You will be prompted to create a root user password.
+
+Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
+
+Once on the Ubuntu terminal, let's install some of our dependencies, so elevate to root by doing `sudo su -` and then type the following:
+
+{lang=bash,line-numbers=off}
+
+```
+apt-get update && apt-get install -y \
+    build-essential \
+    make \
+    gcc \
+    git \
+    unzip \
+    wget \
+    python3-dev \
+    python3-pip \
+    python-is-python3
+```
+
+We need `poetry` for the Python package management, so install Poetry using `pip3 install poetry`.
+
+Then install Postgres by using: `sudo apt install postgresql`.
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with your root user:
+`psql postgres -Upostgres`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`.
+
+### Docker Setup <!-- 4.2.4 -->
+
+In this lesson we'll be setting up our development environment using Docker.
+
+You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
+
+Once you have Docker client running, let's start by creating our `Dockerfile`. The Dockerfile looks like this:
+
+{lang=bash,line-numbers=on}
+
+```
+FROM ubuntu:20.04
+
+# Install packages
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    make \
+    gcc \
+    git \
+    unzip \
+    wget \
+    python3-dev \
+    python3-pip \
+    python-is-python3
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=on
+
+# Install poetry
+RUN pip3 install poetry
+
+# set "counter_app" as the working directory from which CMD, RUN, ADD references
+WORKDIR /counter_app
+
+# setup poetry
+COPY poetry.lock pyproject.toml /counter_app/
+RUN poetry config virtualenvs.create true \
+    && poetry config virtualenvs.in-project false \
+    && poetry install --no-interaction
+
+# now copy all the files in this directory to /code
+COPY . .
+
+# Listen to port 5000 at runtime
+EXPOSE 5000
+
+# Define our command to be run when launching the container
+CMD poetry run quart run --host 0.0.0.0
+```
+
+First we define the base image as the Ubuntu 20.04 image.
+
+Next we install all the Ubuntu packages we will need. We'll also turn off the disruptive pip version check prompts.
+
+Next, we install Poetry using `pip3`.
+
+We then create the `counter_app` directory and set it as the default location for the code.
+
+Right after that, we copy the contents of the local directory into the `counter_app` directory using the `ADD` command.
+
+Once all the code in is place, we run `pipenv install`, open the `5000` port and invoke the `quart run` command.
+
+[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/Dockerfile).
+
+Now we need to create a `docker-compose` file that will build up both our application instance as well as the MySQL instance.
+
+We will create the services using the following `docker-compose.yml` file:
+
+{lang=yml,line-numbers=on,starting-line-number=1}
+
+```
+version: "2"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/counter_app
+    links:
+      - db:mysql
+    container_name: counterappmysql_web_1
+    depends_on:
+      - db
+    stdin_open: true
+    tty: true
+    environment:
+      PORT: 5000
+      SECRET_KEY: "you-will-never-guess"
+      DEBUG: 1 # can't pass True here, but 1 works
+      MYSQL_ROOT_PASSWORD: rootpass
+      DB_USERNAME: counter_user
+      DB_PASSWORD: counter_password
+      DB_HOST: mysql
+      DATABASE_NAME: counter
+```
+
+First we describe the Docker Compose file version as "2". We then start defining the services, which are essentially the containers that will be running at the same time.
+
+The first service is the web application which we are calling `web`. We instruct Docker Compose to build the container using the `Dockerfile` in the same directory using the `build .` statement.
+
+Next we open up port 5000 both in the host as well as in the container, as this will be the port that Quart is assigned to listen on.
+
+Then we mount the current directory as volume inside the container, which will be called `counter_app`.
+
+The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `mysql`.
+
+We then assign the name of the container to be `counterappmysql_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
+
+The next two statements, `stdin_open` abd `tty` are added so that we can do Python Debugger and examine it from outside the container.
+
+The rest of the file is the environment variables. As you can see they are the same ones defined on the `.quartenv` file.
+
+Next we'll define the MySQL database docker instance:
+
+{lang=yml,line-numbers=on,starting-line-number=25}
+
+```
+  db:
+    image: mysql:5.7
+    restart: always
+    container_name: counterappmysql_db_1
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_USER: counter_user
+      MYSQL_PASSWORD: counter_password
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: counter
+```
+
+This is file is pretty much self-explanatory. We will use the MySQL 5.7 image, instruct the container to always restart, put a name for it and open port 3306 to the host.
+
+[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml). We're now ready to test the Docker environment.
+
+One word of caution before you continue, if you have installed the packages locally using `pipenv`, make sure to delete the `.venv` folder before you build the containers, otherwise the packages will be copied to the container on the `ADD` step and `pipenv` won't be able to lock the packages.
+
+Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
+
+To start the environment, type `docker-compose up --build`. You will see the MySQL image and the Quart container being built. After a few seconds you should see that the container is up and running.
+
+However, if you hit the `http://localhost:5000` URL on your browser, you will get an error. This is because the tables haven't been created. To do that we will need to run a migration.
+
+So press `CTRL-C` to stop the containers and run the following command:
+
+{lang=bash,line-numbers=off}
+
+```
+docker-compose run --rm web pipenv run alembic upgrade head
+```
+
+The containers should be brought up and the migration should execute.
+
+Restart the Docker environment with `docker-compose up` and hit `http://localhost:5000`. You should now be able to see the Counter title with the numnber "1". If you you reload the page, the counter should increment.
+
+Finally, to run the tests, you can do:
+
+{lang=bash,line-numbers=off}
+
+```
+docker-compose run --rm web pipenv run pytest -s
+```
+
+And that's it! You have your Quart MySQL boilerplate application up and running. If you make any changes to the code, the container should automatically restart and pick up the changes.
+
+## Initial Setup <!-- 4.3 -->
 
 So let’s go ahead and start setting up our Quart counter application. Like I’ve done in other courses, we’re going to build a web application that stores a counter in the database and increases it by one every time you reload the page. This will allow us to see how a typical Quart database application is laid out.
 
@@ -24,7 +326,7 @@ One new thing we’ll use here is Alembic for database migrations. Alembic is wh
 
 Start by creating the folder for the project. I'll name mine `quart-postgres-boilerplate`. Change to that directory.
 
-Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env.
+Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. Make sure you have Poetry installed or install it if needed.
 
 So do: `poetry init -n --name quart-postgres-boilerplate --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
@@ -70,93 +372,9 @@ DATABASE_NAME = os.environ["DATABASE_NAME"]
 
 As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
 
-## Setting up Postgres <!-- 4.3 -->
-
-We now need a Postgres database server to connect to our application.
-
-The following sections describe how to install Postgres locally for Windows and Mac. Skip to the lesson that applies to you.
-
-If you want to use Docker, check out the lesson at the end of this section.
-
-### Installing Postgres on Mac with Homebrew <!-- 4.3.1 -->
-
-Thanks to Homebrew installing MySQL on the Mac is pretty simple.
-
-If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
-
-Just do the following:
-`brew install postgresql`
-
-If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
-
-Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`
-
-### Installing Postgres on Windows with Chocolatey <!-- 4.3.2 -->
-
-Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
-
-If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
-
-Open a PowerShell as an administrator and type:
-`choco install postgresql --params '/Password:rootpass`
-
-To login to Postgres use: psql postgres postgres
-
-Now close the PowerShell application completely and open a new, regular session.
-
-Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-In the next section we will be creating a visitor counter application, so we will create a database called “counter”. We will access this database with the user “counter_app” and the password “mypassword”.
-
-So, login to MySQL with your root user and password:
-`mysql -uroot -prootpass`
-
-Create the database:
-`CREATE DATABASE counter;`
-
-And now create the user and password:
-`CREATE USER 'counter_app'@'%' IDENTIFIED BY 'mypassword';`
-
-Allow the user full access to the database:
-`GRANT ALL PRIVILEGES ON counter.* TO 'counter_app'@'%';`
-
-And reload the privileges:
-`FLUSH PRIVILEGES;`
-
-Now exit using `CTRL-C` and try to login using the new app user:
-`mysql -ucounter_app -pmypassword`
-
-If you are able to login, you’re in good shape. Now try to use the `counter` database:
-`USE counter;`
-
-If you don’t get an error, we’re good. Now logout using `exit;`
-
 ## Application Setup <!-- 4.4 -->
 
-At this point we’re ready to start building our Quart counter application. You should have MySQL server up and running with your counter database and user.
+At this point we’re ready to start building our Quart counter application. You should have the Postgres server up and running with your counter database and user.
 
 We’ll install a couple of database packages we will use. The first is `aiomysql`, a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
 
@@ -957,149 +1175,3 @@ And with that we have a working MySQL based Quart application with testing. We c
 [^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
 [^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
 [^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
-
-## Docker Setup <!-- 4.8 -->
-
-Another way to work on the application is by using Docker. There are many benefits of working with Docker that I won't go into, but I would like to show you how to setup our Quart counter application in a Docker environment.
-
-The first thing we need to do is setup the `Dockerfile`. The Dockerfile looks like this:
-
-{lang=python,line-numbers=on,starting-line-number=1}
-
-```
-FROM python:3.7.3-slim
-
-# Install pipenv
-RUN pip install pipenv
-
-# Make a local directory
-RUN mkdir /counter_app
-
-# Set "counter_app" as the working directory from which CMD, RUN, ADD references
-WORKDIR /counter_app
-
-# Now copy all the files in this directory to /counter_app
-ADD . .
-
-# Install pipenv
-RUN pipenv install
-
-# Listen to port 5000 at runtime
-EXPOSE 5000
-
-# Define our command to be run when launching the container
-CMD pipenv run quart run --host 0.0.0.0
-```
-
-First we need to define a Python image. For that we will use the `python:3.7.3-slim` image which includes a simple Debian Linux OS and no other packages installed.
-
-Next we install `pipenv`, since it's not included in the image.
-
-We then create the `counter_app` directory and set it as the default location for the code.
-
-Right after that, we copy the contents of the local directory into the `counter_app` directory using the `ADD` command.
-
-Once all the code in is place, we run `pipenv install`, open the `5000` port and invoke the `quart run` command.
-
-[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/Dockerfile).
-
-Now we need to create a `docker-compose` file that will build up both our application instance as well as the MySQL instance.
-
-We will create the services using the following `docker-compose.yml` file:
-
-{lang=yml,line-numbers=on,starting-line-number=1}
-
-```
-version: "2"
-services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./:/counter_app
-    links:
-      - db:mysql
-    container_name: counterappmysql_web_1
-    depends_on:
-      - db
-    stdin_open: true
-    tty: true
-    environment:
-      PORT: 5000
-      SECRET_KEY: "you-will-never-guess"
-      DEBUG: 1 # can't pass True here, but 1 works
-      MYSQL_ROOT_PASSWORD: rootpass
-      DB_USERNAME: counter_user
-      DB_PASSWORD: counter_password
-      DB_HOST: mysql
-      DATABASE_NAME: counter
-```
-
-First we describe the Docker Compose file version as "2". We then start defining the services, which are essentially the containers that will be running at the same time.
-
-The first service is the web application which we are calling `web`. We instruct Docker Compose to build the container using the `Dockerfile` in the same directory using the `build .` statement.
-
-Next we open up port 5000 both in the host as well as in the container, as this will be the port that Quart is assigned to listen on.
-
-Then we mount the current directory as volume inside the container, which will be called `counter_app`.
-
-The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `mysql`.
-
-We then assign the name of the container to be `counterappmysql_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
-
-The next two statements, `stdin_open` abd `tty` are added so that we can do Python Debugger and examine it from outside the container.
-
-The rest of the file is the environment variables. As you can see they are the same ones defined on the `.quartenv` file.
-
-Next we'll define the MySQL database docker instance:
-
-{lang=yml,line-numbers=on,starting-line-number=25}
-
-```
-  db:
-    image: mysql:5.7
-    restart: always
-    container_name: counterappmysql_db_1
-    ports:
-      - "3306:3306"
-    environment:
-      MYSQL_USER: counter_user
-      MYSQL_PASSWORD: counter_password
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: counter
-```
-
-This is file is pretty much self-explanatory. We will use the MySQL 5.7 image, instruct the container to always restart, put a name for it and open port 3306 to the host.
-
-[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml). We're now ready to test the Docker environment.
-
-One word of caution before you continue, if you have installed the packages locally using `pipenv`, make sure to delete the `.venv` folder before you build the containers, otherwise the packages will be copied to the container on the `ADD` step and `pipenv` won't be able to lock the packages.
-
-Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
-
-To start the environment, type `docker-compose up --build`. You will see the MySQL image and the Quart container being built. After a few seconds you should see that the container is up and running.
-
-However, if you hit the `http://localhost:5000` URL on your browser, you will get an error. This is because the tables haven't been created. To do that we will need to run a migration.
-
-So press `CTRL-C` to stop the containers and run the following command:
-
-{lang=bash,line-numbers=off}
-
-```
-docker-compose run --rm web pipenv run alembic upgrade head
-```
-
-The containers should be brought up and the migration should execute.
-
-Restart the Docker environment with `docker-compose up` and hit `http://localhost:5000`. You should now be able to see the Counter title with the numnber "1". If you you reload the page, the counter should increment.
-
-Finally, to run the tests, you can do:
-
-{lang=bash,line-numbers=off}
-
-```
-docker-compose run --rm web pipenv run pytest -s
-```
-
-And that's it! You have your Quart MySQL boilerplate application up and running. If you make any changes to the code, the container should automatically restart and pick up the changes.
