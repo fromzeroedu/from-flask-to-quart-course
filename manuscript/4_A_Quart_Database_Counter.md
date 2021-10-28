@@ -112,7 +112,9 @@ I personally recommend using Ubuntu, so to install it, we can do: `wsl --install
 
 Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
 
-Once on the Ubuntu terminal, let's install some of our dependencies, so elevate to root by doing `sudo su -` and then type the following:
+Once on the Ubuntu terminal, let's install some of our dependencies.
+
+First elevate to root by doing `sudo su -` and then type the following:
 
 {lang=bash,line-numbers=off}
 
@@ -125,26 +127,29 @@ apt-get update && apt-get install -y \
     unzip \
     wget \
     python3-dev \
-    python3-pip \
-    python-is-python3
+    python3-pip
 ```
 
 We need `poetry` for the Python package management, so install Poetry using `pip3 install poetry`.
 
-Then install Postgres by using: `sudo apt install postgresql`.
+Then install Postgres by using: `sudo apt install -y postgresql`.
+
+After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
+
+Then start Postres by doing: `sudo service postgresql start`.
 
 It’s a good practice to create the database with a specific user and password and not use the root user from the application.
 
 We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
 
-So, login to Postgres with your root user:
-`psql postgres -Upostgres`.
+So, login to Postgres with the `postgres` user by doing:
+`sudo -u postgres psql`.
 
 Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
 
 Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
 
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+Logout using `\q` and now login using the `app_user` by typing the following: `psql -h localhost -U app_user postgres`. Enter the password: `app_password` when prompted.
 
 Next, we'll create the app database: `CREATE DATABASE app;`.
 
