@@ -108,7 +108,7 @@ Installing WSL requires Windows 10 version 2004, and it's really easy, just open
 
 After that, you need to select a Linux distribution to install. You can see a list of the distributions by typing: `wsl --list --online`.
 
-I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu:20.04`. You will be prompted to create a root user password.
+I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
 
 Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
 
