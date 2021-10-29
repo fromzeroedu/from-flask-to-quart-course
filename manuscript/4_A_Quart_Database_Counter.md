@@ -295,31 +295,7 @@ Save the file. We're now ready to test the Docker environment.
 
 Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
 
-To start the environment, type `docker-compose up --build`. You will see the MySQL image and the Quart container being built. After a few seconds you should see that the container is up and running.
-
-However, if you hit the `http://localhost:5000` URL on your browser, you will get an error. This is because the tables haven't been created. To do that we will need to run a migration.
-
-So press `CTRL-C` to stop the containers and run the following command:
-
-{lang=bash,line-numbers=off}
-
-```
-docker-compose run --rm web pipenv run alembic upgrade head
-```
-
-The containers should be brought up and the migration should execute.
-
-Restart the Docker environment with `docker-compose up` and hit `http://localhost:5000`. You should now be able to see the Counter title with the numnber "1". If you you reload the page, the counter should increment.
-
-Finally, to run the tests, you can do:
-
-{lang=bash,line-numbers=off}
-
-```
-docker-compose run --rm web pipenv run pytest -s
-```
-
-And that's it! You have your Quart MySQL boilerplate application up and running. If you make any changes to the code, the container should automatically restart and pick up the changes.
+We won't start the Docker container yet, as we need a couple of more things in place.
 
 ## Initial Setup <!-- 4.3 -->
 
@@ -685,23 +661,38 @@ And with this, we’re ready to run our first migration.
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
-So we’ll create our first “migration commit”, by running:
+So we’ll create our first “migration commit”. It will be different if you are using Docker or not, so don't type anything yet.
+
+For local development we will use:
 
 {lang=bash,line-numbers=off}
 
 ```
-$ pipenv run alembic revision --autogenerate -m "create counter table"
+$ poetry run alembic revision --autogenerate -m "create counter table"
 ```
+
+For Docker, you will use:
+{lang=bash,line-numbers=off}
+
+```
+docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
+```
+
+However, if you are using Docker, you need to build the environment first, so type `docker-compose up --build`. You will see the Postgres image and the Quart container being built. After a few seconds you should see that the container is up and running.
+
+After this one time, to start the environment, you can omit the `--build` flag. You only need it if you have changed the Dockerfile, `docker-compose` file or added new Poetry packages.
+
+So press `CTRL-C` to stop the containers.
 
 Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the “obvious” migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
-Make sure your MySQL server is up and running, then execute the command and you should see something like the following:
+Make sure your MySQL server is up and running, then execute the migration command according to your environment, and you should see something like the following:
 
 {lang=bash,line-numbers=off}
 
 ```
-$ pipenv run alembic revision --autogenerate -m "create counter table"
-INFO  [alembic.runtime.migration] Context impl MySQLImpl.
+$ poetry run alembic revision --autogenerate -m "create counter table"
+INFO  [alembic.runtime.migration] Context impl Postgres.
 INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
 INFO  [alembic.autogenerate.compare] Detected added table 'counter'
   Generating /opt/quart-mysql-
