@@ -162,7 +162,7 @@ You need to download the Docker desktop client for Windows or Mac, which you can
 
 Once you have Docker client running, let's start by creating our `Dockerfile`. The Dockerfile looks like this:
 
-{lang=bash,line-numbers=on}
+{lang=yml,line-numbers=on,starting-line-number=1}
 
 ```
 FROM ubuntu:20.04
@@ -209,15 +209,17 @@ Next we install all the Ubuntu packages we will need. We'll also turn off the di
 
 Next, we install Poetry using `pip3`.
 
-We then create the `counter_app` directory and set it as the default location for the code.
+We then create the `counter_app` directory in the Docker instance and set it as the default location for the code.
 
-Right after that, we copy the contents of the local directory into the `counter_app` directory using the `ADD` command.
+At this point we need to set up Poetry, so we copy both the `pyproject` and the `poetry.lock` files to prepare to install. We then set come flags for Poetry to work best and install all the packages.
 
-Once all the code in is place, we run `pipenv install`, open the `5000` port and invoke the `quart run` command.
+Right after that, we copy the contents of the local directory into the `counter_app` directory using the `COPY` command.
 
-[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/Dockerfile).
+Once all the code in is place, we open the `5000` port and invoke the `poetry run` command.
 
-Now we need to create a `docker-compose` file that will build up both our application instance as well as the MySQL instance.
+Save the file.
+
+Now we need to create a `docker-compose` file that will build up both our application instance as well as the Postgres instance.
 
 We will create the services using the following `docker-compose.yml` file:
 
@@ -233,8 +235,8 @@ services:
     volumes:
       - ./:/counter_app
     links:
-      - db:mysql
-    container_name: counterappmysql_web_1
+      - db:postgres
+    container_name: app_web_1
     depends_on:
       - db
     stdin_open: true
@@ -243,11 +245,10 @@ services:
       PORT: 5000
       SECRET_KEY: "you-will-never-guess"
       DEBUG: 1 # can't pass True here, but 1 works
-      MYSQL_ROOT_PASSWORD: rootpass
-      DB_USERNAME: counter_user
-      DB_PASSWORD: counter_password
-      DB_HOST: mysql
-      DATABASE_NAME: counter
+      DB_USERNAME: app_user
+      DB_PASSWORD: app_password
+      DB_HOST: postgres
+      DATABASE_NAME: app
 ```
 
 First we describe the Docker Compose file version as "2". We then start defining the services, which are essentially the containers that will be running at the same time.
@@ -256,39 +257,36 @@ The first service is the web application which we are calling `web`. We instruct
 
 Next we open up port 5000 both in the host as well as in the container, as this will be the port that Quart is assigned to listen on.
 
-Then we mount the current directory as volume inside the container, which will be called `counter_app`.
+Then we mount the current host's (Windows or Mac computer)directory as a volume inside the container, which will be aliased `counter_app`. This will allow us to code on the host machine and propagate those changes in the container instantly.
 
-The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `mysql`.
+The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `postgres`.
 
-We then assign the name of the container to be `counterappmysql_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
+We then assign the name of the container to be `app_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
 
-The next two statements, `stdin_open` abd `tty` are added so that we can do Python Debugger and examine it from outside the container.
+The next two statements, `stdin_open` abd `tty` are added so that we can execute the Python debugger and examine it from outside the container.
 
 The rest of the file is the environment variables. As you can see they are the same ones defined on the `.quartenv` file.
 
-Next we'll define the MySQL database docker instance:
+Next we'll define the Postgres database docker instance:
 
-{lang=yml,line-numbers=on,starting-line-number=25}
+{lang=yml,line-numbers=on,starting-line-number=24}
 
 ```
   db:
-    image: mysql:5.7
+    image: postgres:13-alpine
     restart: always
-    container_name: counterappmysql_db_1
+    container_name: app_db_1
     ports:
-      - "3306:3306"
+      - "5432:5432"
     environment:
-      MYSQL_USER: counter_user
-      MYSQL_PASSWORD: counter_password
-      MYSQL_ROOT_PASSWORD: rootpass
-      MYSQL_DATABASE: counter
+      POSTGRES_USER: app_user
+      POSTGRES_PASSWORD: app_password
+      POSTGRES_DB: app
 ```
 
-This is file is pretty much self-explanatory. We will use the MySQL 5.7 image, instruct the container to always restart, put a name for it and open port 3306 to the host.
+This is file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
 
-[Save the file](https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-8/docker-compose.yml). We're now ready to test the Docker environment.
-
-One word of caution before you continue, if you have installed the packages locally using `pipenv`, make sure to delete the `.venv` folder before you build the containers, otherwise the packages will be copied to the container on the `ADD` step and `pipenv` won't be able to lock the packages.
+Save the file. We're now ready to test the Docker environment.
 
 Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
 
