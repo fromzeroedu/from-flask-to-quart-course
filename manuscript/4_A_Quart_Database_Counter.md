@@ -165,7 +165,15 @@ In this lesson we'll be setting up our development environment using Docker.
 
 You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
-Once you have Docker client running, let's start by creating our `Dockerfile`. The Dockerfile looks like this:
+Once you have Docker client running, let's start by creating our `Dockerfile`.
+
+First, create the directory where the application will live. You can create this directory inside your user's home directory.
+
+If you plan to use a diretory outside your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
+
+So I'll call mine `counter_app` -- so I will do `mkdir counter_app`.
+
+Now `cd` into your application folder and open a code editor to create the `Dockerfile`. It looks like this:
 
 {lang=yml,line-numbers=on,starting-line-number=1}
 
@@ -291,9 +299,7 @@ Next we'll define the Postgres database docker instance:
 
 This is file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
 
-Save the file. We're now ready to test the Docker environment.
-
-Also, double check that the folder where the application lives (in my case it's `/opt`) has been marked as shared inside the Docker client.
+Save the file.
 
 We won't start the Docker container yet, as we need a couple of more things in place.
 
@@ -303,11 +309,11 @@ So let’s go ahead and start setting up our Quart counter application. Like I�
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
-Start by creating the folder for the project. I'll name mine `quart-postgres-boilerplate`. Change to that directory.
+Start by creating the folder for the project. I'll name mine `counter_app`. Change to that directory.
 
-Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. Make sure you have Poetry installed or install it if needed.
+Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name quart-postgres-boilerplate --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So do: `poetry init -n --name counter_app --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
 This will write the `pyproject` but won't install the packages. To do so, type `poetry install` and create the virtualenv by typing `poetry shell`.
 
@@ -355,16 +361,18 @@ As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and lo
 
 At this point we’re ready to start building our Quart counter application. You should have the Postgres server up and running with your counter database and user.
 
-We’ll install a couple of database packages we will use. The first is `aiomysql`, a library that allows Python applications to connect to MySQL asynchronously. This is normally done by the `PyMySQL` package in synchronous applications.
+We’ll install some database packages we will need. The first is `psycopg2-binary`, a library that allows Python applications to connect to Postgres databases. We'll also install the `databases` package that allows async connection to databases.
 
-The second, as we mentioned, is the SQLAlchemy library, but even though we’ll install the whole package, we’ll be using the Core module for our application.
+The third, as we mentioned earlier, is the SQLAlchemy library, but even though we’ll install the whole package, we’ll be using the Core module for our application.
 
-So go ahead and do:
+So open the `pyproject.toml` file and add the following on the `[tool.poetry.dependencies]` section:
 
-{lang=bash,line-numbers=off}
+{lang=python,line-numbers=on,starting-line-number=12}
 
 ```
-$ pipenv install aiomysql sqlalchemy
+psycopg2-binary = "2.9.1"
+databases = {version = "0.4.1", extras = ["postgresql"]}
+sqlalchemy = "1.4"
 ```
 
 Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
@@ -372,26 +380,32 @@ Once that’s done, we’ll go ahead and create our database driver file, so go 
 {lang=python,line-numbers=on}
 
 ```
-from aiomysql.sa import create_engine
+from databases import Database
 from quart import current_app
+import sqlalchemy
+
+metadata = sqlalchemy.MetaData()
 
 
-async def sa_connection():
-    engine = await create_engine(
-        user=current_app.config["DB_USERNAME"],
-        password=current_app.config["DB_PASSWORD"],
-        host=current_app.config["DB_HOST"],
-        db=current_app.config["DATABASE_NAME"],
-    )
-    conn = await engine.acquire()
-    return conn
+async def db_connection():
+    database_url = f"postgresql://{current_app.config['DB_USERNAME']}:"
+    database_url += f"{current_app.config['DB_PASSWORD']}@"
+    database_url += f"{current_app.config['DB_HOST']}:5432/"
+    database_url += f"{current_app.config['DATABASE_NAME']}"
+    database = Database(database_url, min_size=5, max_size=20)
+
+    return database
 ```
 
-First we will import the `create_engine` from the SqlAlchemy, or `sa` package inside `aiomysql`. We’ll also need to import the `current_app` from `quart`.
+First we will import the `Datbase` class from the `databases` package, which gives us asynchronous connection to our Postgres instance.
 
-Think of the `current_app` as the currently running instance of the Quart application. We’ll need it to read the settings that we’ve set for the database connection. Sp let’s create the engine using the user, password, host and database from those settings. We finally acquire the connection and return it to the caller.
+We’ll also need to import the `current_app` from `quart`. Think of the `current_app` as the currently running instance of the Quart application. We’ll need it to read the settings that we’ve set for the database connection.
 
-Save the file[^1].
+Finally, we will import the `sqlalchemy` package to define an application-wide `metadata` object that will track all the models in our application which will allow us to manage migrations when we start using `alembic`.
+
+Next, let’s create the database connection using the user, password, host and database from those settings. Finally we acquire the connection and return it to the caller.
+
+Save the file.
 
 Now let’s go ahead and create our first and only blueprint of the application, the `counter` module.
 
@@ -402,9 +416,9 @@ Then create the `models.py` file with the following contents:
 {lang=python,line-numbers=on}
 
 ```
-from sqlalchemy import Table, Column, Integer, MetaData
+from sqlalchemy import Table, Column, Integer
 
-metadata = MetaData()
+from db import metadata
 
 counter_table = Table(
     "counter",
@@ -414,19 +428,20 @@ counter_table = Table(
 )
 ```
 
-We’ll begin by importing some modules from `sqlalchemy`. The names might sound familiar: `Table` allows us to setup a table in the database, `Column` allows us to create the table columns, `Integer` is the only column type we use and finally `Metadata` which will allow us to do introspection about the table schema when we use migrations.
+We’ll begin by importing some modules from `sqlalchemy`. The names might sound familiar: `Table` allows us to setup a table in the database, `Column` allows us to create the table columns and `Integer` which is the only column type we use.
 
-So let’s get the metadata out of the way first. Then, we define our `counter_table` as a table consisting of two columns: our `id` which will be the primary key and `count` which will hold the current counter of the application. Notice we also define the table with the `metadata` instance.
+We also import our `metadata` object which will allow us to do introspection about the table schema when we use migrations. You need this object in any model you create.
 
-Save the file[^2].
+Then, we define our `counter_table` as a table consisting of two columns: our `id` which will be the primary key and `count` which will hold the current counter of the application. Notice we define the table name as `counter` and add the `metadata` object as part of the definition.
+
+Save the file.
 
 Now let’s go ahead and build the `views.py` file which will be our main controller and blueprint.
 
 {lang=python,line-numbers=on}
 
 ```
-from quart import Blueprint, current_app
-from sqlalchemy.sql import select
+from quart import Blueprint, current_app, Response
 
 from counter.models import counter_table
 
@@ -434,27 +449,29 @@ counter_app = Blueprint("counter_app", __name__)
 
 
 @counter_app.route("/")
-async def init():
-    conn = current_app.sac
-    counter_query = select([counter_table])
-    result = await conn.execute(counter_query)
+async def init() -> str:
+    conn = current_app.dbc  # type: ignore
+    counter_query = counter_table.select()
+    result = await conn.fetch_all(query=counter_query)
     count = None
 
-    if result.rowcount == 0:
-        stmt = counter_table.insert(None).values(count=1)
+    if not len(result):
+        stmt = counter_table.insert().values(count=1)
         result = await conn.execute(stmt)
         await conn.execute("commit")
         count = 1
     else:
-        row = await result.fetchone()
-        count = row[counter_table.c.count] + 1
-        stmt = counter_table.update(None).values(count=count)
-        result = await conn.execute(stmt)
+        row = result[0]
+        count = row["count"] + 1
+        counter_update = counter_table.update(
+            counter_table.c.id == row["id"]
+        ).values({"count": count})
+        result = await conn.execute(counter_update)
         await conn.execute("commit")
     return "<h1>Counter: " + str(count) + "</h1>"
 ```
 
-We’ll import `Blueprint` to create the `counter_app` blueprint as well as the `current_app` which we'll need to get the database connection. Since we will be doing a select query, we’ll also import that from `SQLAlchemy`.
+We’ll import `Blueprint` to create the `counter_app` blueprint as well as the `current_app` which we'll need to get the database connection.
 
 We’ll also import our `counter_table` from our model file.
 
@@ -462,7 +479,9 @@ So let’s define the blueprint itself, `counter_app`.
 
 The only route this controller has is the root slash, which will call the `init` function.
 
-We begin by fetching our database connection and building a query which will select all the records in the `counter_table` . In this application it will always be just one record as you’ll see below. We’ll get more familiar with the `select` function of `sqlalchemy` but for now just think of this as doing a `SELECT * FROM counter_table`.
+We begin by fetching our database connection from the `current_app.dbc`.
+
+Next we build a query which will select all the records in the `counter_table` . In this application it will always be just one record as you’ll see below. We’ll get more familiar with the `select` function from `sqlalchemy`, but for now just think of this as doing a `SELECT * FROM counter_table`.
 
 We then feed the result of the query to the `result` variable, but notice the use of the `await` keyword there. Indeed the connection execution is an asynchronous operation that will resolve into a coroutine which will eventually resolve with the data we need.
 
@@ -470,13 +489,15 @@ We’ll also set an internal variable of `count` to `None`.
 
 We then get to the main forking point of the script. If we don’t get any results from the query, it means it’s the first time we’re running the application, so we’ll build an insert statement, setting the value of the `count` column to `1`. We’ll then `await` the insert statement and store the results in the `result` variable and finally commit it to the database, again using an `await` operation. Since this is the first time we run the application, we can safely say that the `count` variable is `1`.
 
-Now if do get a result from the select query, we will fetch the first row of the result. We then add `1` to the contents of the `count` column and store it in the local `count` variable. We then build an update statement with the value of the local `count` variable, execute it and commit it.
+Now, on the else statement, if do get a result from the select query, we will fetch the first row of the result. We then add `1` to the contents of the `count` column and store it in the local `count` variable.
+
+We then build an update statement with the value of the local `count` variable, execute it and commit it.
 
 Finally we return the value of the `count` variable to the request as HTML content.
 
 As you can already notice, any database connection operations must be awaited, since they are I/O operations that can yield to the event loop.
 
-Save the file[^3].
+Save the file.
 
 Next we’ll create the application factory, as we’ve done in the past in my Flask course. Call this file `application.py`.
 
@@ -485,7 +506,7 @@ Next we’ll create the application factory, as we’ve done in the past in my F
 ```
 from quart import Quart
 
-from db import sa_connection
+from db import db_connection
 
 
 def create_app(**config_overrides):
@@ -505,18 +526,18 @@ def create_app(**config_overrides):
 
     @app.before_serving
     async def create_db_conn():
-        print("starting app")
-        app.sac = await sa_connection()
+        database = await db_connection()
+        await database.connect()
+        app.dbc = database
 
     @app.after_serving
     async def close_db_conn():
-        print("closing down app")
-        await app.sac.close()
+        await app.dbc.disconnect()
 
     return app
 ```
 
-We begin by importing `Quart` and the `sa_connection` variable from the `db` file we created earlier.
+We begin by importing `Quart` and the `db_connection` variable from the `db` file we created earlier.
 
 Next, we define the factory variable as `create_app` with a `config_overrides` parameter that will allow our tests to change the settings environment variables when running them.
 
@@ -526,11 +547,11 @@ After that we import the `counter_app` blueprint from the `views.py` file and re
 
 We now need a way for the application to open a reusable connection to the MySQL database server. For that we’ll use a couple of special decorators called `before_serving` and `after_serving`. These decorators setup functions to be executed the first time the application is started and right before the application will be closed, which allows us to open the connection once and keep it open for all requests, without needing to close and open it on a per-request basis.
 
-For the `before_serving` function, we’ll put a short message to confirm we’re starting the app and then `await` a database connection. We’ll store this connection in a context variable called `sac` that will be available anywhere you call the `current_app` in any view or model.
+For the `before_serving` function, we’ll `await` a database connection. We then store this connection in a context variable called `dbc` that will be available anywhere you call the `current_app` in any view or model.
 
-Finally, with the `after_serving` function, we’ll close the database connection properly, so any pending database requests are properly taken care of.
+Finally, with the `after_serving` function, we’ll close the database connection properly, so any pending database requests are taken care of.
 
-Save the file[^4].
+Save the file.
 
 We’re almost done with the core application. We just need to create the bootstrap file that will spawn an instance of the application factory. We’ll call this file `manage.py`.
 
@@ -544,13 +565,7 @@ from application import create_app
 app = create_app()
 ```
 
-Save the file[^5] and let’s go ahead and start with the database migration configuration.
-
-[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-2/db.py
-[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/models.py
-[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/counter/views.py
-[^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/application.py
-[^5]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-3/manage.py
+Save the file and let’s go ahead and start with the database migration configuration.
 
 ## Configuring Alembic Migrations <!-- 4.5 -->
 
