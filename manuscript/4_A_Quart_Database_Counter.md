@@ -201,7 +201,7 @@ RUN pip3 install poetry
 WORKDIR /counter_app
 
 # setup poetry
-COPY poetry.lock pyproject.toml /counter_app/
+COPY pyproject.toml /counter_app/
 RUN poetry config virtualenvs.create true \
     && poetry config virtualenvs.in-project false \
     && poetry install --no-interaction
@@ -313,9 +313,9 @@ Start by creating the folder for the project. I'll name mine `counter_app`. Chan
 
 Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name counter_app --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
-This will write the `pyproject` but won't install the packages. To do so, type `poetry install` and create the virtualenv by typing `poetry shell`.
+This will write the `pyproject` but won't install the packages.
 
 Now let's create the Quart environment variables that will be loaded to our environment by `python-dotenv`.
 
@@ -571,25 +571,55 @@ Save the file and let’s go ahead and start with the database migration configu
 
 We’re now going to install Alembic to be able to do database migrations. If you’re not familiar with migrations, it’s just a way to track model changes in your codebase, so that other team members and the different environments can keep up to date as you change your database schema.
 
-So we’ll install Alembic by doing:
+So we’ll install Alembic by adding it to the `pyproject.toml` as follows:
 
-{lang=bash,line-numbers=off}
+{lang=bash,line-numbers=on,starting-line-number=14}
 
 ```
-$ pipenv install alembic
+alembic = "1.6.5"
 ```
 
 We will now initialize the migration setup which will create both an `alembic.ini` and a `migrations` folder.
 
-So do:
+First, we need to install all the Poetry packages we've added. The command is different if are using Docker or if you are running Postgres locally.
+
+If you are doing local development on Mac or Windows, type:
 
 {lang=bash,line-numbers=off}
 
 ```
-$ pipenv run alembic init migrations
+$ poetry install
 ```
 
-If you do an `ls` you’ll see the `alembic.ini` file and the `migrations` folder[^1].
+If you are using Docker, type the following:
+
+{lang=bash,line-numbers=off}
+
+```
+$ docker-compose run --rm web poetry install
+```
+
+Now we're ready for our first migration. Again, the command is different if are using Docker or if you are running Postgres locally.
+
+If you are doing local development on Mac or Windows, makre sure you are running Postgres, and then type:
+
+{lang=bash,line-numbers=off}
+
+```
+$ poetry run alembic init migrations
+```
+
+If you are using Docker, type the following:
+
+{lang=bash,line-numbers=off}
+
+```
+$ docker-compose run --rm web poetry run alembic init migrations
+```
+
+You’ll notice there's a new file, `alembic.ini` and a `migrations` folder.
+
+## TODO: Continue here...
 
 We need to tell `alembic` three things.
 
