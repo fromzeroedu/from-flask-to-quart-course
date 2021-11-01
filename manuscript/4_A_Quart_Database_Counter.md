@@ -617,9 +617,7 @@ If you are using Docker, type the following:
 $ docker-compose run --rm web poetry run alembic init migrations
 ```
 
-You’ll notice there's a new file, `env.py` inside a new `migrations` folder.
-
-## TODO: Continue here...
+You’ll notice there's a new file, `env.py` inside a new `migrations` folder. There's also a new file called `alembic.ini` in the root folder.
 
 We need to tell `alembic` three things.
 
@@ -650,6 +648,7 @@ Then add this under `from alembic import context` on line 10:
 parent = Path(__file__).resolve().parents[1]
 load_dotenv(os.path.join(parent, ".quartenv"))
 sys.path.append(str(parent))
+
 ```
 
 The `parent` variable will figure out the parent folder so that we can fetch the `.quartenv` file location and pass it to the `python-dotenv` and finally we add that parent folder to the `sys.path` so that Alembic has access to it.
@@ -673,34 +672,32 @@ Now we can move to step 2, tell Alembic what models we have in our application. 
 {lang=python,line-numbers=on,starting-line-number=25}
 
 ```
-# import all application models here
-from counter.models import metadata as CounterMetadata
+from db import metadata
 
-# and then add them here as a list
-target_metadata = [CounterMetadata]
+from counter.models import counter_table
+
+target_metadata = metadata
 ```
 
 This is very important to remember: any new models you add subsequently, you need to add them here.
 
-Save the file[^2].
+Save the file.
 
 With all that in place, we’ll finally move to the last step: tell Alembic how to connect to the database.
 
-Open the `alembic.ini` file and change `sqlalchemy.url` on line 38 like this.
+Open the `alembic.ini` file and change `sqlalchemy.url` on line 42 like this.
 
-{lang=python,line-numbers=on,starting-line-number=38}
+{lang=python,line-numbers=on,starting-line-number=42}
 
 ```
-sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s
+sqlalchemy.url = postgresql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:5432/%(DATABASE_NAME)s
 ```
 
-These variables are coming from the `env.py` we edited earlier. Save the file[^3].
+These variables are coming from the `env.py` we edited earlier. Save the file.
 
 And with this, we’re ready to run our first migration.
 
-[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/tree/step-4
-[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/env.py
-[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/alembic.ini
+### TODO: continue here...
 
 ## Our First Migration <!-- 4.6 -->
 
@@ -722,12 +719,6 @@ For Docker, you will use:
 ```
 docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
 ```
-
-However, if you are using Docker, you need to build the environment first, so type `docker-compose up --build`. You will see the Postgres image and the Quart container being built. After a few seconds you should see that the container is up and running.
-
-After this one time, to start the environment, you can omit the `--build` flag. You only need it if you have changed the Dockerfile, `docker-compose` file or added new Poetry packages.
-
-So press `CTRL-C` to stop the containers.
 
 Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the “obvious” migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
