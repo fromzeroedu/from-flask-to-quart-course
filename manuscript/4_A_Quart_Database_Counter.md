@@ -617,7 +617,7 @@ If you are using Docker, type the following:
 $ docker-compose run --rm web poetry run alembic init migrations
 ```
 
-You’ll notice there's a new file, `alembic.ini` and a `migrations` folder.
+You’ll notice there's a new file, `env.py` inside a new `migrations` folder.
 
 ## TODO: Continue here...
 
