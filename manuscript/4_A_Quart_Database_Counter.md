@@ -298,7 +298,7 @@ Change to that directory: `cd counter_app`.
 
 Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name counter_app --python ^3.6 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
 This will write the `pyproject` but won't install the packages.
 
@@ -352,7 +352,7 @@ The third, as we mentioned earlier, is the SQLAlchemy library, but even though w
 
 So open the `pyproject.toml` file and add the following on the `[tool.poetry.dependencies]` section:
 
-{lang=python,line-numbers=on,starting-line-number=12}
+{lang=python,line-numbers=on,starting-line-number=11}
 
 ```
 psycopg2-binary = "2.9.1"
@@ -586,7 +586,7 @@ $ docker-compose run --rm web poetry install
 
 Now we're ready for our first migration. Again, the command is different if are using Docker or if you are running Postgres locally.
 
-If you are doing local development on Mac or Windows, makre sure you are running Postgres, and then type:
+If you are doing local development on Mac or Windows, make sure you are running Postgres, and then type:
 
 {lang=bash,line-numbers=off}
 
@@ -682,8 +682,6 @@ These variables are coming from the `env.py` we edited earlier. Save the file.
 
 And with this, we’re ready to run our first migration.
 
-### TODO: continue here...
-
 ## Our First Migration <!-- 4.6 -->
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
@@ -714,11 +712,11 @@ Make sure your Postgres server is up and running, then execute the migration com
 
 ```
 $ poetry run alembic revision --autogenerate -m "create counter table"
-INFO  [alembic.runtime.migration] Context impl Postgres.
-INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
 INFO  [alembic.autogenerate.compare] Detected added table 'counter'
-  Generating /opt/quart-mysql-
-  boilerplate/migrations/versions/2abbbb3287d2_create_counter_table.py ... done
+  Generating /home/jorescobar/counter_app/migrations/versions/51d999a1e262_cr
+  eate_counter_table.py ...  done
 ```
 
 Check that a new `versions` file was created and take a look:
@@ -730,7 +728,7 @@ Check that a new `versions` file was created and take a look:
 
 Revision ID: 2abbbb3287d2
 Revises:
-Create Date: 2019-09-19 10:46:47.608330
+Create Date: 2021-11-03 17:43:35.192873
 
 """
 from alembic import op
@@ -762,31 +760,49 @@ def downgrade():
 
 As you can see, there are three sections: one that holds what revision this is and how to get to the previous one, an `upgrade` list of commands and a `downgrade` list of commands. Always take a look at the newest revision file so that you can spot any inconsistencies or issues.
 
-This looks good to me, so let’s apply these changes on the database by doing:
+This looks good to me, so let’s apply these changes on the database by doing the following.
+
+For local development we will use:
 
 {lang=bash,line-numbers=off}
 
 ```
-$ pipenv run alembic upgrade head
-INFO  [alembic.runtime.migration] Context impl MySQLImpl.
-INFO  [alembic.runtime.migration] Will assume non-transactional DDL.
+$ poetry run alembic upgrade head
+```
+
+For Docker, you will use:
+
+{lang=bash,line-numbers=off}
+
+```
+docker-compose run --rm web poetry run alembic upgrade head
+```
+
+You will see the following:
+
+{lang=bash,line-numbers=off}
+
+```
+$ poetry run alembic upgrade head
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
 INFO  [alembic.runtime.migration] Running upgrade  -> 2abbbb3287d2, create counter table
 ```
 
-Great, it went smoothly which means the tables were created. We can log in into MySQL and check the tables.
+Great, it went smoothly which means the tables were created. We can log in into Postgres and check the tables.
 
 {lang=mysql,line-numbers=off}
 
 ```
-mysql> use counter;
-mysql> show tables;
-+-------------------+
-| Tables_in_counter |
-+-------------------+
-| alembic_version   |
-| counter           |
-+-------------------+
-2 rows in set (0.00 sec)
+postgres-> \c app
+You are now connected to database "app" as user "app_user".
+app-> \dt
+              List of relations
+ Schema |      Name       | Type  |  Owner   
+--------+-----------------+-------+----------
+ public | alembic_version | table | app_user
+ public | counter         | table | app_user
+(2 rows)
 ```
 
 We can see the counter table was created, but notice there’s an `alembic_version` table. This table holds the current migration version.
@@ -794,34 +810,39 @@ We can see the counter table was created, but notice there’s an `alembic_versi
 {lang=mysql,line-numbers=off}
 
 ```
-mysql> select * from alembic_version;
-+--------------+
-| version_num  |
-+--------------+
-| 2abbbb3287d2 |
-+--------------+
-1 row in set (0.00 sec)
+app=> select * from alembic_version;
+ version_num  
+--------------
+ 51d999a1e262
+(1 row)
 ```
 
 That hash matches with our latest revision value:
 
-{lang=python,line-numbers=off}
+{lang=python,line-numbers=on,starting-line-number=12}
 
 ```
 # revision identifiers, used by Alembic.
-revision = '2abbbb3287d2'
+revision = '51d999a1e262'
 ```
 
-Exit the MySQL server and we should be ready to run our application. Just do:
+Exit the Postgres server and we should be ready to run our application. 
+
+For local development run the application using:
 
 {lang=bash,line-numbers=off}
 
 ```
-$ pipenv run quart run
-Running on http://127.0.0.1:5000 (CTRL + C to quit)
-starting app
-Running on 127.0.0.1:5000 over http (CTRL + C to quit)
+$ poetry run quart run
 ```
+
+For Docker, we can start the whole cluster as follows:
+
+{lang=bash,line-numbers=off}
+
+```
+docker-compose up
+``
 
 If you open `localhost:5000` you will see the first number of our counter:
 
@@ -829,7 +850,7 @@ If you open `localhost:5000` you will see the first number of our counter:
 
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
 
-[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-5/migrations/versions/2abbbb3287d2\_create\_counter\_table.py
+## TODO: continue here
 
 ## Testing our Counter Application <!-- 4.7 -->
 
