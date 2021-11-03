@@ -115,23 +115,7 @@ Once you have Ubuntu, I recommend that you install the new [Windows Terminal](ht
 
 Once on the Ubuntu terminal, let's install some of our dependencies.
 
-First elevate to root by doing `sudo su -` and then type the following to install some required packages for Postgres:
-
-{lang=bash,line-numbers=off}
-
-```
-apt-get update && apt-get install -y \
-    build-essential \
-    make \
-    gcc \
-    git \
-    unzip \
-    wget \
-    python3-dev \
-    python3-pip
-```
-
-Then install Postgres by using: `apt install -y postgresql`.
+First elevate to root by doing `sudo su -` and then install Postgres by using: `apt install -y postgresql`.
 
 After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
 
