@@ -115,7 +115,7 @@ Once you have Ubuntu, I recommend that you install the new [Windows Terminal](ht
 
 Once on the Ubuntu terminal, let's install some of our dependencies.
 
-First elevate to root by doing `sudo su -` and then type the following:
+First elevate to root by doing `sudo su -` and then type the following to install some required packages for Postgres:
 
 {lang=bash,line-numbers=off}
 
