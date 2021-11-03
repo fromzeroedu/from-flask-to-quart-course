@@ -70,8 +70,9 @@ Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
 
-Open a PowerShell as an administrator and type:
-`choco install postgresql --params '/Password:rootpass`. In this case we're creating root password of "rootpass", but select any password you'd like.
+Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`. 
+
+In this case we're creating root password of "rootpass", but select any password you'd like.
 
 Now close the PowerShell application completely and open a new, regular session.
 
@@ -88,7 +89,7 @@ Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWO
 
 Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
 
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+Logout using `\q` and now login using the `app_user` by doing `psql postgres app_user` and entering the password `app_password`.
 
 Next, we'll create the app database: `CREATE DATABASE app;`.
 
@@ -100,15 +101,15 @@ Logout using `\q`.
 
 ### Installing Postgres on WSL <!-- 4.2.3-->
 
-In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows.
+In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows.  In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
 
-In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
+This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
 
-Installing WSL requires Windows 10 version 2004, and it's really easy, just open an administrator Powershell and type the following command: `wsl --install`.
-
-After that, you need to select a Linux distribution to install. You can see a list of the distributions by typing: `wsl --list --online`.
+Installing WSL requires Windows 10 version 2004 and up, and it's really easy. You just open an administrator Powershell and use the `wsl` coomand.
 
 I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
+
+You can select other Linux distributions to install. You can see a list of the distributions by typing: `wsl --list --online`.
 
 Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
 
@@ -130,9 +131,7 @@ apt-get update && apt-get install -y \
     python3-pip
 ```
 
-We need `poetry` for the Python package management, so install Poetry using `pip3 install poetry`.
-
-Then install Postgres by using: `sudo apt install -y postgresql`.
+Then install Postgres by using: `apt install -y postgresql`.
 
 After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
 
@@ -171,7 +170,7 @@ First, create the directory where the application will live. You can create this
 
 If you plan to use a diretory outside your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
 
-So I'll call mine `counter_app` -- so I will do `mkdir counter_app`.
+So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 
 Now `cd` into your application folder and open a code editor to create the `Dockerfile`. It looks like this:
 
@@ -309,11 +308,13 @@ So let’s go ahead and start setting up our Quart counter application. Like I�
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
-Start by creating the folder for the project. I'll name mine `counter_app`. Change to that directory.
+Start by creating the folder for the project. I'll name mine `counter_app`: `mkdir counter_app`
+
+Change to that directory: `cd counter_app`.
 
 Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So do: `poetry init -n --name counter_app --python ^3.6 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
 This will write the `pyproject` but won't install the packages.
 
@@ -714,15 +715,16 @@ $ poetry run alembic revision --autogenerate -m "create counter table"
 ```
 
 For Docker, you will use:
+
 {lang=bash,line-numbers=off}
 
 ```
 docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
 ```
 
-Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the “obvious” migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
+Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
-Make sure your MySQL server is up and running, then execute the migration command according to your environment, and you should see something like the following:
+Make sure your Postgres server is up and running, then execute the migration command according to your environment, and you should see something like the following:
 
 {lang=bash,line-numbers=off}
 
@@ -735,7 +737,7 @@ INFO  [alembic.autogenerate.compare] Detected added table 'counter'
   boilerplate/migrations/versions/2abbbb3287d2_create_counter_table.py ... done
 ```
 
-Check that a new `versions` file[^1] was created and take a look:
+Check that a new `versions` file was created and take a look:
 
 {lang=python,line-numbers=on}
 
