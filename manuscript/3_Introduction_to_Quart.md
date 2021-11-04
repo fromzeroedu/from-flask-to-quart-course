@@ -57,7 +57,6 @@ Open your favorite code editor and create a file called `hello.py` in the root f
 We'll write the following code in `hello.py`:
 
 {lang=python,line-numbers=on}
-
 ```
 from quart import Quart
 
@@ -83,7 +82,6 @@ Save the file.
 Before we can run it, we need to define some environment variables, just like we did with Flask. In order for that to work, we're going to install the `python-dotenv` library, which allows us to create an `env` file to be loaded when Quart runs. So on the terminal: `poetry add python-dotenv` and then create a `.quartenv` file in the root folder as follows:
 
 {lang=python,line-numbers=on}
-
 ```
 QUART_APP='hello'
 QUART_ENV=development
@@ -93,7 +91,6 @@ SECRET_KEY='my_secret_key'
 We're now ready to run our first Quart app. Just type: `poetry run quart`. You will be notified that the application is running on port 5000.
 
 {lang=bash,line-numbers=off}
-
 ```
 Running on http://127.0.0.1:5000 (CTRL + C to quit)
 ```
@@ -105,7 +102,6 @@ Now let's create a template instead of returning the string directly to the user
 For that, we'll create a template folder so that we can render the page more dynamically with a context. So create a `templates` folder and inside create the `hello.html` file as follows:
 
 {lang=html,line-numbers=on}
-
 ```
 <html>
   <header>
@@ -120,7 +116,6 @@ For that, we'll create a template folder so that we can render the page more dyn
 In the `hello.py` file add `render_template` to the Quart import on line 1:
 
 {lang=python,line-numbers=on,starting-line-number=1}
-
 ```
 from quart import Quart, render_template
 ```
@@ -128,7 +123,6 @@ from quart import Quart, render_template
 And change the `hello` function as follows:
 
 {lang=python,line-numbers=on,starting-line-number=6}
-
 ```
 @app.route("/")
 async def hello():
@@ -143,7 +137,6 @@ If you said that `render_template` is a coroutine, you are right. Rendering a te
 Try taking out the `await` keyword, run the application and reload the page in the browser. You will get the following error:
 
 {lang=python,line-numbers=off}
-
 ```
 TypeError: 'coroutine' object is not iterable
 ```

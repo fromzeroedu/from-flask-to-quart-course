@@ -45,7 +45,6 @@ Let’s now go ahead and code the waiter and cook example using our first async 
 So let’s try and code the waiter and cook example using regular synchronous Python. This is what it could look like:
 
 {lang=python,line-numbers=off}
-
 ```
 import time
 
@@ -74,7 +73,6 @@ Make sure you have at least Python 3.7 installed by doing `python3 --version` on
 So run the example and you will see slowly, but surely, all the plates come out.
 
 {lang=bash,line-numbers=off}
-
 ```
 $ python3 sync.py
 Getting Pasta order
@@ -92,7 +90,6 @@ Those lamb chops take a long time for sure!
 So now, we’ll convert this program to use the `asyncio` library and get a feel of how to write this code asynchronously. So let’s copy the `sync.py` file on a new file called `coros.py` with the following code.
 
 {lang=python,line-numbers=off}
-
 ```
 import asyncio
 import time
@@ -126,7 +123,6 @@ _Run_ also takes care of the cleanup, so when the whole code is run, it will gra
 These changes are not enough to make our code asynchronous, though. We need to tell `asyncio` what functions and what tasks will be run asynchronously. So let’s change the`waiter` function as follows.
 
 {lang=python,line-numbers=on}
-
 ```
 async def waiter() -> None:
     await cook("Pasta", 8)
@@ -143,7 +139,6 @@ Just remember that if you have any `await` tasks, you need to define that functi
 You might be wondering, “what about the cook function?”. Well, we need to make that asynchronous as well, so we could change it to the following.
 
 {lang=python,line-numbers=off}
-
 ```
 async def cook(order, time_to_prepare):
     print(f'Getting {order} order')
@@ -154,7 +149,6 @@ async def cook(order, time_to_prepare):
 Here’s an issue though. If we use the regular `time.sleep` function, it will block the whole execution, rendering the asynchronous program useless. In this case we need to use asyncio’s `sleep` function instead.
 
 {lang=python,line-numbers=off}
-
 ```
 async def cook(order, time_to_prepare):
     print(f'Getting {order} order')
@@ -167,7 +161,6 @@ Now we’re guaranteeing that while the `cook` function is asleep for those numb
 Now if we run the program we get the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ python3 coros.py
 Getting Pasta order
@@ -191,7 +184,6 @@ Both the `waiter` and the `cook` functions are transformed when we put the `asyn
 If you try to execute a coroutine directly, you will get a coroutine message, but the code won’t be executed. We can try that out by running a Python shell and importing the `cook` function from the `coros` file. First, comment the `asyncio.run` command so that the code isn’t executed and save the file.
 
 {lang=python,line-numbers=off}
-
 ```
 # asyncio.run(waiter())
 ```
@@ -199,7 +191,6 @@ If you try to execute a coroutine directly, you will get a coroutine message, bu
 Then open a Python terminal and do;
 
 {lang=python,line-numbers=off}
-
 ```
 $ python3
 >>> from coros import cook
@@ -216,7 +207,6 @@ There’s a third way we can execute a coroutine and we’ll see how to do that 
 We can run multiple coroutines by using tasks. So go ahead and copy the `coros.py` file into a file we’ll call `tasks.py` and write the following:
 
 {lang=python,line-numbers=on}
-
 ```
 import asyncio
 
@@ -242,7 +232,6 @@ What we’re doing here is creating three tasks with the different orders. Tasks
 So in the above code when we await the three tasks, the three `cook` coroutines are running at the same time, so the execution is quite different. Go ahead and run the code.
 
 {lang=bash,line-numbers=off}
-
 ```
 $ python3 tasks.py
 Getting Pasta order
@@ -268,7 +257,6 @@ An example we just saw was using the synchronous `time.sleep` function inside of
 Go ahead and try it. Add the `import time` at the top of the `coros.py` file and then add the synchronous sleep function:
 
 {lang=python,line-numbers=on}
-
 ```
 async def cook(order, time_to_prepare):
     print(f'Getting {order} order')
@@ -279,7 +267,6 @@ async def cook(order, time_to_prepare):
 When you execute that we get this very cryptic error:
 
 {lang=bash,line-numbers=off}
-
 ```
 Traceback (most recent call last):
   File "coros.py", line 16, in <module>
@@ -310,7 +297,6 @@ So always remember that if you are inside a coroutine and calling an external fu
 First, let’s undo the `time.sleep` code back to using `asyncio.sleep` and then change the second cook call on `coros.py` taking out the `await`:
 
 {lang=python,line-numbers=on}
-
 ```
 import asyncio
 
@@ -330,7 +316,6 @@ import asyncio
 If you try to execute this code, you will see the following error:
 
 {lang=bash,line-numbers=off}
-
 ```
 coros.py:5: RuntimeWarning: coroutine 'cook' was never awaited
 ```
@@ -344,7 +329,6 @@ Another pitfall is that we complete our coroutine while an inner coroutine is st
 For example, look at this code:
 
 {lang=python,line-numbers=on}
-
 ```
 import asyncio
 
@@ -361,7 +345,6 @@ asyncio.run(main())
 When we run this, we get the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ python3 never_retrieved.py
 never_retrieved.py:5: RuntimeWarning: coroutine 'sleep' was never awaited

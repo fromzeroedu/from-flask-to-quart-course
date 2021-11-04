@@ -70,7 +70,7 @@ Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
 
 If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
 
-Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`. 
+Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`.
 
 In this case we're creating root password of "rootpass", but select any password you'd like.
 
@@ -101,7 +101,7 @@ Logout using `\q`.
 
 ### Installing Postgres on WSL <!-- 4.2.3-->
 
-In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows.  In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
+In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows. In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
 
 This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
 
@@ -159,7 +159,6 @@ So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 Now `cd` into your application folder and open a code editor to create the `Dockerfile`. It looks like this:
 
 {lang=yml,line-numbers=on,starting-line-number=1}
-
 ```
 FROM ubuntu:20.04
 
@@ -220,7 +219,6 @@ Now we need to create a `docker-compose` file that will build up both our applic
 We will create the services using the following `docker-compose.yml` file:
 
 {lang=yml,line-numbers=on,starting-line-number=1}
-
 ```
 version: "2"
 services:
@@ -266,7 +264,6 @@ The rest of the file is the environment variables. As you can see they are the s
 Next we'll define the Postgres database docker instance:
 
 {lang=yml,line-numbers=on,starting-line-number=24}
-
 ```
   db:
     image: postgres:13-alpine
@@ -307,7 +304,6 @@ Now let's create the Quart environment variables that will be loaded to our envi
 So create the `.quartenv` file and type the following code:
 
 {lang=python,line-numbers=on}
-
 ```
 QUART_APP='manage.py'
 QUART_ENV=development
@@ -329,7 +325,6 @@ Save the file.
 We’ll now need to create a `settings.py` file, so we’ll use very similar variables from the `.quartenv` with the following format:
 
 {lang=python,line-numbers=on}
-
 ```
 import os
 
@@ -353,17 +348,14 @@ The third, as we mentioned earlier, is the SQLAlchemy library, but even though w
 So open the `pyproject.toml` file and add the following on the `[tool.poetry.dependencies]` section:
 
 {lang=python,line-numbers=on,starting-line-number=11}
-
 ```
 psycopg2-binary = "2.9.1"
-databases = {version = "0.4.1", extras = ["postgresql"]}
-sqlalchemy = "1.4"
+databases = {version = "0.4.1", extras = ["postgresql"]}sqlalchemy = "1.4"
 ```
 
 Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
 
 {lang=python,line-numbers=on}
-
 ```
 from databases import Database
 from quart import current_app
@@ -399,7 +391,6 @@ First, create the `counter` folder and inside create the empty `__init__.py` to 
 Then create the `models.py` file with the following contents:
 
 {lang=python,line-numbers=on}
-
 ```
 from sqlalchemy import Table, Column, Integer
 
@@ -424,7 +415,6 @@ Save the file.
 Now let’s go ahead and build the `views.py` file which will be our main controller and blueprint.
 
 {lang=python,line-numbers=on}
-
 ```
 from quart import Blueprint, current_app, Response
 
@@ -487,7 +477,6 @@ Save the file.
 Next we’ll create the application factory, as we’ve done in the past in my Flask course. Call this file `application.py`.
 
 {lang=python,line-numbers=on}
-
 ```
 from quart import Quart
 
@@ -543,7 +532,6 @@ We’re almost done with the core application. We just need to create the bootst
 This is a simple file. We just need to import the `create_app` function and then execute it and store it in a variable called `app`.
 
 {lang=python,line-numbers=on}
-
 ```
 from application import create_app
 
@@ -559,7 +547,6 @@ We’re now going to install Alembic to be able to do database migrations. If yo
 So we’ll install Alembic by adding it to the `pyproject.toml` as follows:
 
 {lang=bash,line-numbers=on,starting-line-number=14}
-
 ```
 alembic = "1.6.5"
 ```
@@ -571,7 +558,6 @@ First, we need to install all the Poetry packages we've added. The command is di
 If you are doing local development on Mac or Windows, type:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry install
 ```
@@ -579,7 +565,6 @@ $ poetry install
 If you are using Docker, type the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ docker-compose run --rm web poetry install
 ```
@@ -589,7 +574,6 @@ Now we're ready for our first migration. Again, the command is different if are 
 If you are doing local development on Mac or Windows, make sure you are running Postgres, and then type:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry run alembic init migrations
 ```
@@ -597,7 +581,6 @@ $ poetry run alembic init migrations
 If you are using Docker, type the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ docker-compose run --rm web poetry run alembic init migrations
 ```
@@ -615,7 +598,6 @@ So let’s begin setting up the environment variables in the `migrations/env.py`
 Add the following at the top before `logging.config`:
 
 {lang=python,line-numbers=on}
-
 ```
 import os, sys
 from dotenv import load_dotenv
@@ -627,7 +609,6 @@ We’ll need all these libraries for the next step.
 Then add this under `from alembic import context` on line 10:
 
 {lang=python,line-numbers=on,starting-line-number=12}
-
 ```
 # Path ops
 parent = Path(__file__).resolve().parents[1]
@@ -641,7 +622,6 @@ The `parent` variable will figure out the parent folder so that we can fetch the
 Then on line 35 right before the `run_migrations_offline` function, let’s add the following:
 
 {lang=python,line-numbers=on,starting-line-number=35}
-
 ```
 section = config.config_ini_section
 config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
@@ -655,7 +635,6 @@ We’re giving the `alembic.ini` file, which we’ll edit in a little bit, acces
 Now we can move to step 2, tell Alembic what models we have in our application. So on line 25 let’s replace that whole block with the following:
 
 {lang=python,line-numbers=on,starting-line-number=25}
-
 ```
 from db import metadata
 
@@ -673,7 +652,6 @@ With all that in place, we’ll finally move to the last step: tell Alembic how 
 Open the `alembic.ini` file and change `sqlalchemy.url` on line 42 like this.
 
 {lang=python,line-numbers=on,starting-line-number=42}
-
 ```
 sqlalchemy.url = postgresql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:5432/%(DATABASE_NAME)s
 ```
@@ -691,7 +669,6 @@ So we’ll create our first “migration commit”. It will be different if you 
 For local development we will use:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry run alembic revision --autogenerate -m "create counter table"
 ```
@@ -699,7 +676,6 @@ $ poetry run alembic revision --autogenerate -m "create counter table"
 For Docker, you will use:
 
 {lang=bash,line-numbers=off}
-
 ```
 docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
 ```
@@ -709,7 +685,6 @@ Thanks to the `target_metadata` setting we added earlier, Alembic can view the s
 Make sure your Postgres server is up and running, then execute the migration command according to your environment, and you should see something like the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry run alembic revision --autogenerate -m "create counter table"
 INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
@@ -722,7 +697,6 @@ INFO  [alembic.autogenerate.compare] Detected added table 'counter'
 Check that a new `versions` file was created and take a look:
 
 {lang=python,line-numbers=on}
-
 ```
 """create counter table
 
@@ -765,7 +739,6 @@ This looks good to me, so let’s apply these changes on the database by doing t
 For local development we will use:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry run alembic upgrade head
 ```
@@ -773,7 +746,6 @@ $ poetry run alembic upgrade head
 For Docker, you will use:
 
 {lang=bash,line-numbers=off}
-
 ```
 docker-compose run --rm web poetry run alembic upgrade head
 ```
@@ -781,7 +753,6 @@ docker-compose run --rm web poetry run alembic upgrade head
 You will see the following:
 
 {lang=bash,line-numbers=off}
-
 ```
 $ poetry run alembic upgrade head
 INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
@@ -792,13 +763,12 @@ INFO  [alembic.runtime.migration] Running upgrade  -> 2abbbb3287d2, create count
 Great, it went smoothly which means the tables were created. We can log in into Postgres and check the tables.
 
 {lang=mysql,line-numbers=off}
-
 ```
 postgres-> \c app
 You are now connected to database "app" as user "app_user".
 app-> \dt
               List of relations
- Schema |      Name       | Type  |  Owner   
+ Schema |      Name       | Type  |  Owner
 --------+-----------------+-------+----------
  public | alembic_version | table | app_user
  public | counter         | table | app_user
@@ -808,10 +778,9 @@ app-> \dt
 We can see the counter table was created, but notice there’s an `alembic_version` table. This table holds the current migration version.
 
 {lang=mysql,line-numbers=off}
-
 ```
 app=> select * from alembic_version;
- version_num  
+ version_num
 --------------
  51d999a1e262
 (1 row)
@@ -820,29 +789,24 @@ app=> select * from alembic_version;
 That hash matches with our latest revision value:
 
 {lang=python,line-numbers=on,starting-line-number=12}
-
 ```
 # revision identifiers, used by Alembic.
 revision = '51d999a1e262'
 ```
 
-Exit the Postgres server and we should be ready to run our application. 
+Exit the Postgres server and we should be ready to run our application.
 
 For local development run the application using:
 
-{lang=bash,line-numbers=off}
-
-```
+{lang=bash,line-numbers=off}```
 $ poetry run quart run
 ```
 
 For Docker, we can start the whole cluster as follows:
 
-{lang=bash,line-numbers=off}
-
-```
+{lang=bash,line-numbers=off}```
 docker-compose up
-``
+```
 
 If you open `localhost:5000` you will see the first number of our counter:
 
@@ -850,9 +814,9 @@ If you open `localhost:5000` you will see the first number of our counter:
 
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
 
-## TODO: continue here
-
 ## Testing our Counter Application <!-- 4.7 -->
+
+TODO: continue here...
 
 It’s great that we have a running application, but we know that any application needs good tests to insure it won’t break with new development.
 
@@ -860,9 +824,7 @@ In our synchronous applications we had used `unittest`, but for asynchronous app
 
 So let’s begin by adding those libraries to the application. So just do:
 
-{lang=bash,line-numbers=off}
-
-```
+{lang=bash,line-numbers=off}```
 $ pipenv install pytest pytest-asyncio
 ```
 
@@ -881,8 +843,8 @@ So let’s create our first `conftest` file. Create it on the root application f
 First, we’ll add the necessary imports we’ll use.
 
 {lang=python,line-numbers=on}
-
 ```
+
 import pytest
 import asyncio
 import os
@@ -892,6 +854,7 @@ from sqlalchemy import create_engine
 load_dotenv(".quartenv")
 
 from application import create_app
+
 ```
 
 Make sure to place the `load_dotenv` command before the `create_app` factory instantiation so that the environment variables are set.
@@ -899,21 +862,21 @@ Make sure to place the `load_dotenv` command before the `create_app` factory ins
 We will now create the database instantiation part of our test, so let’s write that:
 
 {lang=python,line-numbers=on,starting-line-number=13}
-
 ```
+
 @pytest.mark.asyncio
 @pytest.fixture(scope="module")
 async def create_db():
-    print("Creating db")
-    db_name = os.environ["DATABASE_NAME"] + "_test"
-    db_host = os.environ["DB_HOST"]
-    db_root_password = os.environ["MYSQL_ROOT_PASSWORD"]
-    if db_root_password:
-        db_username = "root"
-        db_password = db_root_password
-    else:
-        db_username = os.environ["DB_USERNAME"]
-        db_password = os.environ["DB_PASSWORD"]
+print("Creating db")
+db_name = os.environ["DATABASE_NAME"] + "\_test"
+db_host = os.environ["DB_HOST"]
+db_root_password = os.environ["MYSQL_ROOT_PASSWORD"]
+if db_root_password:
+db_username = "root"
+db_password = db_root_password
+else:
+db_username = os.environ["DB_USERNAME"]
+db_password = os.environ["DB_PASSWORD"]
 
     db_uri = "mysql+pymysql://%s:%s@%s:3306" % (db_username, db_password, db_host)
 
@@ -931,13 +894,13 @@ async def create_db():
         "DB_URI": db_uri,
         "TESTING": True,
     }
-
     print("Destroying db")
     engine = create_engine(db_uri)
     conn = engine.connect()
     conn.execute("DROP DATABASE " + db_name)
     conn.execute("COMMIT")
     conn.close()
+
 ```
 
 First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
@@ -953,14 +916,15 @@ Essentially what yield does is to send the control back to the calling test, and
 Next, let’s create the Quart application itself.
 
 {lang=python,line-numbers=on,starting-line-number=55}
-
 ```
+
 @pytest.fixture(scope="module")
 async def create_test_app(create_db):
-    app = create_app(**create_db)
-    await app.startup()
-    yield app
-    await app.shutdown()
+app = create_app(\*\*create_db)
+await app.startup()
+yield app
+await app.shutdown()
+
 ```
 
 This also needs to be a module-level fixture and we will inject the `create_db` fixture to it as a dependency. That’s right, you can inject fixtures in other fixtures — but again, remember to limit the number of fixture layers to keep your tests manageable, like I mentioned earlier.
@@ -968,59 +932,65 @@ This also needs to be a module-level fixture and we will inject the `create_db` 
 We then create an instance of the factory `create_app` function and then call the Quart app method `startup` which will run the `before_serving` decorated function, which in our app establishes the database connection.
 
 {lang=python,line-numbers=on,starting-line-number=22}
-
 ```
+
     @app.before_serving
     async def create_db_conn():
         print("Starting app")
         app.sac = await sa_connection()
+
 ```
 
 We then yield the app itself to the calling test and once the tests are done, we do the `shutdown` method of the Quart app which calls the `after_serving` function in our `application.py`.
 
 {lang=python,line-numbers=on,starting-line-number=27}
-
 ```
+
     @app.after_serving
     async def close_db_conn():
         print("Closing down app")
         await app.sac.close()
+
 ```
 
 One thing I want you to notice, in the instantiation of the `create_app` we are passing the `create_db` fixture returned with a double asterisk in front of it:
 
 {lang=python,line-numbers=on,starting-line-number=57}
-
 ```
-app = create_app(**create_db)
+
+app = create_app(\*\*create_db)
+
 ```
 
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
 
 {lang=python,line-numbers=on,starting-line-number=13}
-
 ```
+
     # apply overrides for tests
     app.config.update(config_overrides)
+
 ```
 
 This is exactly why, so that we can instantiate test apps with different configuration settings. The double asterisk in Python essentially passes the variables returned by `create_db` as a keyword argument list, so it’s the same as writing the following:
 
 {lang=python,line-numbers=on,starting-line-number=57}
-
 ```
+
 app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB_PASSWORD']...)
+
 ```
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
 {lang=python,line-numbers=on,starting-line-number=63}
-
 ```
+
 @pytest.fixture
 def create_test_client(create_test_app):
-	print("Creating test client")
-    return create_test_app.test_client()
+print("Creating test client")
+return create_test_app.test_client()
+
 ```
 
 We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
@@ -1032,21 +1002,20 @@ Save the file[^1].
 Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
 
 {lang=python,line-numbers=on,starting-line-number=1}
-
 ```
+
 import pytest
 from quart import current_app
 from sqlalchemy import create_engine, select
 
 from counter.models import counter_table, metadata as CounterMetadata
 
-
 @pytest.fixture(scope="module")
 def create_all(create_db):
-	print("Creating Counter Tables")
-    engine = create_engine(create_db["DB_URI"] + "/" + create_db["DATABASE_NAME"])
-    CounterMetadata.bind = engine
-    CounterMetadata.create_all()
+print("Creating Counter Tables")
+engine = create_engine(create_db["DB_URI"] + "/" + create_db["DATABASE_NAME"])
+CounterMetadata.bind = engine
+CounterMetadata.create_all()
 
 ```
 
@@ -1061,13 +1030,14 @@ We then bind that engine to the `CounterMetadata` object and finally execute the
 Finally we’re ready to create our very first test, so let’s keep it simple. We want to be able to see that the counter is started when we first hit the page.
 
 {lang=python,line-numbers=on,starting-line-number=17}
-
 ```
+
 @pytest.mark.asyncio
 async def test_initial_response(create_test_client, create_all):
-    response = await create_test_client.get("/")
-    body = await response.get_data()
-    assert "Counter: 1" in str(body)
+response = await create_test_client.get("/")
+body = await response.get_data()
+assert "Counter: 1" in str(body)
+
 ```
 
 We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need both the `create_test_client` fixture as well as the `create_counter_tables` fixture. We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
@@ -1075,8 +1045,8 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 Save the file[^2] and run the test using `pipenv run pytest`.
 
 {lang=bash,line-numbers=off}
-
 ```
+
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1084,15 +1054,16 @@ rootdir: /opt/quart-mysql-boilerplate
 plugins: asyncio-0.10.0
 collected 1 item
 
-counter/test_counter.py E                                                [100%]
+counter/test_counter.py E [100%]
 
 ==================================== ERRORS ====================================
-___________________ ERROR at setup of test_initial_response ____________________
+**\*\*\*\***\_\_\_**\*\*\*\*** ERROR at setup of test_initial_response **\*\*\*\***\_\_\_\_**\*\*\*\***
 ScopeMismatch: You tried to access the 'function' scoped fixture 'event_loop' with a 'module' scoped request object, involved factories
-counter/test_counter.py:9:  def create_counter_tables(create_db)
-conftest.py:13:  def create_db(event_loop)
-.venv/lib/python3.7/site-packages/pytest_asyncio/plugin.py:204:  def event_loop(request)
+counter/test_counter.py:9: def create_counter_tables(create_db)
+conftest.py:13: def create_db(event_loop)
+.venv/lib/python3.7/site-packages/pytest_asyncio/plugin.py:204: def event_loop(request)
 =========================== 1 error in 0.02 seconds ============================
+
 ```
 
 It fails!
@@ -1100,20 +1071,21 @@ It fails!
 What’s the problem? The issue here is that `pytest` has a built-in function-level event loop that’s not persisted across functions, so we need to grab an event loop at the very top so that this one is persisted. Let’s add it on the `conftest` file.
 
 {lang=python,line-numbers=on,starting-line-number=14}
-
 ```
+
 @pytest.fixture(scope="module")
 def event_loop(request):
-    loop = asyncio.get_event_loop()
-    yield loop
-    loop.close()
+loop = asyncio.get_event_loop()
+yield loop
+loop.close()
+
 ```
 
 Save the file[^3] and run the test again.
 
 {lang=bash,line-numbers=off}
-
 ```
+
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1121,9 +1093,10 @@ rootdir: /opt/quart-mysql-boilerplate
 plugins: asyncio-0.10.0
 collected 1 item
 
-counter/test_counter.py .                                                [100%]
+counter/test_counter.py . [100%]
 
 =========================== 1 passed in 0.19 seconds ===========================
+
 ```
 
 Perfect! We now get a green line and the test passed label.
@@ -1131,9 +1104,9 @@ Perfect! We now get a green line and the test passed label.
 But if you notice, the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
 
 {lang=bash,line-numbers=off}
-
 ```
- pipenv run pytest -s
+
+pipenv run pytest -s
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
 rootdir: /opt/quart-mysql-boilerplate
@@ -1147,8 +1120,8 @@ Creating test client
 .Closing down app
 Destroying db
 
-
 =========================== 1 passed in 0.11 seconds ===========================
+
 ```
 
 This gives us a good insight of when things are called and the order of operations of our fixtures. Notice that the “Starting app” and “Closing down app” are coming from the `application.py` print statements.
@@ -1156,15 +1129,16 @@ This gives us a good insight of when things are called and the order of operatio
 We’ll add just one more test to mark this part complete. I want to evaluate if I hit the page a second time, I get the number two in the counter.
 
 {lang=python,line-numbers=on,starting-line-number=24}
-
 ```
+
 @pytest.mark.asyncio
 async def test_second_response(
-    create_test_app, create_test_client, create_counter_tables
+create_test_app, create_test_client, create_counter_tables
 ):
-    response = await create_test_client.get("/")
-    body = await response.get_data()
-    assert "Counter: 2" in str(body)
+response = await create_test_client.get("/")
+body = await response.get_data()
+assert "Counter: 2" in str(body)
+
 ```
 
 We’ll mark the test as async and we will also need the fixtures we used in the previous test as well as the `create_test_app` fixture itself, since we’ll be interacting with the application context.
@@ -1174,8 +1148,8 @@ First, we generate a response from the homepage and check if we get the “Count
 Let’s now check if the database has the right value. To do that, we need to interact with the models, which means we will need an app context. We’ll do that with the following:
 
 {lang=python,line-numbers=on,starting-line-number=33}
-
 ```
+
     async with create_test_app.app_context():
         conn = current_app.sac
         counter_query = select([counter_table.c.count])
@@ -1183,6 +1157,7 @@ Let’s now check if the database has the right value. To do that, we need to in
         result_row = await result.first()
         count = result_row[counter_table.c.count]
         assert count == 2
+
 ```
 
 First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
@@ -1190,8 +1165,8 @@ First we create an async context with the `with` Python keyword. Inside the bloc
 Save the file[^4] and run the tests.
 
 {lang=bash,line-numbers=on}
-
 ```
+
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1199,9 +1174,10 @@ rootdir: /opt/quart-mysql-boilerplate
 plugins: asyncio-0.10.0
 collected 2 items
 
-counter/test_counter.py ..                                               [100%]
+counter/test_counter.py .. [100%]
 
 =========================== 2 passed in 0.13 seconds ===========================
+
 ```
 
 Looks good!
@@ -1212,3 +1188,7 @@ And with that we have a working MySQL based Quart application with testing. We c
 [^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
 [^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
 [^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
+
+```
+
+```
