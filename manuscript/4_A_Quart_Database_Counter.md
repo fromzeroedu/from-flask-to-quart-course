@@ -798,13 +798,15 @@ Exit the Postgres server and we should be ready to run our application.
 
 For local development run the application using:
 
-{lang=bash,line-numbers=off}```
+{lang=bash,line-numbers=off}
+```
 $ poetry run quart run
 ```
 
 For Docker, we can start the whole cluster as follows:
 
-{lang=bash,line-numbers=off}```
+{lang=bash,line-numbers=off}
+```
 docker-compose up
 ```
 
@@ -824,7 +826,8 @@ In our synchronous applications we had used `unittest`, but for asynchronous app
 
 So let’s begin by adding those libraries to the application. So just do:
 
-{lang=bash,line-numbers=off}```
+{lang=bash,line-numbers=off}
+```
 $ pipenv install pytest pytest-asyncio
 ```
 
@@ -844,7 +847,6 @@ First, we’ll add the necessary imports we’ll use.
 
 {lang=python,line-numbers=on}
 ```
-
 import pytest
 import asyncio
 import os
@@ -854,7 +856,6 @@ from sqlalchemy import create_engine
 load_dotenv(".quartenv")
 
 from application import create_app
-
 ```
 
 Make sure to place the `load_dotenv` command before the `create_app` factory instantiation so that the environment variables are set.
@@ -863,7 +864,6 @@ We will now create the database instantiation part of our test, so let’s write
 
 {lang=python,line-numbers=on,starting-line-number=13}
 ```
-
 @pytest.mark.asyncio
 @pytest.fixture(scope="module")
 async def create_db():
@@ -900,7 +900,6 @@ db_password = os.environ["DB_PASSWORD"]
     conn.execute("DROP DATABASE " + db_name)
     conn.execute("COMMIT")
     conn.close()
-
 ```
 
 First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
@@ -917,14 +916,12 @@ Next, let’s create the Quart application itself.
 
 {lang=python,line-numbers=on,starting-line-number=55}
 ```
-
 @pytest.fixture(scope="module")
 async def create_test_app(create_db):
 app = create_app(\*\*create_db)
 await app.startup()
 yield app
 await app.shutdown()
-
 ```
 
 This also needs to be a module-level fixture and we will inject the `create_db` fixture to it as a dependency. That’s right, you can inject fixtures in other fixtures — but again, remember to limit the number of fixture layers to keep your tests manageable, like I mentioned earlier.
@@ -933,40 +930,33 @@ We then create an instance of the factory `create_app` function and then call th
 
 {lang=python,line-numbers=on,starting-line-number=22}
 ```
-
     @app.before_serving
     async def create_db_conn():
         print("Starting app")
         app.sac = await sa_connection()
-
 ```
 
 We then yield the app itself to the calling test and once the tests are done, we do the `shutdown` method of the Quart app which calls the `after_serving` function in our `application.py`.
 
 {lang=python,line-numbers=on,starting-line-number=27}
 ```
-
     @app.after_serving
     async def close_db_conn():
         print("Closing down app")
         await app.sac.close()
-
 ```
 
 One thing I want you to notice, in the instantiation of the `create_app` we are passing the `create_db` fixture returned with a double asterisk in front of it:
 
 {lang=python,line-numbers=on,starting-line-number=57}
 ```
-
 app = create_app(\*\*create_db)
-
 ```
 
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
 
 {lang=python,line-numbers=on,starting-line-number=13}
 ```
-
     # apply overrides for tests
     app.config.update(config_overrides)
 
@@ -976,21 +966,17 @@ This is exactly why, so that we can instantiate test apps with different configu
 
 {lang=python,line-numbers=on,starting-line-number=57}
 ```
-
 app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB_PASSWORD']...)
-
 ```
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
 {lang=python,line-numbers=on,starting-line-number=63}
 ```
-
 @pytest.fixture
 def create_test_client(create_test_app):
 print("Creating test client")
 return create_test_app.test_client()
-
 ```
 
 We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
@@ -1003,7 +989,6 @@ Now let’s create our actual test. Create a file called `test_counter` inside t
 
 {lang=python,line-numbers=on,starting-line-number=1}
 ```
-
 import pytest
 from quart import current_app
 from sqlalchemy import create_engine, select
@@ -1016,7 +1001,6 @@ print("Creating Counter Tables")
 engine = create_engine(create_db["DB_URI"] + "/" + create_db["DATABASE_NAME"])
 CounterMetadata.bind = engine
 CounterMetadata.create_all()
-
 ```
 
 First we do the necessary imports. We’re going to need the counter models to create the database tables as well as access to their metadata.
@@ -1031,13 +1015,11 @@ Finally we’re ready to create our very first test, so let’s keep it simple. 
 
 {lang=python,line-numbers=on,starting-line-number=17}
 ```
-
 @pytest.mark.asyncio
 async def test_initial_response(create_test_client, create_all):
 response = await create_test_client.get("/")
 body = await response.get_data()
 assert "Counter: 1" in str(body)
-
 ```
 
 We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need both the `create_test_client` fixture as well as the `create_counter_tables` fixture. We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
@@ -1046,7 +1028,6 @@ Save the file[^2] and run the test using `pipenv run pytest`.
 
 {lang=bash,line-numbers=off}
 ```
-
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1063,7 +1044,6 @@ counter/test_counter.py:9: def create_counter_tables(create_db)
 conftest.py:13: def create_db(event_loop)
 .venv/lib/python3.7/site-packages/pytest_asyncio/plugin.py:204: def event_loop(request)
 =========================== 1 error in 0.02 seconds ============================
-
 ```
 
 It fails!
@@ -1072,20 +1052,17 @@ What’s the problem? The issue here is that `pytest` has a built-in function-le
 
 {lang=python,line-numbers=on,starting-line-number=14}
 ```
-
 @pytest.fixture(scope="module")
 def event_loop(request):
 loop = asyncio.get_event_loop()
 yield loop
 loop.close()
-
 ```
 
 Save the file[^3] and run the test again.
 
 {lang=bash,line-numbers=off}
 ```
-
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1096,7 +1073,6 @@ collected 1 item
 counter/test_counter.py . [100%]
 
 =========================== 1 passed in 0.19 seconds ===========================
-
 ```
 
 Perfect! We now get a green line and the test passed label.
@@ -1105,7 +1081,6 @@ But if you notice, the print statements we added aren’t being printed. For tho
 
 {lang=bash,line-numbers=off}
 ```
-
 pipenv run pytest -s
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1121,7 +1096,6 @@ Creating test client
 Destroying db
 
 =========================== 1 passed in 0.11 seconds ===========================
-
 ```
 
 This gives us a good insight of when things are called and the order of operations of our fixtures. Notice that the “Starting app” and “Closing down app” are coming from the `application.py` print statements.
@@ -1130,7 +1104,6 @@ We’ll add just one more test to mark this part complete. I want to evaluate if
 
 {lang=python,line-numbers=on,starting-line-number=24}
 ```
-
 @pytest.mark.asyncio
 async def test_second_response(
 create_test_app, create_test_client, create_counter_tables
@@ -1138,7 +1111,6 @@ create_test_app, create_test_client, create_counter_tables
 response = await create_test_client.get("/")
 body = await response.get_data()
 assert "Counter: 2" in str(body)
-
 ```
 
 We’ll mark the test as async and we will also need the fixtures we used in the previous test as well as the `create_test_app` fixture itself, since we’ll be interacting with the application context.
@@ -1149,7 +1121,6 @@ Let’s now check if the database has the right value. To do that, we need to in
 
 {lang=python,line-numbers=on,starting-line-number=33}
 ```
-
     async with create_test_app.app_context():
         conn = current_app.sac
         counter_query = select([counter_table.c.count])
@@ -1157,7 +1128,6 @@ Let’s now check if the database has the right value. To do that, we need to in
         result_row = await result.first()
         count = result_row[counter_table.c.count]
         assert count == 2
-
 ```
 
 First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
@@ -1166,7 +1136,6 @@ Save the file[^4] and run the tests.
 
 {lang=bash,line-numbers=on}
 ```
-
 $ pipenv run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
@@ -1177,18 +1146,8 @@ collected 2 items
 counter/test_counter.py .. [100%]
 
 =========================== 2 passed in 0.13 seconds ===========================
-
 ```
 
 Looks good!
 
 And with that we have a working MySQL based Quart application with testing. We can use this as a boilerplate for any project that uses Quart and MySQL.
-
-[^1]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/conftest.py
-[^2]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-6/counter/test\_counter.py
-[^3]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/conftest.py
-[^4]: https://github.com/fromzeroedu/quart-mysql-boilerplate/blob/step-7/counter/test\_counter.py
-
-```
-
-```
