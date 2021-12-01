@@ -841,6 +841,8 @@ The other difference with `unittest` is that `pytest` doesn’t require classes,
 
 To follow Poetry's directory structure recommendations, we'll create a `tests` folder on the root level where the `conftest` and all the tests will live.
 
+Then create an `__init__.py` empty file inside the `tests` folder to make sure it's recognized as a Python module.
+
  Create the `conftest` file inside the `tests` folder and let's start working on it.
 
 First, we’ll add the necessary imports we’ll use.
@@ -863,7 +865,7 @@ Make sure to place the `load_dotenv` command before the `create_app` factory ins
 
 We will now create the database instantiation fixture for all our tests, so let’s write that:
 
-{lang=python,line-numbers=on,starting-line-number=12}
+{lang=python,line-numbers=on,starting-line-number=13}
 ```
 @pytest.mark.asyncio
 @pytest.fixture
