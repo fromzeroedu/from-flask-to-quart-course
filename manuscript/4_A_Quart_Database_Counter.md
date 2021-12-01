@@ -818,8 +818,6 @@ Refreshing the page will increase the counter value. And there you have it, your
 
 ## Testing our Counter Application <!-- 4.7 -->
 
-TODO: continue here...
-
 It’s great that we have a running application, but we know that any application needs good tests to insure it won’t break with new development.
 
 In our synchronous applications we had used `unittest`, but for asynchronous applications, I’ve found that `pytest` is a better fit. `Pytest` also has an `asyncio` library that will allow us to test our code better.
@@ -828,22 +826,26 @@ So let’s begin by adding those libraries to the application. So just do:
 
 {lang=bash,line-numbers=off}
 ```
-$ pipenv install pytest pytest-asyncio
+$ poetry add pytest pytest-asyncio
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
 
 The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
 
-The cool thing about theses fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
+The cool thing about these fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
 
 These fixtures can live in the same test files that use them or you can put them in a special file called `conftest`. Any `conftest` fixtures on a parent directory are available to the tests in the child directories. You’ll get the hang of it as you start building your tests.
 
 The other difference with `unittest` is that `pytest` doesn’t require classes, although they can still be used.
 
-So let’s create our first `conftest` file. Create it on the root application folder.
+To follow Poetry's directory structure recommendations, we'll create a `tests` folder on the root level where the `conftest` and all the tests will live.
+
+ Create the `conftest` file inside the `tests` folder and let's start working on it.
 
 First, we’ll add the necessary imports we’ll use.
+
+# TODO: continue here...
 
 {lang=python,line-numbers=on}
 ```
