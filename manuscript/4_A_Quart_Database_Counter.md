@@ -845,8 +845,6 @@ To follow Poetry's directory structure recommendations, we'll create a `tests` f
 
 First, we’ll add the necessary imports we’ll use.
 
-# TODO: continue here...
-
 {lang=python,line-numbers=on}
 ```
 import pytest
@@ -858,79 +856,105 @@ from sqlalchemy import create_engine
 load_dotenv(".quartenv")
 
 from application import create_app
+from db import metadata
 ```
 
 Make sure to place the `load_dotenv` command before the `create_app` factory instantiation so that the environment variables are set.
 
-We will now create the database instantiation part of our test, so let’s write that:
+We will now create the database instantiation fixture for all our tests, so let’s write that:
 
-{lang=python,line-numbers=on,starting-line-number=13}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
 @pytest.mark.asyncio
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def create_db():
-print("Creating db")
-db_name = os.environ["DATABASE_NAME"] + "\_test"
-db_host = os.environ["DB_HOST"]
-db_root_password = os.environ["MYSQL_ROOT_PASSWORD"]
-if db_root_password:
-db_username = "root"
-db_password = db_root_password
-else:
-db_username = os.environ["DB_USERNAME"]
-db_password = os.environ["DB_PASSWORD"]
+    print("Creating db")
+    db_name = os.environ["DATABASE_NAME"]
+    db_host = os.environ["DB_HOST"]
+    db_username = os.environ["DB_USERNAME"]
+    db_password = os.environ["DB_PASSWORD"]
 
-    db_uri = "mysql+pymysql://%s:%s@%s:3306" % (db_username, db_password, db_host)
+    db_uri = "postgresql://%s:%s@%s:5432/" % (
+        db_username,
+        db_password,
+        db_host,
+    )
 
-    engine = create_engine(db_uri)
+    engine = create_engine(db_uri + db_name)
     conn = engine.connect()
-    conn.execute("CREATE DATABASE " + db_name)
+
+    db_test_name = os.environ["DATABASE_NAME"] + "_test"
+
+    # drop database if exists from previous run
+    try:
+        conn.execute("COMMIT")
+        conn.execute(f"DROP DATABASE {db_test_name} WITH (FORCE)")
+    except:
+        pass
+
     conn.execute("COMMIT")
+    conn.execute("CREATE DATABASE " + db_test_name)
     conn.close()
 
-    yield {
-        "DB_USERNAME": db_username,
-        "DB_PASSWORD": db_password,
-        "DB_HOST": db_host,
-        "DATABASE_NAME": db_name,
-        "DB_URI": db_uri,
-        "TESTING": True,
-    }
-    print("Destroying db")
-    engine = create_engine(db_uri)
-    conn = engine.connect()
-    conn.execute("DROP DATABASE " + db_name)
-    conn.execute("COMMIT")
-    conn.close()
+    print("Creating test tables")
+    engine = create_engine(db_uri + db_test_name)
+    metadata.bind = engine
+    metadata.create_all()
 ```
 
 First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
 
-We also need to tell `pytest` that this is a module-level fixture, which means it will be run only once across any modules that import it, and since this `conftest` is in the root folder of the application, it means it will only be run once for all our tests, and that makes sense: we only need to create the test database once.
+By default all pytest fixtures are function level, which means that pytest will create the database from scrath at the beginning of the function and destroy it at the end of the function. This works well for testing purposes, since each test function will work on isolation. For more complex applications, we can leverage fixtures to pre-load data for some of the tests, but we'll see examples of that later on.
 
-We then load the credentials from the `dotenv` file. Notice how we have an if/else block that uses the root password if it’s present. If you took my Flask course, you know this is necessary for cloud development IDEs like PythonAnywhere where we don’t have root access. We then connect to the database and create the test database.
+We then load the credentials from the `dotenv` file. We then connect to the database and create the test database, which will be called the same as our application database with the string "_test" appended.
 
-Now here’s something you will see often with `pytest` fixtures and that’s the use of the `yield` statement. We’re going to yield the application settings to the next test or fixture that includes it.
+We also want to drop the database by default if it exists. This will let us handle interrupted test runs.
 
-Essentially what yield does is to send the control back to the calling test, and you can define what data you want to share with it here. Once the test is completed, the rest of the commands below the yield are executed, so we will write the database cleanup commands in here. We’ll put some print statements to see the order of operations when we run the tests so we can have a better picture of how the fixture is executed.
+Finally we will create all the tables from the models in the application, using the `sqlalchemy` metadata property.
+
+Now here’s something you will see often with `pytest` fixtures and that’s the use of the `yield` statement. 
+
+{lang=python,line-numbers=on,starting-line-number=49}
+```
+    yield {
+        "DB_USERNAME": db_username,
+        "DB_PASSWORD": db_password,
+        "DB_HOST": db_host,
+        "DATABASE_NAME": db_test_name,
+        "DB_URI": db_uri + db_test_name,
+        "TESTING": True,
+    }
+
+    print("Destroying db")
+    engine = create_engine(db_uri + db_name)
+    conn = engine.connect()
+
+    conn.execute("COMMIT")
+    conn.execute(f"DROP DATABASE {db_test_name} WITH (FORCE)")
+    conn.close()
+```
+
+We’re going to yield the application settings to the next test or fixture that includes it.
+
+Essentially what yield does is to send the control back to the calling test, and you can define what data you want to share with it here. Once the test is completed, the rest of the commands below the yield are executed, so we will write the database cleanup commands in here, which in our case includes destroying the database.
 
 Next, let’s create the Quart application itself.
 
-{lang=python,line-numbers=on,starting-line-number=55}
+{lang=python,line-numbers=on,starting-line-number=67}
 ```
-@pytest.fixture(scope="module")
+@pytest.fixture
 async def create_test_app(create_db):
-app = create_app(\*\*create_db)
-await app.startup()
-yield app
-await app.shutdown()
+    app = create_app(**create_db)
+    await app.startup()
+    yield app
+    await app.shutdown()
 ```
 
-This also needs to be a module-level fixture and we will inject the `create_db` fixture to it as a dependency. That’s right, you can inject fixtures in other fixtures — but again, remember to limit the number of fixture layers to keep your tests manageable, like I mentioned earlier.
+This is also a function-scoped fixture and we will inject the `create_db` fixture to it as a dependency. That’s right: you can inject fixtures in other fixtures — but again, remember to limit the number of fixture layers to keep your tests manageable, like I mentioned earlier. By including `create_db` as a parent fixture to `create_test_app`, we won't need to call `create_db` in our tests, we just include `create_test_app` which in turns guarantees it calls the `create_db` fixture and runs it.
 
-We then create an instance of the factory `create_app` function and then call the Quart app method `startup` which will run the `before_serving` decorated function, which in our app establishes the database connection.
+Inside the fixture, we create an instance of the factory `create_app` function and then call the Quart app method `startup` which will run the `before_serving` decorated function, which in our app establishes the database connection.
 
-{lang=python,line-numbers=on,starting-line-number=22}
+{lang=python,line-numbers=on,starting-line-number=21}
 ```
     @app.before_serving
     async def create_db_conn():
@@ -957,23 +981,22 @@ app = create_app(\*\*create_db)
 
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
 
-{lang=python,line-numbers=on,starting-line-number=13}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
     # apply overrides for tests
     app.config.update(config_overrides)
-
 ```
 
 This is exactly why, so that we can instantiate test apps with different configuration settings. The double asterisk in Python essentially passes the variables returned by `create_db` as a keyword argument list, so it’s the same as writing the following:
 
-{lang=python,line-numbers=on,starting-line-number=57}
+{lang=python,line-numbers=on,starting-line-number=63}
 ```
 app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB_PASSWORD']...)
 ```
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
-{lang=python,line-numbers=on,starting-line-number=63}
+{lang=python,line-numbers=on,starting-line-number=75}
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
@@ -983,50 +1006,33 @@ return create_test_app.test_client()
 
 We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
 
-We don’t need to yield anything in this case since we don’t need to run any cleanups after the test is done. Also notice this is not a module-level fixture which means it will be executed with every test that calls it.
+I just want to highlight how cool fixtures are. We can now just include `create_test_client` in each test, and that will automatically create the database using the `create_db` fixture and create the test application using the `create_test_app` fixture.
 
-Save the file[^1].
+We don’t need to yield anything in this case since we don’t need to run any cleanups after the test is done.
+
+Save the file.
 
 Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
+
+For our first test, We want to be able to see that the counter is started when we first hit the page.
 
 {lang=python,line-numbers=on,starting-line-number=1}
 ```
 import pytest
-from quart import current_app
-from sqlalchemy import create_engine, select
 
-from counter.models import counter_table, metadata as CounterMetadata
 
-@pytest.fixture(scope="module")
-def create_all(create_db):
-print("Creating Counter Tables")
-engine = create_engine(create_db["DB_URI"] + "/" + create_db["DATABASE_NAME"])
-CounterMetadata.bind = engine
-CounterMetadata.create_all()
-```
-
-First we do the necessary imports. We’re going to need the counter models to create the database tables as well as access to their metadata.
-
-So first let’s create a fixture that we’ll only need on this test which is to create the counter tables. We will make it a module-level fixture so that it can access the `create_db` properties (which is also a module level fixture).
-
-To do that we create an engine, but notice we will use the dictionary object passed in the yield statement in `create_db` instead of using the actual settings, since this is this test’s custom settings.
-
-We then bind that engine to the `CounterMetadata` object and finally execute the `create_all` method, which will create the counter tables on the database.
-
-Finally we’re ready to create our very first test, so let’s keep it simple. We want to be able to see that the counter is started when we first hit the page.
-
-{lang=python,line-numbers=on,starting-line-number=17}
-```
 @pytest.mark.asyncio
-async def test_initial_response(create_test_client, create_all):
-response = await create_test_client.get("/")
-body = await response.get_data()
-assert "Counter: 1" in str(body)
+async def test_initial_response(create_test_client):
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 1" in str(body)
 ```
 
 We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need both the `create_test_client` fixture as well as the `create_counter_tables` fixture. We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
 
-Save the file[^2] and run the test using `pipenv run pytest`.
+Save the file and run the test using `poetry run pytest`.
+
+TODO: continue here...
 
 {lang=bash,line-numbers=off}
 ```
