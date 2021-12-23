@@ -14,139 +14,15 @@ However, we don’t need to go back to using raw SQL queries in our codebase. It
 
 We’ll also be using the [`databases`](https://www.encode.io/databases/) package to connect to Postgres asynchronously.
 
-So let’s go ahead and start coding our Quart Postgres counter application.
+So let’s go ahead and start coding our Quart database counter application.
 
 ## Our Development Environment <!-- 4.2 -->
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
-We have two main choices: develop locally or on the cloud.
+One quick thing I want to mention is that we are going to be using Docker fully for this and all of the projects in this course. So there's not going to be instructions on setting up a local database server. We are going to install the Python packages locally so that we can have linting and auto-completion on the code editor, but we are going to be using Docker set up for the application itself, which is the development setup that it's being used today by professional software developers. So with that, let's start with the Docker setup.
 
-For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
-
-We can also develop locally using Docker, which is host OS agnostic.
-
-For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay around $5 dollars per month.
-
-Skip to the one that works for you.
-
-### Installing Postgres on Mac with Homebrew <!-- 4.2.1 -->
-
-Thanks to Homebrew installing MySQL on the Mac is pretty simple.
-
-If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
-
-Just do the following:
-`brew install postgresql`
-
-If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
-
-Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`
-
-### Installing Postgres on Windows with Chocolatey <!-- 4.2.2 -->
-
-Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
-
-If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
-
-Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`.
-
-In this case we're creating root password of "rootpass", but select any password you'd like.
-
-Now close the PowerShell application completely and open a new, regular session.
-
-Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres app_user` and entering the password `app_password`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Installing Postgres on WSL <!-- 4.2.3-->
-
-In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows. In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
-
-This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
-
-Installing WSL requires Windows 10 version 2004 and up, and it's really easy. You just open an administrator Powershell and use the `wsl` coomand.
-
-I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
-
-You can select other Linux distributions to install. You can see a list of the distributions by typing: `wsl --list --online`.
-
-Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
-
-Once on the Ubuntu terminal, let's install some of our dependencies.
-
-First elevate to root by doing `sudo su -` and then install Postgres by using: `apt install -y postgresql`.
-
-After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
-
-Then start Postres by doing: `sudo service postgresql start`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with the `postgres` user by doing:
-`sudo -u postgres psql`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by typing the following: `psql -h localhost -U app_user postgres`. Enter the password: `app_password` when prompted.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Docker Setup <!-- 4.2.4 -->
-
-In this lesson we'll be setting up our development environment using Docker.
-
-You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
+If you haven't done so. you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
 Once you have Docker client running, let's start by creating our `Dockerfile`.
 
