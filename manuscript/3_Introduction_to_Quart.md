@@ -42,7 +42,7 @@ Next, we're going to install the Poetry package manager. Poetry allows us to han
 
 Check if you have Poetry installed by typing `poetry --version` in your terminal. If you don't, follow the Poetry installation instructions in the [Poetry docs page](https://python-poetry.org/docs/#installation).
 
-To create or first Quart application folder, we will use Poetry to set that up for us. So navigate to the folder where you keep your Python applications. It can be your user's home directory or a completely different directory. Just do a `cd` to it.
+To create our first Quart application folder, we will use Poetry to set that up for us. So navigate to the folder where you keep your Python applications. It can be your user's home directory or a completely different directory. Just do a `cd` to it.
 
 Next, let's create a folder for our Quart project, with `mkdir quart-hello` and type `cd quart-hello` to start the process.
 
@@ -79,7 +79,7 @@ Finally we need to make the app start with `app.run()`.
 
 Save the file.
 
-Before we can run it, we need to define some environment variables, just like we did with Flask. In order for that to work, we're going to install the `python-dotenv` library, which allows us to create an `env` file to be loaded when Quart runs. So on the terminal: `poetry add python-dotenv` and then create a `.quartenv` file in the root folder as follows:
+Before we can run it, we need to define some environment variables, just like we did with Flask. In order for that to work, we're going to install the `python-dotenv` library, which allows us to create an `env` file to be loaded when Quart runs. So on the terminal type: `poetry add python-dotenv` and then create a `.quartenv` file in the root folder as follows:
 
 {lang=python,line-numbers=on}
 ```
@@ -103,14 +103,16 @@ For that, we'll create a template folder so that we can render the page more dyn
 
 {lang=html,line-numbers=on}
 ```
-<html>
-  <header>
+<HTML>
+<header>
     <title>Home Page</title>
-  </header>
-  <body>
+</header>
+
+<body>
     <h1>Hello {{ name }}</h1>
-  </body>
-</html>
+</body>
+
+</HTML>
 ```
 
 In the `hello.py` file add `render_template` to the Quart import on line 1:
