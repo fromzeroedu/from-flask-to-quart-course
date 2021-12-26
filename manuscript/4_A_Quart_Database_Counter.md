@@ -4,23 +4,149 @@
 
 In the next few lessons, we’ll build a counter app that will be a good boilerplate application for your Postgres-based Quart projects.
 
-For our original Flask database counter application, we used the Flask-SQLAlchemy ORM libraryr. However, for async projects we can’t use the same library without some form of penalization.
+But before we start writing the application, we need to understand one of the many quirks we’ll see when working with asynchronous applications, and this one is related to database ORMs.
 
-Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it reads or writes. This will mean it cannot handle much concurrent load;[only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
+For our original Flask database boilerplate application, we used SQLAlchemy ORM, the Python Database Object Relational Mapper. However, for async projects we can’t use the same library without some form of penalization.
+
+Flask-SQLAlchemy does work with Quart using the `flask_patch` function we discussed earlier, but it doesn't yield to the event loop when it reads or writes. This will mean it cannot handle much concurrent load — [only a couple of concurrent requests](https://gitter.im/python-quart/lobby?at=5cd1da132e2caa1aa625ef83).
 
 However, we don’t need to go back to using raw SQL queries in our codebase. It just happens that we can use the SQLAlchemy Core package from SQLAlchemy, which allows us to express queries in a nice way without sacrificing performance.
 
 We’ll also be using the [`databases`](https://www.encode.io/databases/) package to connect to Postgres asynchronously.
 
-So let’s go ahead and start coding our Quart database counter application.
+So let’s go ahead and start coding our Quart Postgres counter application.
 
 ## Our Development Environment <!-- 4.2 -->
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
-One quick thing I want to mention is that we are going to be using Docker fully for this and all of the projects in this course. So there's not going to be instructions on setting up a local database server. We are going to install the Python packages locally so that we can have linting and auto-completion on the code editor, but we are going to be using Docker set up for the application itself, which is the development setup that it's being used today by professional software developers. So with that, let's start with the Docker setup.
+We have two main choices: develop locally or on the cloud.
 
-If you haven't done so. you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
+For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
+
+We can also develop locally using Docker, which is host OS agnostic.
+
+For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay around $5 dollars per month.
+
+Skip to the one that works for you.
+
+### Installing Postgres on Mac with Homebrew <!-- 4.2.1 -->
+
+Thanks to Homebrew installing MySQL on the Mac is pretty simple.
+
+If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
+
+Just do the following:
+`brew install postgresql`
+
+If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
+
+Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with your root user:
+`psql postgres`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`
+
+### Installing Postgres on Windows with Chocolatey <!-- 4.2.2 -->
+
+Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
+
+If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
+
+Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`.
+
+In this case we're creating root password of "rootpass", but select any password you'd like.
+
+Now close the PowerShell application completely and open a new, regular session.
+
+Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`.
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with your root user:
+`psql postgres postgres`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by doing `psql postgres app_user` and entering the password `app_password`.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`.
+
+### Installing Postgres on WSL <!-- 4.2.3-->
+
+In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows. In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
+
+This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
+
+Installing WSL requires Windows 10 version 2004 and up, and it's really easy. You just open an administrator Powershell and use the `wsl` coomand.
+
+I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
+
+You can select other Linux distributions to install. You can see a list of the distributions by typing: `wsl --list --online`.
+
+Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
+
+Once on the Ubuntu terminal, let's install some of our dependencies.
+
+First elevate to root by doing `sudo su -` and then install Postgres by using: `apt install -y postgresql`.
+
+After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
+
+Then start Postres by doing: `sudo service postgresql start`.
+
+It’s a good practice to create the database with a specific user and password and not use the root user from the application.
+
+We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
+
+So, login to Postgres with the `postgres` user by doing:
+`sudo -u postgres psql`.
+
+Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
+
+Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
+
+Logout using `\q` and now login using the `app_user` by typing the following: `psql -h localhost -U app_user postgres`. Enter the password: `app_password` when prompted.
+
+Next, we'll create the app database: `CREATE DATABASE app;`.
+
+You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
+
+You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
+
+Logout using `\q`.
+
+### Docker Setup <!-- 4.2.4 -->
+
+In this lesson we'll be setting up our development environment using Docker.
+
+You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
 Once you have Docker client running, let's start by creating our `Dockerfile`.
 
@@ -904,46 +1030,40 @@ async def test_initial_response(create_test_client):
     assert "Counter: 1" in str(body)
 ```
 
-We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need both the `create_test_client` fixture as well as the `create_counter_tables` fixture. We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
+We need to decorate it as an `asyncio` test, since we’ll be doing I/O operations. We’ll also need the `create_test_client` fixture which will be seting up the test client and its dependencies. 
+
+We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
 
 Save the file and run the test using `poetry run pytest`.
 
-TODO: continue here...
-
 {lang=bash,line-numbers=off}
 ```
-$ pipenv run pytest
-============================= test session starts ==============================
-platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
-rootdir: /opt/quart-mysql-boilerplate
-plugins: asyncio-0.10.0
-collected 1 item
+$ poetry run pytest
+================================== test session starts ==================================
+platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
+rootdir: /opt/quart-db-boilerplate
+plugins: asyncio-0.16.0
+collected 1 item                                                                        
 
-counter/test_counter.py E [100%]
+tests/test_counter.py F                                                           [100%]
 
-==================================== ERRORS ====================================
-**\*\*\*\***\_\_\_**\*\*\*\*** ERROR at setup of test_initial_response **\*\*\*\***\_\_\_\_**\*\*\*\***
-ScopeMismatch: You tried to access the 'function' scoped fixture 'event_loop' with a 'module' scoped request object, involved factories
-counter/test_counter.py:9: def create_counter_tables(create_db)
-conftest.py:13: def create_db(event_loop)
-.venv/lib/python3.7/site-packages/pytest_asyncio/plugin.py:204: def event_loop(request)
-=========================== 1 error in 0.02 seconds ============================
+======================================= FAILURES ========================================
+_________________________________ test_initial_response _________________________________
+
 ```
 
 It fails!
 
-What’s the problem? The issue here is that `pytest` has a built-in function-level event loop that’s not persisted across functions, so we need to grab an event loop at the very top so that this one is persisted. Let’s add it on the `conftest` file.
+What’s the problem? The issue here is that we don't have the `counter` model referenced anywhere, and when the `create_all` method is called on line 56 of the `conftest.py` file, there are no references to any models to be created.
 
-{lang=python,line-numbers=on,starting-line-number=14}
+So on line 3 of the `test_counter.py` file, add the following:
+
+{lang=python,line-numbers=on,starting-line-number=3}
 ```
-@pytest.fixture(scope="module")
-def event_loop(request):
-loop = asyncio.get_event_loop()
-yield loop
-loop.close()
+from counter.models import counter_table
 ```
 
-Save the file[^3] and run the test again.
+Save the file and run the test again.
 
 {lang=bash,line-numbers=off}
 ```
@@ -959,79 +1079,135 @@ counter/test_counter.py . [100%]
 =========================== 1 passed in 0.19 seconds ===========================
 ```
 
-Perfect! We now get a green line and the test passed label.
+Perfect! We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
 
-But if you notice, the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
+If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
 
 {lang=bash,line-numbers=off}
 ```
-pipenv run pytest -s
-============================= test session starts ==============================
-platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
-rootdir: /opt/quart-mysql-boilerplate
-plugins: asyncio-0.10.0
-collected 1 item
+$ poetry run pytest -s
+================================== test session starts ==================================
+platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
+rootdir: /opt/quart-db-boilerplate
+plugins: asyncio-0.16.0
+collected 1 item                                                                        
 
-counter/test_counter.py Creating db
-Creating Counter Tables
-Starting app
+tests/test_counter.py Creating db
+Creating test tables
 Creating test client
-.Closing down app
-Destroying db
+.Destroying db
 
 =========================== 1 passed in 0.11 seconds ===========================
 ```
 
-This gives us a good insight of when things are called and the order of operations of our fixtures. Notice that the “Starting app” and “Closing down app” are coming from the `application.py` print statements.
+This gives us a good insight of when things are called and the order of operations of our fixtures.
 
 We’ll add just one more test to mark this part complete. I want to evaluate if I hit the page a second time, I get the number two in the counter.
 
-{lang=python,line-numbers=on,starting-line-number=24}
+{lang=python,line-numbers=on,starting-line-number=13}
 ```
 @pytest.mark.asyncio
-async def test_second_response(
-create_test_app, create_test_client, create_counter_tables
-):
-response = await create_test_client.get("/")
-body = await response.get_data()
-assert "Counter: 2" in str(body)
+async def test_second_response(create_test_client):
+    # Counter 1
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+
+    # Counter 2
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 2" in str(body)
 ```
 
-We’ll mark the test as async and we will also need the fixtures we used in the previous test as well as the `create_test_app` fixture itself, since we’ll be interacting with the application context.
+We’ll mark the test as async and we will also need the `create_test_client` fixture we used in the previous test.
 
-First, we generate a response from the homepage and check if we get the “Counter: 2” label. Something you will notice different here as compared to the `unittest` library behavior we saw in the past is that the database is _not_ reset between tests. We would have to manually do that by calling the `CounterMetadata.drop_all()` method.
+First, we generate a response from the homepage which should set to counter's value to "1".  That is because the database is being destroyed and created with each new `pytest` function that runs.
 
-Let’s now check if the database has the right value. To do that, we need to interact with the models, which means we will need an app context. We’ll do that with the following:
+Since we test that the counter value is set to "1" on the first run within the previous test, there's no need to check the value.
 
-{lang=python,line-numbers=on,starting-line-number=33}
+Then we hit the page a second time, and this time we assert that the value is indeed "2", if everything is working correctly.
+
+Run the test to see the result:
+
+{lang=bash,line-numbers=off}
 ```
+poetry run pytest -s
+================================== test session starts ==================================
+platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
+rootdir: /opt/quart-db-boilerplate
+plugins: asyncio-0.16.0
+collected 2 items                                                                       
+
+tests/test_counter.py Creating db
+Creating test tables
+Creating test client
+.Destroying db
+Creating db
+Creating test tables
+Creating test client
+.Destroying db
+
+
+=================================== 2 passed in 1.25s ===================================
+```
+
+As you can see from the output, the database was created and destroyed twice.
+
+But now, let's say we want to actually check if the value in the counter collection on the database is indeed "2". To do that, we need to interact with the models, which means we will need an app context. We’ll do that with the following code.
+
+First, we need to import the `current_app` module from Quart to be able to get the database connection. So on line 2 add the following:
+
+{lang=python,line-numbers=on,starting-line-number=2}
+```
+from quart import current_app
+```
+
+Then, add the `create_test_app` fixture to the `test_secord_response` function:
+
+{lang=python,line-numbers=on,starting-line-number=15}
+```
+async def test_second_response(create_test_client, create_test_app):
+```
+
+Then, let's add the code to read the counter value directly from the counter collection.
+
+{lang=python,line-numbers=on,starting-line-number=25}
+```
+    # check on the model itself
     async with create_test_app.app_context():
-        conn = current_app.sac
-        counter_query = select([counter_table.c.count])
-        result = await conn.execute(counter_query)
-        result_row = await result.first()
-        count = result_row[counter_table.c.count]
+        conn = current_app.dbc
+        counter_query = counter_table.select()
+        result = await conn.fetch_all(counter_query)
+        result_row = result[0]
+        count = result_row["count"]
         assert count == 2
 ```
 
-First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart`current_app`context’s SQL connection object `sac`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
+First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart `current_app` context’s SQL connection object `dbc`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
 
-Save the file[^4] and run the tests.
+Save the file and run the tests.
 
 {lang=bash,line-numbers=on}
 ```
-$ pipenv run pytest
-============================= test session starts ==============================
-platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
-rootdir: /opt/quart-mysql-boilerplate
-plugins: asyncio-0.10.0
-collected 2 items
+poetry run pytest -s
+================================== test session starts ==================================
+platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
+rootdir: /opt/quart-db-boilerplate
+plugins: asyncio-0.16.0
+collected 2 items                                                                       
 
-counter/test_counter.py .. [100%]
+tests/test_counter.py Creating db
+Creating test tables
+Creating test client
+.Destroying db
+Creating db
+Creating test tables
+Creating test client
+.Destroying db
 
-=========================== 2 passed in 0.13 seconds ===========================
+
+=================================== 2 passed in 1.28s ===================================
 ```
 
 Looks good!
 
-And with that we have a working MySQL based Quart application with testing. We can use this as a boilerplate for any project that uses Quart and MySQL.
+And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
