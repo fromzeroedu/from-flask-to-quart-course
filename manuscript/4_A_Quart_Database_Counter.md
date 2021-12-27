@@ -22,11 +22,18 @@ We now need two services to be running for our application: the Quart web server
 
 We have two main choices: develop locally or on the cloud.
 
+<!-- for Video Course only -->
+<!-- 
+For this and all of my other courses, I will be focusing on developing locally using Docker, as this is the preferred development environment used by professional teams. If you haven't used Docker before, don't worry, just follow the instructions. I also have a Docker for Flask course if you want to learn more about Docker.
+
+So let's go ahead and set up our local Docker development environment.
+-->
+
 For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
 
 We can also develop locally using Docker, which is host OS agnostic.
 
-For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay around $5 dollars per month.
+For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay their monthly cost.
 
 Skip to the one that works for you.
 
