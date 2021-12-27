@@ -20,14 +20,14 @@ So let’s go ahead and start coding our Quart Postgres counter application.
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
-We have two main choices: develop locally or on the cloud.
-
 <!-- for Video Course only -->
 <!-- 
 For this and all of my other courses, I will be focusing on developing locally using Docker, as this is the preferred development environment used by professional teams. If you haven't used Docker before, don't worry, just follow the instructions. I also have a Docker for Flask course if you want to learn more about Docker.
 
 So let's go ahead and set up our local Docker development environment.
 -->
+
+We have two main choices: develop locally or on the cloud.
 
 For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
 
@@ -153,7 +153,7 @@ Logout using `\q`.
 
 In this lesson we'll be setting up our development environment using Docker.
 
-You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
+First, you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
 Once you have Docker client running, let's start by creating our `Dockerfile`.
 
