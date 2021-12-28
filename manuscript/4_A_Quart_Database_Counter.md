@@ -20,13 +20,20 @@ So let’s go ahead and start coding our Quart Postgres counter application.
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
+<!-- for Video Course only -->
+<!-- 
+For this and all of my other courses, I will be focusing on developing locally using Docker, as this is the preferred development environment used by professional teams. If you haven't used Docker before, don't worry, just follow the instructions. I also have a Docker for Flask course if you want to learn more about Docker.
+
+So let's go ahead and set up our local Docker development environment.
+-->
+
 We have two main choices: develop locally or on the cloud.
 
 For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
 
 We can also develop locally using Docker, which is host OS agnostic.
 
-For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay around $5 dollars per month.
+For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay their monthly cost.
 
 Skip to the one that works for you.
 
@@ -146,14 +153,14 @@ Logout using `\q`.
 
 In this lesson we'll be setting up our development environment using Docker.
 
-You need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
+First, you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
 Once you have Docker client running, let's start by creating our `Dockerfile`.
 
 First, create the directory where the application will live. You can create this directory inside your user's home directory.
 
-If you plan to use a diretory outside your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
-
+If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
+ 
 So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 
 Now `cd` into your application folder and open a code editor to create the `Dockerfile`. It looks like this:
@@ -198,7 +205,7 @@ EXPOSE 5000
 CMD poetry run quart run --host 0.0.0.0
 ```
 
-First we define the base image as the Ubuntu 20.04 image.
+First we define the base image as an Ubuntu 20.04 image.
 
 Next we install all the Ubuntu packages we will need. We'll also turn off the disruptive pip version check prompts.
 
@@ -206,7 +213,7 @@ Next, we install Poetry using `pip3`.
 
 We then create the `counter_app` directory in the Docker instance and set it as the default location for the code.
 
-At this point we need to set up Poetry, so we copy both the `pyproject` and the `poetry.lock` files to prepare to install. We then set come flags for Poetry to work best and install all the packages.
+At this point we need to set up Poetry, so we copy the `pyproject.toml` file to prepare the install. We then set some flags for Poetry to work best and install all the packages.
 
 Right after that, we copy the contents of the local directory into the `counter_app` directory using the `COPY` command.
 
@@ -251,15 +258,15 @@ The first service is the web application which we are calling `web`. We instruct
 
 Next we open up port 5000 both in the host as well as in the container, as this will be the port that Quart is assigned to listen on.
 
-Then we mount the current host's (Windows or Mac computer)directory as a volume inside the container, which will be aliased `counter_app`. This will allow us to code on the host machine and propagate those changes in the container instantly.
+Then we mount the current host's (Windows or Mac computer) directory as a volume inside the container, which will be mounted as  `counter_app`. This will allow us to code on the host machine and propagate those changes in the container instantly.
 
 The `links` statement describes that this container is connected to another service which we will call `db`, but inside the container it will be reachable as `postgres`.
 
 We then assign the name of the container to be `app_web_1` and instrust Docker Compose that it depends on the `db` service to be up.
 
-The next two statements, `stdin_open` abd `tty` are added so that we can execute the Python debugger and examine it from outside the container.
+The next two statements, `stdin_open` and `tty` are added so that we can execute the Python debugger and examine it from outside the container.
 
-The rest of the file is the environment variables. As you can see they are the same ones defined on the `.quartenv` file.
+The rest of the web service definition is the environment variables. As you can see they are the similar to the ones we defined on the `.quartenv` file on our previous lesson, with some extra ones for the database user and password.
 
 Next we'll define the Postgres database docker instance:
 
@@ -277,7 +284,7 @@ Next we'll define the Postgres database docker instance:
       POSTGRES_DB: app
 ```
 
-This is file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
+This file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
 
 Save the file.
 
@@ -289,15 +296,17 @@ So let’s go ahead and start setting up our Quart counter application. Like I�
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
+<!-- Skip for the videos -->
 Start by creating the folder for the project. I'll name mine `counter_app`: `mkdir counter_app`
 
 Change to that directory: `cd counter_app`.
+<!-- /Skip for the videos -->
 
-Change to the directory, and let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
+Let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
 So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 
-This will write the `pyproject` but won't install the packages.
+This will write the `pyproject.toml` but won't install the packages.
 
 Now let's create the Quart environment variables that will be loaded to our environment by `python-dotenv`.
 
@@ -350,7 +359,8 @@ So open the `pyproject.toml` file and add the following on the `[tool.poetry.dep
 {lang=python,line-numbers=on,starting-line-number=11}
 ```
 psycopg2-binary = "2.9.1"
-databases = {version = "0.4.1", extras = ["postgresql"]}sqlalchemy = "1.4"
+databases = {version = "0.4.1", extras = ["postgresql"]}
+sqlalchemy = "1.4"
 ```
 
 Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
