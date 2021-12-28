@@ -28,7 +28,7 @@ RUN poetry config virtualenvs.create true \
 # now copy all the files in this directory to /code
 COPY . .
 
-# Listen to port 500 at runtime
+# Listen to port 5000 at runtime
 EXPOSE 5000
 
 # Define our command to be run when launching the container
