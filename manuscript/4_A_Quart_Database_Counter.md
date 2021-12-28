@@ -159,8 +159,8 @@ Once you have Docker client running, let's start by creating our `Dockerfile`.
 
 First, create the directory where the application will live. You can create this directory inside your user's home directory.
 
-If you plan to use a diretory outside your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
-
+If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
+ 
 So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 
 Now `cd` into your application folder and open a code editor to create the `Dockerfile`. It looks like this:
@@ -205,7 +205,7 @@ EXPOSE 5000
 CMD poetry run quart run --host 0.0.0.0
 ```
 
-First we define the base image as the Ubuntu 20.04 image.
+First we define the base image as an Ubuntu 20.04 image.
 
 Next we install all the Ubuntu packages we will need. We'll also turn off the disruptive pip version check prompts.
 
@@ -213,7 +213,7 @@ Next, we install Poetry using `pip3`.
 
 We then create the `counter_app` directory in the Docker instance and set it as the default location for the code.
 
-At this point we need to set up Poetry, so we copy both the `pyproject` and the `poetry.lock` files to prepare to install. We then set come flags for Poetry to work best and install all the packages.
+At this point we need to set up Poetry, so we copy the `pyproject.toml` file to prepare the install. We then set some flags for Poetry to work best and install all the packages.
 
 Right after that, we copy the contents of the local directory into the `counter_app` directory using the `COPY` command.
 
