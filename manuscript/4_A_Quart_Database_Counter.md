@@ -20,142 +20,20 @@ So let’s go ahead and start coding our Quart Postgres counter application.
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
-<!-- for Video Course only -->
-<!-- 
 For this and all of my other courses, I will be focusing on developing locally using Docker, as this is the preferred development environment used by professional teams. If you haven't used Docker before, don't worry, just follow the instructions. I also have a Docker for Flask course if you want to learn more about Docker.
 
 So let's go ahead and set up our local Docker development environment.
--->
-
-We have two main choices: develop locally or on the cloud.
-
-For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
-
-We can also develop locally using Docker, which is host OS agnostic.
-
-For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay their monthly cost.
-
-Skip to the one that works for you.
-
-### Installing Postgres on Mac with Homebrew <!-- 4.2.1 -->
-
-Thanks to Homebrew installing MySQL on the Mac is pretty simple.
-
-If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
-
-Just do the following:
-`brew install postgresql`
-
-If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
-
-Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`
-
-### Installing Postgres on Windows with Chocolatey <!-- 4.2.2 -->
-
-Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
-
-If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
-
-Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`.
-
-In this case we're creating root password of "rootpass", but select any password you'd like.
-
-Now close the PowerShell application completely and open a new, regular session.
-
-Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres app_user` and entering the password `app_password`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Installing Postgres on WSL <!-- 4.2.3-->
-
-In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows. In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
-
-This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
-
-Installing WSL requires Windows 10 version 2004 and up, and it's really easy. You just open an administrator Powershell and use the `wsl` coomand.
-
-I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
-
-You can select other Linux distributions to install. You can see a list of the distributions by typing: `wsl --list --online`.
-
-Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
-
-Once on the Ubuntu terminal, let's install some of our dependencies.
-
-First elevate to root by doing `sudo su -` and then install Postgres by using: `apt install -y postgresql`.
-
-After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
-
-Then start Postres by doing: `sudo service postgresql start`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with the `postgres` user by doing:
-`sudo -u postgres psql`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by typing the following: `psql -h localhost -U app_user postgres`. Enter the password: `app_password` when prompted.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Docker Setup <!-- 4.2.4 -->
-
-In this lesson we'll be setting up our development environment using Docker.
 
 First, you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
-Once you have Docker client running, let's start by creating our `Dockerfile`.
+Once you have Docker client running, you can check if it's properly installed, by typing the following on your terminal:
+
+{lang=bash,line-numbers=off}
+```
+$ docker run hello-world
+```
+
+If you see a welcome message, everything is good to go. Let's start by creating our `Dockerfile`.
 
 First, create the directory where the application will live. You can create this directory inside your user's home directory.
 
@@ -245,7 +123,7 @@ services:
     environment:
       PORT: 5000
       SECRET_KEY: "you-will-never-guess"
-      DEBUG: 1 # can't pass True here, but 1 works
+      QUART_ENV: development
       DB_USERNAME: app_user
       DB_PASSWORD: app_password
       DB_HOST: postgres
@@ -296,15 +174,14 @@ So let’s go ahead and start setting up our Quart counter application. Like I�
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
-<!-- Skip for the videos -->
-Start by creating the folder for the project. I'll name mine `counter_app`: `mkdir counter_app`
-
-Change to that directory: `cd counter_app`.
-<!-- /Skip for the videos -->
-
 Let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So type the following command: 
+
+{lang=bash,line-numbers=off}
+```
+$ poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+```
 
 This will write the `pyproject.toml` but won't install the packages.
 
@@ -323,9 +200,9 @@ DB_HOST=localhost
 DATABASE_NAME=app
 ```
 
-First, the `QUART_APP` will be small kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course.
+First, the `QUART_APP` will be the kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course.
 
-Next the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
+Next we’ll define the `QUART_ENV` environment as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
 
 The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. We'll use a generic `app` prefix for the user, password and database so that we don't have to worry when we use the same code for other applications.
 
@@ -348,7 +225,7 @@ As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and lo
 
 ## Application Setup <!-- 4.4 -->
 
-At this point we’re ready to start building our Quart counter application. You should have the Postgres server up and running with your counter database and user.
+At this point we’re ready to start building our Quart counter application. You should have the Docker Postgres server up and running with your `app` database and user.
 
 We’ll install some database packages we will need. The first is `psycopg2-binary`, a library that allows Python applications to connect to Postgres databases. We'll also install the `databases` package that allows async connection to databases.
 
@@ -468,7 +345,7 @@ We begin by fetching our database connection from the `current_app.dbc`.
 
 Next we build a query which will select all the records in the `counter_table` . In this application it will always be just one record as you’ll see below. We’ll get more familiar with the `select` function from `sqlalchemy`, but for now just think of this as doing a `SELECT * FROM counter_table`.
 
-We then feed the result of the query to the `result` variable, but notice the use of the `await` keyword there. Indeed the connection execution is an asynchronous operation that will resolve into a coroutine which will eventually resolve with the data we need.
+We then feed the result of the query to the `result` variable, but notice the use of the `await` keyword there. Indeed the connection execution is an asynchronous operation that will resolve into a coroutine which will eventually return the data we need.
 
 We’ll also set an internal variable of `count` to `None`.
 
@@ -563,36 +440,20 @@ alembic = "1.6.5"
 
 We will now initialize the migration setup which will create both an `alembic.ini` and a `migrations` folder.
 
-First, we need to install all the Poetry packages we've added. The command is different if are using Docker or if you are running Postgres locally.
+But before that, we need to install all the Poetry packages we've added. 
 
-If you are doing local development on Mac or Windows, type:
+So type:
 
 {lang=bash,line-numbers=off}
 ```
 $ poetry install
 ```
 
-If you are using Docker, type the following:
-
-{lang=bash,line-numbers=off}
-```
-$ docker-compose run --rm web poetry install
-```
-
-Now we're ready for our first migration. Again, the command is different if are using Docker or if you are running Postgres locally.
-
-If you are doing local development on Mac or Windows, make sure you are running Postgres, and then type:
+Now we're ready for our first migration. Just type:
 
 {lang=bash,line-numbers=off}
 ```
 $ poetry run alembic init migrations
-```
-
-If you are using Docker, type the following:
-
-{lang=bash,line-numbers=off}
-```
-$ docker-compose run --rm web poetry run alembic init migrations
 ```
 
 You’ll notice there's a new file, `env.py` inside a new `migrations` folder. There's also a new file called `alembic.ini` in the root folder.
@@ -601,7 +462,7 @@ We need to tell `alembic` three things.
 
 - First, we need it to use our environment variables to connect to the database.
 - Second we need to tell it what models our application uses and finally,
-- We need to tell it how to connect to the database.
+- Third, we need to tell it how to connect to the database.
 
 So let’s begin setting up the environment variables in the `migrations/env.py` file.
 
@@ -674,25 +535,27 @@ And with this, we’re ready to run our first migration.
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
-So we’ll create our first “migration commit”. It will be different if you are using Docker or not, so don't type anything yet.
+However, we haven't created our Docker instances yet, so let's go ahead and do that. On the terminal, type:
 
-For local development we will use:
+{lang=bash,line-numbers=off}
+```
+$ docker-compose up --build
+```
+
+This tells Docker to build all the services on the `docker-compose.yml` file. If the images are not stored locally, they will be downloaded and then the containers will be built with your specs.
+
+Since we haven't done a migration, the app instance might crash. This is fine for now, just make sure that the Postgres instance is stil up and running.
+
+So now we're ready to create our first “migration commit”. For that just type:
 
 {lang=bash,line-numbers=off}
 ```
 $ poetry run alembic revision --autogenerate -m "create counter table"
 ```
 
-For Docker, you will use:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
-```
-
 Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
-Make sure your Postgres server is up and running, then execute the migration command according to your environment, and you should see something like the following:
+We then execute the migration command, and you should see something like the following:
 
 {lang=bash,line-numbers=off}
 ```
@@ -746,18 +609,9 @@ As you can see, there are three sections: one that holds what revision this is a
 
 This looks good to me, so let’s apply these changes on the database by doing the following.
 
-For local development we will use:
-
 {lang=bash,line-numbers=off}
 ```
 $ poetry run alembic upgrade head
-```
-
-For Docker, you will use:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose run --rm web poetry run alembic upgrade head
 ```
 
 You will see the following:
@@ -771,6 +625,15 @@ INFO  [alembic.runtime.migration] Running upgrade  -> 2abbbb3287d2, create count
 ```
 
 Great, it went smoothly which means the tables were created. We can log in into Postgres and check the tables.
+
+For that, let's connect to Postgres running in our Docker container by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ TODO add docker postgres connection
+```
+
+And from there, you can check that the tables were created:
 
 {lang=mysql,line-numbers=off}
 ```
@@ -806,18 +669,9 @@ revision = '51d999a1e262'
 
 Exit the Postgres server and we should be ready to run our application.
 
-For local development run the application using:
-
 {lang=bash,line-numbers=off}
 ```
 $ poetry run quart run
-```
-
-For Docker, we can start the whole cluster as follows:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose up
 ```
 
 If you open `localhost:5000` you will see the first number of our counter:
@@ -825,6 +679,26 @@ If you open `localhost:5000` you will see the first number of our counter:
 ![Figure 4.8.1](images/4.8.1.png)
 
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
+
+Here's something interesting I want you to notice: the Quart application is running in our host machine, and not from the Docker container, which allows us to debug easily and start and stop it quickly. For example, you can set breakpoints in your code editor and debug easily from there.
+
+But if we want to run the whole application from the Docker containers, do the following:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose up
+```
+
+You will see the application in `localhost:5000`.
+
+And this is very important: if you add any Poetry packages to the application, you will need to rebuild the web container doing the following Docker command:
+
+{lang=bash,line-numbers=off}
+```
+docker build .
+```
+
+That will re-run the Dockerfile script and install any new packages you have added.
 
 ## Testing our Counter Application <!-- 4.7 -->
 
@@ -837,6 +711,13 @@ So let’s begin by adding those libraries to the application. So just do:
 {lang=bash,line-numbers=off}
 ```
 $ poetry add pytest pytest-asyncio
+```
+
+Since we've added new packages, we want to keep our Docker instance in sync, so do:
+
+{lang=bash,line-numbers=off}
+```
+$ docker build .
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
@@ -1077,7 +958,7 @@ Save the file and run the test again.
 
 {lang=bash,line-numbers=off}
 ```
-$ pipenv run pytest
+$ poetry run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
 rootdir: /opt/quart-mysql-boilerplate
@@ -1091,7 +972,7 @@ counter/test_counter.py . [100%]
 
 Perfect! We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
 
-If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
+If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a the `-s` flag to the command, like so: `poetry run pytest -s`.
 
 {lang=bash,line-numbers=off}
 ```
@@ -1198,7 +1079,7 @@ Save the file and run the tests.
 
 {lang=bash,line-numbers=on}
 ```
-poetry run pytest -s
+$ poetry run pytest -s
 ================================== test session starts ==================================
 platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
 rootdir: /opt/quart-db-boilerplate
@@ -1221,3 +1102,10 @@ Creating test client
 Looks good!
 
 And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
+
+If you want to run the tests from the Docker quart web container, you can do:
+
+```
+docker-compose run --rm web poetry run pytest -s
+```
+
