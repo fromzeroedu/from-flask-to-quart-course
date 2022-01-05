@@ -1,7 +1,7 @@
 FROM ubuntu:20.04
 
 # Install packages
-RUN apt-get update %% apt-get install -y \
+RUN apt-get update && apt-get install -y \
     build-essential \
     make \
     gcc \
