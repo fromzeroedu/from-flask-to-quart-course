@@ -223,7 +223,7 @@ DB_HOST = os.environ["DB_HOST"]
 DATABASE_NAME = os.environ["DATABASE_NAME"]
 ```
 
-As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
+As we saw earlier, `python-dotenv` will load the variables in `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
 
 ## Application Setup <!-- 4.4 -->
 
@@ -971,6 +971,8 @@ counter/test_counter.py . [100%]
 
 =========================== 1 passed in 0.19 seconds ===========================
 ```
+
+TODO: RECORDING
 
 Perfect! We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
 
