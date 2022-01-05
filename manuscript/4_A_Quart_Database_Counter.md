@@ -227,7 +227,20 @@ As we saw earlier, `python-dotenv` will load the variables in `.quartenv` and lo
 
 ## Application Setup <!-- 4.4 -->
 
-At this point we’re ready to start building our Quart counter application. You should have the Docker Postgres server up and running with your `app` database and user.
+At this point we’re ready to start building our Quart counter application. 
+
+So start the Docker client if you haven't already, and type the following on your terminal. Make sure you're on the counter application folder.
+
+{lang=bash,line-numbers=off}
+```
+docker-compose up
+```
+
+Docker will start downloading the Postgres and Ubuntu images and set up your containers. Be patient, this might take a few minutes on the first run, but should be faster after that.
+
+When everything is done, you will get an error building the web container, which is expected, but your Docker client should show the database service up and running.
+
+
 
 We’ll install some database packages we will need. The first is `psycopg2-binary`, a library that allows Python applications to connect to Postgres databases. We'll also install the `databases` package that allows async connection to databases.
 
@@ -242,7 +255,7 @@ databases = {version = "0.4.1", extras = ["postgresql"]}
 sqlalchemy = "1.4"
 ```
 
-Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
+Once that’s done, we’ll go ahead and create our database driver file, so create a new file we’ll call `db.py`.
 
 {lang=python,line-numbers=on}
 ```
@@ -435,7 +448,7 @@ We’re now going to install Alembic to be able to do database migrations. If yo
 
 So we’ll install Alembic by adding it to the `pyproject.toml` as follows:
 
-{lang=bash,line-numbers=on,starting-line-number=14}
+{lang=python,line-numbers=on,starting-line-number=14}
 ```
 alembic = "1.6.5"
 ```
