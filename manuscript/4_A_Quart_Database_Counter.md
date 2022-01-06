@@ -240,8 +240,6 @@ Docker will start downloading the Postgres and Ubuntu images and set up your con
 
 When everything is done, you will get an error building the web container, which is expected, but your Docker client should show the database service up and running.
 
-
-
 We’ll install some database packages we will need. The first is `psycopg2-binary`, a library that allows Python applications to connect to Postgres databases. We'll also install the `databases` package that allows async connection to databases.
 
 The third, as we mentioned earlier, is the SQLAlchemy library, but even though we’ll install the whole package, we’ll be using the Core module for our application.
@@ -253,6 +251,23 @@ So open the `pyproject.toml` file and add the following on the `[tool.poetry.dep
 psycopg2-binary = "2.9.1"
 databases = {version = "0.4.1", extras = ["postgresql"]}
 sqlalchemy = "1.4"
+```
+
+We haven't initialized our local Poetry environment, and we want to do that for two reasons:
+
+First, installing the Poetry packages on the host machine allows our code editor to understand the packages and do linting so that we can see issues as we write the code.
+
+Second, this will allow us to do a "hybrid" approach where we run the application on the host machine, but connect to the database on the Docker container, which allows us to run the application as well as tests without having to rebuild the web Docker container. 
+
+For example, in my Visual Studio Code editor, I can have tests run from the UI or start/stop the application with one button. I have added the `vscode` configuration on the repository if you want to add it to your repo by heading over to this URL.
+
+Once the code is good to go, you can re-build the web app container and run the whole stack from Docker.
+
+So stop the Docker compose with Control-C and go ahead and install all the Poetry packages by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ poetry install
 ```
 
 Once that’s done, we’ll go ahead and create our database driver file, so create a new file we’ll call `db.py`.
@@ -645,7 +660,7 @@ For that, let's connect to Postgres running in our Docker container by doing:
 
 {lang=bash,line-numbers=off}
 ```
-$ TODO add docker postgres connection
+$ docker exec -it app_db_1 psql postgres -U app_user
 ```
 
 And from there, you can check that the tables were created:
