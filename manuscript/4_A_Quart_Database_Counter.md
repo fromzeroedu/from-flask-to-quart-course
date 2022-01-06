@@ -97,7 +97,7 @@ Right after that, we copy the contents of the local directory into the `counter_
 
 Once all the code in is place, we open the `5000` port and invoke the `poetry run` command.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.2.1).
 
 Now we need to create a `docker-compose` file that will build up both our application instance as well as the Postgres instance.
 
@@ -164,7 +164,7 @@ Next we'll define the Postgres database docker instance:
 
 This file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.2.2).
 
 We won't start the Docker container yet, as we need a couple of more things in place.
 
@@ -183,7 +183,7 @@ So type the following command:
 $ poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
 ```
 
-This will write the `pyproject.toml` but won't install the packages.
+[This will write](https://fmze.co/fftq-4.3.1) the `pyproject.toml` but won't install the packages.
 
 Now let's create the Quart environment variables that will be loaded to our environment by `python-dotenv`.
 
@@ -206,7 +206,7 @@ Next we’ll define the `QUART_ENV` environment as `development` so that we have
 
 The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. We'll use a generic `app` prefix for the user, password and database so that we don't have to worry when we use the same code for other applications.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.3.2).
 
 We’ll now need to create a `settings.py` file, so we’ll use very similar variables from the `.quartenv` with the following format:
 
@@ -223,7 +223,7 @@ DB_HOST = os.environ["DB_HOST"]
 DATABASE_NAME = os.environ["DATABASE_NAME"]
 ```
 
-As we saw earlier, `python-dotenv` will load the variables in `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
+As we saw earlier, `python-dotenv` will load the variables in `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. [Save the file](https://fmze.co/fftq-4.3.3).
 
 ## Application Setup <!-- 4.4 -->
 
@@ -253,13 +253,15 @@ databases = {version = "0.4.1", extras = ["postgresql"]}
 sqlalchemy = "1.4"
 ```
 
+[Save the file](https://fmze.co/fftq-4.4.1).
+
 We haven't initialized our local Poetry environment, and we want to do that for two reasons:
 
 First, installing the Poetry packages on the host machine allows our code editor to understand the packages and do linting so that we can see issues as we write the code.
 
 Second, this will allow us to do a "hybrid" approach where we run the application on the host machine, but connect to the database on the Docker container, which allows us to run the application as well as tests without having to rebuild the web Docker container. 
 
-For example, in my Visual Studio Code editor, I can have tests run from the UI or start/stop the application with one button. I have added the `vscode` configuration on the repository if you want to add it to your repo by heading over to this URL.
+For example, in my Visual Studio Code editor, I can have tests run from the UI or start/stop the application with one button. I have added the `vscode` configuration on the repository if you want to add it to your folder by heading over [to this URL](https://fmze.co/fftq-4.4.2).
 
 Once the code is good to go, you can re-build the web app container and run the whole stack from Docker.
 
