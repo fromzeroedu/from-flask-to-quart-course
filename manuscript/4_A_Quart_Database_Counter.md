@@ -301,7 +301,7 @@ Finally, we will import the `sqlalchemy` package to define an application-wide `
 
 Next, let’s create the database connection using the user, password, host and database from those settings. Finally we acquire the connection and return it to the caller.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.3).
 
 Now let’s go ahead and create our first and only blueprint of the application, the `counter` module.
 
@@ -329,7 +329,7 @@ We also import our `metadata` object which will allow us to do introspection abo
 
 Then, we define our `counter_table` as a table consisting of two columns: our `id` which will be the primary key and `count` which will hold the current counter of the application. Notice we define the table name as `counter` and add the `metadata` object as part of the definition.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.4).
 
 Now let’s go ahead and build the `views.py` file which will be our main controller and blueprint.
 
@@ -391,7 +391,7 @@ Finally we return the value of the `count` variable to the request as HTML conte
 
 As you can already notice, any database connection operations must be awaited, since they are I/O operations that can yield to the event loop.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.5).
 
 Next we’ll create the application factory, as we’ve done in the past in my Flask course. Call this file `application.py`.
 
@@ -444,7 +444,7 @@ For the `before_serving` function, we’ll `await` a database connection. We the
 
 Finally, with the `after_serving` function, we’ll close the database connection properly, so any pending database requests are taken care of.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.6).
 
 We’re almost done with the core application. We just need to create the bootstrap file that will spawn an instance of the application factory. We’ll call this file `manage.py`.
 
@@ -457,7 +457,7 @@ from application import create_app
 app = create_app()
 ```
 
-Save the file and let’s go ahead and start with the database migration configuration.
+[Save the file](https://fmze.co/fftq-4.4.7) and let’s go ahead and start with the database migration configuration.
 
 ## Configuring Alembic Migrations <!-- 4.5 -->
 
@@ -566,17 +566,6 @@ And with this, we’re ready to run our first migration.
 ## Our First Migration <!-- 4.6 -->
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
-
-However, we haven't created our Docker instances yet, so let's go ahead and do that. On the terminal, type:
-
-{lang=bash,line-numbers=off}
-```
-$ docker-compose up --build
-```
-
-This tells Docker to build all the services on the `docker-compose.yml` file. If the images are not stored locally, they will be downloaded and then the containers will be built with your specs.
-
-Since we haven't done a migration, the app instance might crash. This is fine for now, just make sure that the Postgres instance is stil up and running.
 
 So now we're ready to create our first “migration commit”. For that just type:
 
@@ -1135,7 +1124,16 @@ Creating test client
 
 Looks good!
 
-And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
+However, we haven't updated our Web app Docker instance yet, so let's go ahead and do that. On the terminal, type:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose up --build
+```
+
+This tells Docker to build all the services on the `docker-compose.yml` file. All the changes we've done to the Poetry packages will now be installed.
+
+The web Docker container should now be up and running and you can visit `localhost:5000` in your browser to see the whole application running.
 
 If you want to run the tests from the Docker quart web container, you can do:
 
@@ -1143,3 +1141,6 @@ If you want to run the tests from the Docker quart web container, you can do:
 docker-compose run --rm web poetry run pytest -s
 ```
 
+And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
+
+If you want to grab the updated boilerplate at any time, just visit this Github repo. TODO: Github repo of Quart-postgres-boilerplate.
