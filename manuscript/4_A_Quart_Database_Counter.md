@@ -569,16 +569,9 @@ And with this, we’re ready to run our first migration.
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
+But first, make sure you're Docker database container is up and running. If it isn't, just type `docker-compose up` or start it from the Docker Desktop application or from VSCode's Docker extension.
+
 So now we're ready to create our first “migration commit”. For that just type:
-
-{lang=bash,line-numbers=off}
-```
-$ poetry run alembic revision --autogenerate -m "create counter table"
-```
-
-Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
-
-We then execute the migration command, and you should see something like the following:
 
 {lang=bash,line-numbers=off}
 ```
@@ -589,6 +582,8 @@ INFO  [alembic.autogenerate.compare] Detected added table 'counter'
   Generating /home/jorescobar/counter_app/migrations/versions/51d999a1e262_cr
   eate_counter_table.py ...  done
 ```
+
+Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
 Check that a new `versions` file was created and take a look:
 
