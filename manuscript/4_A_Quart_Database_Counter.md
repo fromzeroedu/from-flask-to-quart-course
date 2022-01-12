@@ -470,6 +470,8 @@ So we’ll install Alembic by adding it to the `pyproject.toml` as follows:
 alembic = "1.6.5"
 ```
 
+[Save the file](https://fmze.co/fftq-4.5.1).
+
 We will now initialize the migration setup which will create both an `alembic.ini` and a `migrations` folder.
 
 But before that, we need to install all the Poetry packages we've added. 
@@ -478,7 +480,7 @@ So type:
 
 {lang=bash,line-numbers=off}
 ```
-$ poetry install
+$ poetry update
 ```
 
 Now we're ready for our first migration. Just type:
@@ -509,7 +511,7 @@ from pathlib import Path
 
 We’ll need all these libraries for the next step.
 
-Then add this under `from alembic import context` on line 10:
+Then add this under `from alembic import context` after line 10:
 
 {lang=python,line-numbers=on,starting-line-number=12}
 ```
@@ -548,7 +550,7 @@ target_metadata = metadata
 
 This is very important to remember: any new models you add subsequently, you need to add them here.
 
-Save the file.
+[Save the file](https://fmze.com/fftq-4.5.2).
 
 With all that in place, we’ll finally move to the last step: tell Alembic how to connect to the database.
 
@@ -559,7 +561,7 @@ Open the `alembic.ini` file and change `sqlalchemy.url` on line 42 like this.
 sqlalchemy.url = postgresql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:5432/%(DATABASE_NAME)s
 ```
 
-These variables are coming from the `env.py` we edited earlier. Save the file.
+These variables are coming from the `env.py` we edited earlier. [Save the file](https://fmze.co/fftq-4.5.3).
 
 And with this, we’re ready to run our first migration.
 
