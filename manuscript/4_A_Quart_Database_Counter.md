@@ -571,7 +571,7 @@ We’re now ready to create the tables in the database using the Alembic migrati
 
 But first, make sure you're Docker database container is up and running. If it isn't, just type `docker-compose up` or start it from the Docker Desktop application or from VSCode's Docker extension.
 
-So now we're ready to create our first “migration commit”. For that just type:
+So now we're ready to create our first “migration commit”. For that just type: `poetry run alembic revision --autogenerate -m "create counter table"`
 
 {lang=bash,line-numbers=off}
 ```
@@ -713,7 +713,7 @@ And this is very important: if you add any Poetry packages to the application, y
 
 {lang=bash,line-numbers=off}
 ```
-docker build .
+docker-compose up --build
 ```
 
 That will re-run the Dockerfile script and install any new packages you have added.
