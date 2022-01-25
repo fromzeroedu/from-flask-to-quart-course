@@ -731,13 +731,6 @@ So let’s begin by adding those libraries to the application. So just do:
 $ poetry add pytest pytest-asyncio
 ```
 
-Since we've added new packages, we want to keep our Docker instance in sync, so do:
-
-{lang=bash,line-numbers=off}
-```
-$ docker build .
-```
-
 Ok, with that out of the way let’s see how `pytest` works.
 
 The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
@@ -1137,6 +1130,10 @@ If you want to run the tests from the Docker quart web container, you can do:
 ```
 docker-compose run --rm web poetry run pytest -s
 ```
+
+If you are using VSCode, I have added the settings to run tests from the application. Just look for the "bottle" icon and click on it. You will see that in the first run it will detect the tests and add a testing tree.
+
+At this point you can run all the tests by cllicking the run tests doble triangle, or debug using the triangle with the gear. Debugging will respect any breakpoint you add, so the test will stop at that point, and you can further introspect the stack.
 
 And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
 
