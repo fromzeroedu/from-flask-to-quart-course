@@ -733,7 +733,7 @@ $ poetry add pytest pytest-asyncio
 
 Ok, with that out of the way let’s see how `pytest` works.
 
-The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
+The `pytest` library works in a modular fashion using reusable functions called _fixtures_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
 
 The cool thing about these fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
 
@@ -844,7 +844,7 @@ Essentially what yield does is to send the control back to the calling test, and
 
 Next, let’s create the Quart application itself.
 
-{lang=python,line-numbers=on,starting-line-number=67}
+{lang=python,line-numbers=on,starting-line-number=66}
 ```
 @pytest.fixture
 async def create_test_app(create_db):
@@ -880,7 +880,7 @@ One thing I want you to notice, in the instantiation of the `create_app` we are 
 
 {lang=python,line-numbers=on,starting-line-number=57}
 ```
-app = create_app(\*\*create_db)
+app = create_app(**create_db)
 ```
 
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
@@ -900,12 +900,12 @@ app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
-{lang=python,line-numbers=on,starting-line-number=75}
+{lang=python,line-numbers=on,starting-line-number=73}
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
-print("Creating test client")
-return create_test_app.test_client()
+    print("Creating test client")
+    return create_test_app.test_client()
 ```
 
 We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
