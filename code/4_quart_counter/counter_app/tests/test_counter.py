@@ -1,5 +1,7 @@
 import pytest
 
+from counter.models import counter_table
+
 
 @pytest.mark.asyncio
 async def test_initial_response(create_test_client):
