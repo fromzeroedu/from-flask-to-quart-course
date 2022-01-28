@@ -932,7 +932,9 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 
 We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
 
-[Save the file](https://fmze.co/fftq-4.7.2) and run the test using `poetry run pytest`. Make sure you're running your Docker Postgres container.
+[Save the file](https://fmze.co/fftq-4.7.2) and run the test using `poetry run pytest`. 
+
+TODO: RECORD: Make sure you're running your Docker Postgres container.
 
 {lang=bash,line-numbers=off}
 ```
