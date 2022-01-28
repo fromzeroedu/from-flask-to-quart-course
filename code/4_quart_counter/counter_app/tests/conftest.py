@@ -61,14 +61,16 @@ async def create_db():
     conn.execute(f"DROP DATABASE {db_test_name} WITH (FORCE)")
     conn.close()
 
-    @pytest.fixture
-    async def create_test_app(create_db):
-        app = create_app(**create_db)
-        await app.startup()
-        yield app
-        await app.shutdown()
 
-    @pytest.fixture
-    def create_test_client(create_test_app):
-        print("Creating tsst client")
-        return create_test_app.test_client()
+@pytest.fixture
+async def create_test_app(create_db):
+    app = create_app(**create_db)
+    await app.startup()
+    yield app
+    await app.shutdown()
+
+
+@pytest.fixture
+def create_test_client(create_test_app):
+    print("Creating test client")
+    return create_test_app.test_client()
