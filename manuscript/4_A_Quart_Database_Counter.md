@@ -752,7 +752,6 @@ First, we’ll add the necessary imports we’ll use.
 {lang=python,line-numbers=on}
 ```
 import pytest
-import asyncio
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -767,9 +766,8 @@ Make sure to place the `load_dotenv` command before the `create_app` factory ins
 
 We will now create the database instantiation fixture for all our tests, so let’s write that:
 
-{lang=python,line-numbers=on,starting-line-number=13}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
-@pytest.mark.asyncio
 @pytest.fixture
 async def create_db():
     print("Creating db")
@@ -806,8 +804,6 @@ async def create_db():
     metadata.create_all()
 ```
 
-First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
-
 By default all pytest fixtures are function level, which means that pytest will create the database from scrath at the beginning of the function and destroy it at the end of the function. This works well for testing purposes, since each test function will work on isolation. For more complex applications, we can leverage fixtures to pre-load data for some of the tests, but we'll see examples of that later on.
 
 We then load the credentials from the `dotenv` file. We then connect to the database and create the test database, which will be called the same as our application database with the string "_test" appended.
@@ -818,7 +814,7 @@ Finally we will create all the tables from the models in the application, using 
 
 Now here’s something you will see often with `pytest` fixtures and that’s the use of the `yield` statement. 
 
-{lang=python,line-numbers=on,starting-line-number=49}
+{lang=python,line-numbers=on,starting-line-number=47}
 ```
     yield {
         "DB_USERNAME": db_username,
@@ -844,7 +840,7 @@ Essentially what yield does is to send the control back to the calling test, and
 
 Next, let’s create the Quart application itself.
 
-{lang=python,line-numbers=on,starting-line-number=66}
+{lang=python,line-numbers=on,starting-line-number=64}
 ```
 @pytest.fixture
 async def create_test_app(create_db):
@@ -900,7 +896,7 @@ app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
-{lang=python,line-numbers=on,starting-line-number=73}
+{lang=python,line-numbers=on,starting-line-number=71}
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
@@ -914,7 +910,7 @@ I just want to highlight how cool fixtures are. We can now just include `create_
 
 We don’t need to yield anything in this case since we don’t need to run any cleanups after the test is done.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.7.1).
 
 Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
 
