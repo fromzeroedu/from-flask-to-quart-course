@@ -728,7 +728,7 @@ So let’s begin by adding those libraries to the application. So just do:
 
 {lang=bash,line-numbers=off}
 ```
-$ poetry add pytest pytest-asyncio
+$ poetry add pytest=6.2.1 pytest-asyncio=0.15.1
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
@@ -840,7 +840,7 @@ Essentially what yield does is to send the control back to the calling test, and
 
 Next, let’s create the Quart application itself.
 
-{lang=python,line-numbers=on,starting-line-number=64}
+{lang=python,line-numbers=on,starting-line-number=65}
 ```
 @pytest.fixture
 async def create_test_app(create_db):
@@ -896,7 +896,7 @@ app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
-{lang=python,line-numbers=on,starting-line-number=71}
+{lang=python,line-numbers=on,starting-line-number=73}
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
@@ -912,7 +912,7 @@ We don’t need to yield anything in this case since we don’t need to run any 
 
 [Save the file](https://fmze.co/fftq-4.7.1).
 
-Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
+Now let’s create our actual test. Create a file called `test_counter` inside the `tests` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
 
 For our first test, We want to be able to see that the counter is started when we first hit the page.
 
@@ -932,10 +932,13 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 
 We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
 
-Save the file and run the test using `poetry run pytest`.
+[Save the file](https://fmze.co/fftq-4.7.2) and run the test using `poetry run pytest`. Make sure you're running your Docker Postgres container.
 
 {lang=bash,line-numbers=off}
 ```
+$ docker-compose up db -d
+[+] Running 1/1
+ ⠿ Container app_db_1  Started 
 $ poetry run pytest
 ================================== test session starts ==================================
 platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
@@ -961,7 +964,7 @@ So on line 3 of the `test_counter.py` file, add the following:
 from counter.models import counter_table
 ```
 
-Save the file and run the test again.
+[Save the file](https://fmze.co/fftq-4.7.3) and run the test again.
 
 {lang=bash,line-numbers=off}
 ```
@@ -977,9 +980,11 @@ counter/test_counter.py . [100%]
 =========================== 1 passed in 0.19 seconds ===========================
 ```
 
+## Adding more tests <!-- 4.8 -->
+
 TODO: RECORDING
 
-Perfect! We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
+We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
 
 If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a the `-s` flag to the command, like so: `poetry run pytest -s`.
 
