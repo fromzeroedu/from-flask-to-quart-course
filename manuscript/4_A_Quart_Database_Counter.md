@@ -934,7 +934,7 @@ We then hit the test client with a request and await for the response. The data 
 
 [Save the file](https://fmze.co/fftq-4.7.2) and run the test using `poetry run pytest`. 
 
-TODO: RECORD: Make sure you're running your Docker Postgres container.
+Make sure you're running your Docker Postgres container.
 
 {lang=bash,line-numbers=off}
 ```
@@ -982,9 +982,7 @@ counter/test_counter.py . [100%]
 =========================== 1 passed in 0.19 seconds ===========================
 ```
 
-## Adding more tests <!-- 4.8 -->
-
-TODO: RECORDING
+## Completing our tests <!-- 4.8 -->
 
 We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
 
