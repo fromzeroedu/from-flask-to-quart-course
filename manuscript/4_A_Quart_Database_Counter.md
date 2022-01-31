@@ -984,9 +984,7 @@ counter/test_counter.py . [100%]
 
 ## Completing our tests <!-- 4.8 -->
 
-We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
-
-If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a the `-s` flag to the command, like so: `poetry run pytest -s`.
+We now get a green line and the test passed label. If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a the `-s` flag to the command, like so: `poetry run pytest -s`.
 
 {lang=bash,line-numbers=off}
 ```
