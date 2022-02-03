@@ -982,9 +982,9 @@ counter/test_counter.py . [100%]
 =========================== 1 passed in 0.19 seconds ===========================
 ```
 
-## Completing our tests <!-- 4.8 -->
+ ## Completing our tests <!-- 4.8 -->
 
-We now get a green line and the test passed label. If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a the `-s` flag to the command, like so: `poetry run pytest -s`.
+We now get a green line and the "tests passed label". If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a `-s` flag to the command, like so: `poetry run pytest -s`.
 
 {lang=bash,line-numbers=off}
 ```
@@ -1023,7 +1023,7 @@ async def test_second_response(create_test_client):
 
 We’ll mark the test as async and we will also need the `create_test_client` fixture we used in the previous test.
 
-First, we generate a response from the homepage which should set to counter's value to "1".  That is because the database is being destroyed and created with each new `pytest` function that runs.
+First, we generate a response from the homepage which should set the counter's value to "1".  That is because the database is being destroyed and created with each new `pytest` function that runs.
 
 Since we test that the counter value is set to "1" on the first run within the previous test, there's no need to check the value.
 
@@ -1087,7 +1087,7 @@ Then, let's add the code to read the counter value directly from the counter col
 
 First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart `current_app` context’s SQL connection object `dbc`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
 
-Save the file and run the tests.
+[Save the file](https://fmze.co/fftq-4.7.4) and run the tests.
 
 {lang=bash,line-numbers=on}
 ```
