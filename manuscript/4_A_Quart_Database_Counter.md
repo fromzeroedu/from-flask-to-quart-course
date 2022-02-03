@@ -37,7 +37,7 @@ If you see a welcome message, everything is good to go. Let's start by creating 
 
 First, create the directory where the application will live. You can create this directory inside your user's home directory.
 
-If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
+If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resources on preferences.
  
 So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 
@@ -1136,4 +1136,4 @@ At this point you can run all the tests by cllicking the run tests doble triangl
 
 And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
 
-If you want to grab the updated boilerplate at any time, just visit this Github repo. TODO: Github repo of Quart-postgres-boilerplate.
+If you want to grab the updated boilerplate at any time, just visit [this Github repo](https://github.com/fromzeroedu/quart-postgres-boilerplate).
