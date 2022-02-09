@@ -265,6 +265,38 @@ We can connect to the `app` database by doing `\c app` and if we list the tables
 (2 rows)
 ```
 
+We can check the contents of the `alembic_version` table by doing `SELECT * FROM alembic_version`.
+
+{lang=bash,line-numbers=off}
+```
+# SELECT * from alembic_version;
+ version_num  
+--------------
+ 7c33d8dfbca6
+(1 row)
+```
+
+As you cann see, the `version_num` field coincides with the revision ID on the `versions` file.
+
+We can also check the schema for the user table by doing: `\d user`.
+
+{lang=bash,line-numbers=off}
+```
+# \d user;
+                                     Table "public.user"
+  Column  |          Type          | Collation | Nullable |             Default              
+----------+------------------------+-----------+----------+----------------------------------
+ id       | integer                |           | not null | nextval('user_id_seq'::regclass)
+ username | character varying(15)  |           |          | 
+ password | character varying(128) |           |          | 
+Indexes:
+    "user_pkey" PRIMARY KEY, btree (id)
+    "ix_user_username" UNIQUE, btree (username)
+```
+
+As you can see, we have the `id` which has a `nextval` function, meaning it automatically increments by one with each record, the username and password with the right lengths and the two indexes; one for the `id` and the other for the `username`.
+
+Evertyhing looks good, so we're ready to start working on the user registration component of our Quart application.
 
 - Alembic
 	
@@ -288,32 +320,6 @@ We can connect to the `app` database by doing `\c app` and if we list the tables
 	- Run the first migration with `poetry run alembic upgrade head `
 	- Log into the mysql and check the table as well as `alembic_version`.
 		- `describe user;`
-
-For that, let's connect to Postgres running in our Docker container by doing:
-
-{lang=bash,line-numbers=off}
-```
-$ docker exec -it app_db_1 psql postgres -U app_user
-```
-
-And from there, you can check that the tables were created:
-
-{lang=mysql,line-numbers=off}
-```
-postgres-> \c app
-You are now connected to database "app" as user "app_user".
-app-> \dt
-              List of relations
- Schema |      Name       | Type  |  Owner
---------+-----------------+-------+----------
- public | alembic_version | table | app_user
- public | counter         | table | app_user
-(2 rows)
-```		
-
-- Finally run the server:
-	- `poetry run quart run`
-	- Go to `localhost:5000/registration`. You shouldn’t get any errors.
 
 ## User Registration - Initial Setup (step-1) <!-- 5.3 -->
 
