@@ -298,28 +298,6 @@ As you can see, we have the `id` which has a `nextval` function, meaning it auto
 
 Evertyhing looks good, so we're ready to start working on the user registration component of our Quart application.
 
-- Alembic
-	
-	- Note: 
-		
-	- Remove existing `migrations`
-	- `pipenv run alembic init migrations`
-	- Edit the `alembic.ini` script and add the `sqlalchemy.url` from `settings` on line 38. These setting vars will come from the `env.py` we’ll write later:
-	
-	- We need to add a metadata object on line 29 (where it says `target_metadata=None`).  The import needs to happen here after the `sys.path.append` above:
-	  ```python
-	  	from user.models import metadata as UserMetadata
-	  	target_metadata = [UserMetadata]
-	  ```
-	
-- We’re ready now to create the application structure
-	
-- Migration Execution
-	- Then create the first commit with `poetry run alembic revision --autogenerate -m "create user table"`
-	- Check that the versions file was created properly, and then,
-	- Run the first migration with `poetry run alembic upgrade head `
-	- Log into the mysql and check the table as well as `alembic_version`.
-		- `describe user;`
 
 ## User Registration - Initial Setup (step-1) <!-- 5.3 -->
 
