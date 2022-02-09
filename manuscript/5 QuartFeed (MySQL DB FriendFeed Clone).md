@@ -1,6 +1,6 @@
 # QuartFeed, an SSE appplication using MySQL <!-- 5 -->
 
-## Introduction <!-- 5.1 -->
+## Introduction to Server Sent Events <!-- 5.1 -->
 Server Sent Events, or SSEs, or EventSource in JavaScript, are an extension to HTTP that allow a client to keep a connection open to a server, thereby allowing the server to send events to the client as it chooses.
 
 By default, the server sends updates with a `data` payload. You can also have an `event` type, which by default is `message`, but could be things like `add` or `remove`. Additionally it has an `id` parameter that allows the client to continue where it left off if the connection was lost.
@@ -12,67 +12,269 @@ For our FriendFeed clone we’ll have the event type to be either `post`, which 
 For a more complex version or exercise to students, we could also have `groups`, which could be distinct `/sse` endpoints and `like` events for comments.
 
 ## Setup (step-0) <!-- 5.2 -->
-- Git clone/fork [https://github.com/fromzeroedu/quart-mysql-boilerplate](https://github.com/fromzeroedu/quart-mysql-boilerplate)
 
-- Pipenv install requirements: `pipenv install`
+So let's start setting up our Quart Feed application. 
 
-- Install MySQL, create database and user
-	- Start Mysql: `mysql.server start`
-		Login to MySQL with your root user and password:
-		`mysql -uroot -prootpass`
-		Create the database:
-		`CREATE DATABASE quartfeed;`
-		And now create the user and password:
-		`CREATE USER 'qf_user'@'%' IDENTIFIED BY 'qf_password';`
-		Allow the user full access to the database:
-		`GRANT ALL PRIVILEGES ON quartfeed.* TO 'qf_user'@'%';`
-		And reload the privileges:
-		`FLUSH PRIVILEGES;`
-	- Update `.quartenv`
+To start, we can clone the Quart MySQL Boilerplate code that we built from the previous lesson. You can grab the latest version from my [Github repo here](https://github.com/fromzeroedu/quart-mysql-boilerplate).
 
-- Create User Module
-	- Rename `counter` to `user`
-	- Edit `user/models`
-	- Edit `user/views`
-	- Update `application.py` blueprint imports on line 16 and 20 to `user_app`
-	- Erase the `conftest` and `test_counter` files. We’ll create testing later.
-	- 
-	
-- Start the app to see if things are working so far
-	
-- `pipenv run quart run` and open `/registration`
-	
+If you still have the code in your computer, like I do, you can just make a copy of it. Make sure to rename the folder to something like "quartfeed_app".
+
+If you have cache files lying around after the copy, make sure to delete those folders.
+
+We begin by installing the requirements. Edit `pyproject.toml` and change the name of the application to "quartfeed_app". Save the file.
+
+Next we install the poetry packages by doing: `poetry install`.
+
+For local development I will leave the `.quartenv` as is, since they have generic names that we can use for any Quart application.
+
+Now let's go ahead and rename the `counter` directory to `user` since that will be the first module we will be working on.
+
+Next open the `models.py` file inside the new `user` folder.
+
+Modify the file as follows.
+
+{lang=python,line-numbers=on}
+```
+from sqlalchemy import Table, Column, Integer, String
+
+from db import metadata
+
+user_table = Table(
+    "user",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("username", String(15), index=True, unique=True),
+    Column("password", String(128)),
+)
+```
+
+First rename the table to `user_table` and change the table name, which is the first `Table` properry to "user".
+
+The `metadata` propery will still come from the `db` module so leave that.
+
+The first column, "id" will remain the same -- we still want that primary key in the table.
+
+The second column we'll call "username". This is the first time we'll use the "String" `sqlalchemy` type, so let's add that to the import list on line 1. We'll define the length as `15` and then set the `index` property to `True` since we want to be able to search for users quickly using the `username` as a query, and finally we'll say that this column should be unique, since no two users should have the same username.
+
+The next column is `password`, which is also is a string with a length of 128 which coincides with the hashing algorithm we're going to use, which always generates a hash of 128 characters.
+
+[Save the file](https://fmze.co/fftq-5.2.1).
+
+Next, let's change the `user/views.py` file.
+
+{lang=python,line-numbers=on}
+```
+from quart import Blueprint, current_app, Response
+
+from user.models import user_table
+
+user_app = Blueprint("user_app", __name__)
+
+
+@user_app.route("/register")
+async def register() -> str:
+    return "<h1>User Registration</h1>"
+```
+
+On line 3, let's update the import to add the `user_table`.
+
+Update line 4 to rename `counter_app` to `user_app`.
+
+We actually don't need any of thie view function, so we'll go ahead and delete it.
+
+On line 8  update the route to use the `user_app` and on line 9 we'll rename the function to `register` and we'll call this on the `/register` end point.
+
+Finally we'll have this function just return the string "User Registration" just to make sure everything is working correctly.
+
+[Save the file](https://fmze.co/fftq-5.2.2).
+
+Let's go ahead and update the `application.py`. On line 16 and 19, update the `counter_app` to say `user_app`:
+
+{lang=python,line-numbers=on,starting-line-number=15}
+```
+    # Import Blueprints
+    from user.views import user_app
+
+    # Register Blueprints
+    app.register_blueprint(user_app)
+```
+
+[Save the file](https://fmze.co/fftq-5.2.3).
+
+At this point, I want to make sure the application is running, by doing: `poetry run quart run`, and if I now go to `localhost:5000` on the `/register` endpoint, we can see that the application responds with the "User Registration" string, so all the routing seems to be working correctly.
+
+![Figure 4.8.1](images/5.2.1.png)
+
+If you are using VSCode, we can also use the run button on the editor, since we have the launcher files in our repository, and the nice thing with this approach is that we can set breakpoints and debug our application.
+
+Ok, so let's start working on our migrations. The first thing we're going to do is go to the `migrations` folder and remove all files and directories from the `versions` folder, since these are all related to the `counter` app.
+
+There's no need to change anytthing on the `alembic.ini` since we're using the same connection method.
+
+Next, we'll take a look at the `env.py` on the `migrations` folder, and alll we need to do here is update the user model on line 27 like so:
+
+{lang=python,line-numbers=on,starting-line-number=27}
+```
+from user.models import user_table
+```
+
+Also please remember if we add any new models, we need to add it here, so that the migrations script can detect any new schemas.
+
+[Save the file](https://fmze.co/fftq-5.2.4).
+
+So before we run the migration, we need to setup our Docker environment. So open the `Dockerfile` and change the references from `counter_app` to `quartfeed_app` in line 20 and 23.
+
+{lang=python,line-numbers=on,starting-line-number=19}
+```
+# set "quartfeed_app" as the working directory from which CMD, RUN, ADD references
+WORKDIR /quartfeed_app
+
+# setup poetry
+COPY pyproject.toml /quartfeed_app/
+```
+
+[Save the file](https://fmze.co/fftq-5.2.5) and next we'll update the `docker-compose.yml` with a similar change from `counter_app` to `quartfeed_app`:
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+version: "2"
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./:/quartfeed_app
+```
+
+[Save the file](https://fmze.co/fftq-5.2.6).
+
+If you still have the containers and the images from the counter app, go ahead and delete them: both the web app and the database app. You can use the Docker Desktop application or the VSCode plugin.
+
+So go ahead and run `docker-compose up --build` and that will build our new application and PostgreSQL containers.
+
+After it finishes building, exit using `CTRL-C`, and then run just the database container so that we can execute our migration.
+
+So we do: `poetry run alembic revision --autogenerate -m "Create user table"`. This will use the models metadata and crate a new `versions` file so keep an eye out on that folder.
+
+If you are using Docker, you can do `docker-compose run --rm web pipenv run alembic revision --autogenerate -m "create user table"`
+
+{lang=bash,line-numbers=off}
+```
+$ poetry run alembic revision --autogenerate -m "Create user table"
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.autogenerate.compare] Detected added table 'user'
+INFO  [alembic.autogenerate.compare] Detected added index 'ix_user_username' on '['username']'
+  Generating /opt/from-flask-to-quart-
+  course/code/5_quart_feed/quartfeed_app/migrations/versions/c093ae180e73_create_user_table.py ...  done
+```
+
+Perfect. So now we check the new `versions` file.
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+"""create user table
+
+Revision ID: 7c33d8dfbca6
+Revises: 
+Create Date: 2022-02-09 08:57:49.647375
+
+"""
+from alembic import op
+import sqlalchemy as sa
+
+
+# revision identifiers, used by Alembic.
+revision = '7c33d8dfbca6'
+down_revision = None
+branch_labels = None
+depends_on = None
+
+
+def upgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('username', sa.String(length=15), nullable=True),
+    sa.Column('password', sa.String(length=128), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_user_username'), 'user', ['username'], unique=True)
+    # ### end Alembic commands ###
+
+
+def downgrade():
+    # ### commands auto generated by Alembic - please adjust! ###
+    op.drop_index(op.f('ix_user_username'), table_name='user')
+    op.drop_table('user')
+    # ### end Alembic commands ###
+
+```
+
+As we can see, the file has an `upgrade` section where the user table is created with the `id`, `username` and `password` columns, as well as creating an index on `username`.
+
+The `downgrade` function, drops the `username` index and then drops the `user` database.
+
+The next step is to apply the changes on the database using `poetry run alembic upgrade head`.
+
+{lang=bash,line-numbers=off}
+```
+$ poetry run alembic upgrade head
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> 7c33d8dfbca6, create user table
+```
+
+Great! So that applied the changes in the database and should have created the `user` table on our PostgreSQL container. Let's go ahead and check that out.
+
+To connect to the database, run the following command in a new shell:
+
+{lang=bash,line-numbers=off}
+```
+$ docker exec -it app_db_1 psql postgres -U app_user
+```
+
+So now we're on PostgreSQL. We can see the databases by doing `\l`, and as you cann see there's an `app` database owned by the user `app_user`:
+
+{lang=bash,line-numbers=off}
+```
+# \l
+                                 List of databases
+   Name    |  Owner   | Encoding |  Collate   |   Ctype    |   Access privileges   
+-----------+----------+----------+------------+------------+-----------------------
+ app       | app_user | UTF8     | en_US.utf8 | en_US.utf8 | 
+ postgres  | app_user | UTF8     | en_US.utf8 | en_US.utf8 | 
+ template0 | app_user | UTF8     | en_US.utf8 | en_US.utf8 | =c/app_user          +
+           |          |          |            |            | app_user=CTc/app_user
+ template1 | app_user | UTF8     | en_US.utf8 | en_US.utf8 | =c/app_user          +
+           |          |          |            |            | app_user=CTc/app_user
+(4 rows))
+```
+
+We can connect to the `app` database by doing `\c app` and if we list the tables there by using `\dt`, we'll see that we have the `alembic_version` table and the `user` table created.
+
+{lang=bash,line-numbers=off}
+```
+\dt
+              List of relations
+ Schema |      Name       | Type  |  Owner   
+--------+-----------------+-------+----------
+ public | alembic_version | table | app_user
+ public | user            | table | app_user
+(2 rows)
+```
+
+
 - Alembic
 	
-	- Note: If you are using Docker, you do ` docker-compose run --rm web pipenv run alembic revision --autogenerate -m "create user cursor table"`
+	- Note: 
 		
 	- Remove existing `migrations`
 	- `pipenv run alembic init migrations`
 	- Edit the `alembic.ini` script and add the `sqlalchemy.url` from `settings` on line 38. These setting vars will come from the `env.py` we’ll write later:
 	
-	  - `sqlalchemy.url = mysql+pymysql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:3306/%(DATABASE_NAME)s`
-	- Edit the `env.py` in migrations on line 27:
-	  ```python
-	  	section = config.config_ini_section
-	  	config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
-	  	config.set_section_option(section, "DB_PASSWORD", os.environ.get("DB_PASSWORD"))
-	  	config.set_section_option(section, "DB_HOST", os.environ.get("DB_HOST"))
-	  	config.set_section_option(section, "DATABASE_NAME", os.environ.get("DATABASE_NAME"))
-	  ```
-	- Add the following at the top (before `logging.config`:
-	  ```python
-	  	import os, sys
-	  	from dotenv import load_dotenv
-	  	from pathlib import Path
-	  ```
-	- Then add this under `from alembic import context`:
-	  ```python
-	  	# Path ops
-	  	parent = Path(__file__).resolve().parents[1]
-	  	load_dotenv(os.path.join(parent, ".quartenv"))
-	  	sys.path.append(str(parent))
-	  ```
-	- Finally we need to add a metadata object on line 29 (where it says `target_metadata=None`).  The import needs to happen here after the `sys.path.append` above:
+	- We need to add a metadata object on line 29 (where it says `target_metadata=None`).  The import needs to happen here after the `sys.path.append` above:
 	  ```python
 	  	from user.models import metadata as UserMetadata
 	  	target_metadata = [UserMetadata]
@@ -81,14 +283,36 @@ For a more complex version or exercise to students, we could also have `groups`,
 - We’re ready now to create the application structure
 	
 - Migration Execution
-	- Then create the first commit with `pipenv run alembic revision --autogenerate -m "create user table"`
+	- Then create the first commit with `poetry run alembic revision --autogenerate -m "create user table"`
 	- Check that the versions file was created properly, and then,
-	- Run the first migration with `pipenv run alembic upgrade head `
+	- Run the first migration with `poetry run alembic upgrade head `
 	- Log into the mysql and check the table as well as `alembic_version`.
 		- `describe user;`
 
+For that, let's connect to Postgres running in our Docker container by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ docker exec -it app_db_1 psql postgres -U app_user
+```
+
+And from there, you can check that the tables were created:
+
+{lang=mysql,line-numbers=off}
+```
+postgres-> \c app
+You are now connected to database "app" as user "app_user".
+app-> \dt
+              List of relations
+ Schema |      Name       | Type  |  Owner
+--------+-----------------+-------+----------
+ public | alembic_version | table | app_user
+ public | counter         | table | app_user
+(2 rows)
+```		
+
 - Finally run the server:
-	- `pipenv run quart run`
+	- `poetry run quart run`
 	- Go to `localhost:5000/registration`. You shouldn’t get any errors.
 
 ## User Registration - Initial Setup (step-1) <!-- 5.3 -->
