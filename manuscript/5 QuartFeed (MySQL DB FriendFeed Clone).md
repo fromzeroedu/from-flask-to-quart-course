@@ -15,13 +15,13 @@ For a more complex version or exercise to students, we could also have `groups`,
 
 So let's start setting up our Quart Feed application. 
 
-To start, we can clone the Quart MySQL Boilerplate code that we built from the previous lesson. You can grab the latest version from my [Github repo here](https://github.com/fromzeroedu/quart-mysql-boilerplate).
+To start, we can clone the Quart PostgreSQL Boilerplate code that we built in the previous lesson. You can grab the latest version from my [Github repo here](https://github.com/fromzeroedu/quart-postgres-boilerplate).
 
 If you still have the code in your computer, like I do, you can just make a copy of it. Make sure to rename the folder to something like "quartfeed_app".
 
 If you have cache files lying around after the copy, make sure to delete those folders.
 
-We begin by installing the requirements. Edit `pyproject.toml` and change the name of the application to "quartfeed_app". Save the file.
+We begin by installing the requirements. Edit `pyproject.toml` and change the name of the application to "quartfeed_app". [Save the file](https://fmze.co/fftq-5.2.7).
 
 Next we install the poetry packages by doing: `poetry install`.
 
@@ -48,15 +48,15 @@ user_table = Table(
 )
 ```
 
-First rename the table to `user_table` and change the table name, which is the first `Table` properry to "user".
+First rename the table to `user_table` and change the table name, which is the first `Table` property to "user".
 
-The `metadata` propery will still come from the `db` module so leave that.
+The `metadata` property will still come from the `db` module so leave that.
 
 The first column, "id" will remain the same -- we still want that primary key in the table.
 
 The second column we'll call "username". This is the first time we'll use the "String" `sqlalchemy` type, so let's add that to the import list on line 1. We'll define the length as `15` and then set the `index` property to `True` since we want to be able to search for users quickly using the `username` as a query, and finally we'll say that this column should be unique, since no two users should have the same username.
 
-The next column is `password`, which is also is a string with a length of 128 which coincides with the hashing algorithm we're going to use, which always generates a hash of 128 characters.
+The next column is `password`, which is also a string with a length of 128 which coincides with the hashing algorithm we're going to use, which always generates a hash of 128 characters.
 
 [Save the file](https://fmze.co/fftq-5.2.1).
 
@@ -155,9 +155,9 @@ So go ahead and run `docker-compose up --build` and that will build our new appl
 
 After it finishes building, exit using `CTRL-C`, and then run just the database container so that we can execute our migration.
 
-So we do: `poetry run alembic revision --autogenerate -m "Create user table"`. This will use the models metadata and crate a new `versions` file so keep an eye out on that folder.
+So we do: `poetry run alembic revision --autogenerate -m "Create user table"`. This will use the models metadata and create a new `versions` file so keep an eye out on that folder.
 
-If you are using Docker, you can do `docker-compose run --rm web pipenv run alembic revision --autogenerate -m "create user table"`
+If you are using Docker, you can do `docker-compose run --rm web poetry run alembic revision --autogenerate -m "create user table"`
 
 {lang=bash,line-numbers=off}
 ```
@@ -170,7 +170,7 @@ INFO  [alembic.autogenerate.compare] Detected added index 'ix_user_username' on 
   course/code/5_quart_feed/quartfeed_app/migrations/versions/c093ae180e73_create_user_table.py ...  done
 ```
 
-Perfect. So now we check the new `versions` file.
+Perfect! So now we check the new `versions` file.
 
 {lang=python,line-numbers=on,starting-line-number=1}
 ```
@@ -235,7 +235,7 @@ To connect to the database, run the following command in a new shell:
 $ docker exec -it app_db_1 psql postgres -U app_user
 ```
 
-So now we're on PostgreSQL. We can see the databases by doing `\l`, and as you cann see there's an `app` database owned by the user `app_user`:
+So now we're on PostgreSQL. We can see the databases by doing `\l`, and as you can see there's an `app` database owned by the user `app_user`:
 
 {lang=bash,line-numbers=off}
 ```
@@ -276,7 +276,7 @@ We can check the contents of the `alembic_version` table by doing `SELECT * FROM
 (1 row)
 ```
 
-As you cann see, the `version_num` field coincides with the revision ID on the `versions` file.
+As you can see, the `version_num` field coincides with the revision ID on the `versions` file.
 
 We can also check the schema for the user table by doing: `\d user`.
 
@@ -294,9 +294,9 @@ Indexes:
     "ix_user_username" UNIQUE, btree (username)
 ```
 
-As you can see, we have the `id` which has a `nextval` function, meaning it automatically increments by one with each record, the username and password with the right lengths and the two indexes; one for the `id` and the other for the `username`.
+We have the `id` which has a `nextval` function, meaning it automatically increments by one with each record, the username and password with the right lengths and the two indexes; one for the `id` and the other for the `username`.
 
-Evertyhing looks good, so we're ready to start working on the user registration component of our Quart application.
+Everything looks good, so we're ready to start working on the user registration component of our Quart application.
 
 
 ## User Registration - Initial Setup (step-1) <!-- 5.3 -->
