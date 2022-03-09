@@ -301,10 +301,53 @@ Everything looks good, so we're ready to start working on the user registration 
 
 ## User Registration - Initial Setup (step-1) <!-- 5.3 -->
 
-We’re going to create a templates folder with a base, navbar templates using bootstrap. We’ll also create the `user` templates folder and create `register.html` template on it.
+We’re going to create a templates folder with a base and navbar templates using bootstrap. We’ll also create the `user` templates folder and create the `register.html` template in it.
 
-Then let’s modify the `user/views` and add the template rendering. Notice the format: `return await render_template` and not `await return render_template`.
+First we create the `base.html` and this will be a shell of a standard HTML document with its required tags.
 
+First we open and close the `<html>` tag. 
+
+Then we create the `<head>` opening and closing tags and inside we'll put some `meta` tags that describe some of the characteristics of the document, including its character set which we'll set as `utf-8` and the viewposrt size.
+
+We're going to be using Bootstrap, a presentation framework that will make it easier to make the application more appealing visually, so let's grab the CSS for Bootstrap in the head as well from their recommended CDN.
+
+Finally we'll make the title a Jinja block, which we can override from each one of the templates.
+
+Now we start with the body of the page. We'll insert all of the content from other templates, so we make this a container Bootstrap element and inside we'll define a `content` Jinja block.
+
+Finally we need the Javascript component of Bootstrap, so we'll add it at the bottom of the page.
+
+Save the file and now let's create the `navbar.html` template.
+
+This navbar we'll use is actually a Bootstrap component, so I'm pretty much going to copy their initial setup and then customize it to have a "Login" and "Register" navigation elements.
+
+Next we'll create a folder inside the `templates` directory called `user`. As you know from other courses, I like to keep the templates for each module separated in folders.
+
+Inside we'll create `register.html` which essentially will be a Bootstrap form.
+
+So first we'll extend the `base.html` template so that this template is embedded within the base html file. We define the title using a Jinja block and then create the content block.
+
+First we create a Bootstrap row to contain all the form. 
+
+We then define a div that will be 6 units wide with an offset of 3 units from the left of the page.
+
+We put a registration sub-title and then define an error block if there is any error being passed to the template.
+
+Now it's time to create the form. It will be a POST, since we will be sending data from the page and we define the action using the Jinja `url_for` property. This is a best practice; we don't use actual URLs anywhere on our forms, so that they can be dynamically generated.
+
+Next we create the input fields using the Bootstrap recommendations. First the username and then the password.
+
+Finally we create a submit button and that's it, we're done.
+
+Save the file.
+
+Our last step if to modify the `user/views` controller.
+
+First we add the `render_template` module from `Quart`, add the methods to the view, so that it accepts both `GET` and `POST`, and finally add the render template function, but notice the format here; it's `return await` and not `await return`.
+
+Save the file and start the application. On your browser, head over to `localhost:5000/register` and you should see our registration form.
+
+Looking good! Now let's actually read these variables from the form on the next lesson.
 
 
 ## User Registration - Parsing the Form (step-2) <!-- 5.4 -->
