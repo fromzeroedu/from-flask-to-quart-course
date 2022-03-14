@@ -1,4 +1,4 @@
-# QuartFeed, an SSE appplication using MySQL <!-- 5 -->
+# QuartFeed, an SSE appplication using PostgreSQL <!-- 5 -->
 
 ## Introduction to Server Sent Events <!-- 5.1 -->
 Server Sent Events, or SSEs, or EventSource in JavaScript, are an extension to HTTP that allow a client to keep a connection open to a server, thereby allowing the server to send events to the client as it chooses.
@@ -11,9 +11,9 @@ For our FriendFeed clone we’ll have the event type to be either `post`, which 
 
 For a more complex version or exercise to students, we could also have `groups`, which could be distinct `/sse` endpoints and `like` events for comments.
 
-## Setup (step-0) <!-- 5.2 -->
+## QuartFeed Application Setup (step-0) <!-- 5.2 -->
 
-So let's start setting up our Quart Feed application. 
+So let's start setting up our QuartFeed application. 
 
 To start, we can clone the Quart PostgreSQL Boilerplate code that we built in the previous lesson. You can grab the latest version from my [Github repo here](https://github.com/fromzeroedu/quart-postgres-boilerplate).
 
@@ -78,11 +78,11 @@ async def register() -> str:
 
 On line 3, let's update the import to add the `user_table`.
 
-Update line 4 to rename `counter_app` to `user_app`.
+Update line 5 to rename `counter_app` to `user_app`.
 
 We actually don't need any of thie view function, so we'll go ahead and delete it.
 
-On line 8  update the route to use the `user_app` and on line 9 we'll rename the function to `register` and we'll call this on the `/register` end point.
+On line 8 update the route to use the `user_app` and on line 9 we'll rename the function to `register` and we'll call this on the `/register` end point.
 
 Finally we'll have this function just return the string "User Registration" just to make sure everything is working correctly.
 
@@ -305,11 +305,11 @@ We’re going to create a templates folder with a base and navbar templates usin
 
 First we create the `base.html` and this will be a shell of a standard HTML document with its required tags.
 
-First we open and close the `<html>` tag. 
+Let's open and close the `<html>` tag. 
 
 Then we create the `<head>` opening and closing tags and inside we'll put some `meta` tags that describe some of the characteristics of the document, including its character set which we'll set as `utf-8` and the viewposrt size.
 
-We're going to be using Bootstrap, a presentation framework that will make it easier to make the application more appealing visually, so let's grab the CSS for Bootstrap in the head as well from their recommended CDN.
+We're going to be using Bootstrap, a presentation framework that will make it easier to make the application more appealing visually, so let's grab the CSS for Bootstrap from their recommended CDN.
 
 Finally we'll make the title a Jinja block, which we can override from each one of the templates.
 
@@ -341,7 +341,7 @@ Finally we create a submit button and that's it, we're done.
 
 Save the file.
 
-Our last step if to modify the `user/views` controller.
+Our last step is to modify the `user/views` controller.
 
 First we add the `render_template` module from `Quart`, add the methods to the view, so that it accepts both `GET` and `POST`, and finally add the render template function, but notice the format here; it's `return await` and not `await return`.
 
