@@ -303,6 +303,38 @@ Everything looks good, so we're ready to start working on the user registration 
 
 We’re going to create a templates folder with a base and navbar templates using bootstrap. We’ll also create the `user` templates folder and create the `register.html` template in it.
 
+{lang=html,line-numbers=on}
+```
+<!DOCTYP E html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Boostrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <title>{% block title %}{% endblock %}</title>
+</head>
+
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
+
+</body>
+
+</html>
+```
+
 First we create the `base.html` and this will be a shell of a standard HTML document with its required tags.
 
 Let's open and close the `<html>` tag. 
@@ -317,17 +349,85 @@ Now we start with the body of the page. We'll insert all of the content from oth
 
 Finally we need the Javascript component of Bootstrap, so we'll add it at the bottom of the page.
 
-Save the file and now let's create the `navbar.html` template.
+[Save the file](https://fmze.co/fftq-5.3.1) and now let's create the `navbar.html` template.
 
 This navbar we'll use is actually a Bootstrap component, so I'm pretty much going to copy their initial setup and then customize it to have a "Login" and "Register" navigation elements.
+
+{lang=html,line-numbers=on}
+```
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">QuartFeed</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+            <a class="nav-link" href="#">Login</a>
+            <a class="nav-link" href="#">Register</a>
+        </div>
+        </div>
+    </div>
+</nav>
+```
+
+[Save the file](https://fmze.co/fftq-5.3.1).
 
 Next we'll create a folder inside the `templates` directory called `user`. As you know from other courses, I like to keep the templates for each module separated in folders.
 
 Inside we'll create `register.html` which essentially will be a Bootstrap form.
 
+{lang=html,line-numbers=on}
+```
+{% extends "base.html" %}
+
+{% block title %}Registration{% endblock %}
+
+{% block content %}
+
+{% include "navbar.html" %}
+
+<div class="row">
+
+    <div class="col-md-offset-3 col-md-6">
+
+        <h3>Registration</h3>
+
+        {% if error %}
+        <div class="text-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('.register') }}" role="form">
+
+            <div class="mb-3">
+                <label for="username" class="form-label">Username</label>
+                <input name="username" type="text" class="form-control" id="username" 
+                value="{% if user_username %}{{ username }}{% endif %}"
+                placeholder="Select a username" />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input name="password" type="password" class="form-control" id="password" 
+                placeholder="Password" />
+            </div>
+
+            <button type="submit" class="btn btn-default">Register</button>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}
+```
+
 So first we'll extend the `base.html` template so that this template is embedded within the base html file. We define the title using a Jinja block and then create the content block.
 
-First we create a Bootstrap row to contain all the form. 
+Let's add the navbar right at the beginning of the content block.
+
+Next, we create a Bootstrap row to contain all the form. 
 
 We then define a div that will be 6 units wide with an offset of 3 units from the left of the page.
 
@@ -339,13 +439,13 @@ Next we create the input fields using the Bootstrap recommendations. First the u
 
 Finally we create a submit button and that's it, we're done.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-5.3.3).
 
 Our last step is to modify the `user/views` controller.
 
 First we add the `render_template` module from `Quart`, add the methods to the view, so that it accepts both `GET` and `POST`, and finally add the render template function, but notice the format here; it's `return await` and not `await return`.
 
-Save the file and start the application. On your browser, head over to `localhost:5000/register` and you should see our registration form.
+[Save the file](https://fmze.co/fftq-5.3.4) and start the application. On your browser, head over to `localhost:5000/register` and you should see our registration form.
 
 Looking good! Now let's actually read these variables from the form on the next lesson.
 
