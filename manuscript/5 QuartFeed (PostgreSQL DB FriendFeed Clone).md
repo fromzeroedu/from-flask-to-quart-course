@@ -305,7 +305,7 @@ We’re going to create a templates folder with a base and navbar templates usin
 
 {lang=html,line-numbers=on}
 ```
-<!DOCTYP E html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -402,7 +402,7 @@ Inside we'll create `register.html` which essentially will be a Bootstrap form.
             <div class="mb-3">
                 <label for="username" class="form-label">Username</label>
                 <input name="username" type="text" class="form-control" id="username" 
-                value="{% if user_username %}{{ username }}{% endif %}"
+                value="{% if username %}{{ username }}{% endif %}"
                 placeholder="Select a username" />
             </div>
 
@@ -451,11 +451,67 @@ Looking good! Now let's actually read these variables from the form on the next 
 
 
 ## User Registration - Parsing the Form (step-2) <!-- 5.4 -->
-Notice the `form = await request.form`,  and not `await form = request.form`.
 
-Let’s check the user enters all the fields and setup an error variable
+So let's go ahead and check out how to read the username and password fields that we are going to get from this form. We need to process this form in a slightly different way because of our async workflow and we're going to check that out.
 
+So open the `user/views.py` file. Right now we just have this register function that returns the template, but now we want to check the variables that are coming in from the form.
 
+{lang=python,line-numbers=on,starting-line-number=8}
+```
+@user_app.route("/register", methods=["GET", "POST"])
+async def register() -> str:
+    error: str = ""
+    username: str = ""
+    password: str = ""
+
+    if request.method == "POST":
+        form: dict = await request.form
+        username = form.get("username", "")
+        password = form.get("password", "")
+
+        if not username or not password:
+            error = "Please enter username and password"
+        else:
+            # check if the user exists
+            # register the user on the database
+            pass
+
+    return await render_template(
+        "user/register.html", error=error, username=username
+    )
+```
+
+The first thing we'll do is to create an `error` variable, which is going to be a blank string.
+
+Next we initialize the fields that we have in the form, assigning them to be blank strings.
+
+Then, let's check the HTTP method. The first time the function is loaded, it will be a `GET` operation, so the template will be rendered, but if it's a `POST`, that means we're getting some data from the form and we need to do some operations there.
+
+So we'll check if the request method is `POST` and open that section. Make sure to import `request` on the import list on line 1.
+
+We'll initialize a `form` variable that will hold the contents of the form. It is a dictio nary, so we'll type cast it. However, the `request.form` method is a coroutine, so we'll need to await the contents of it.
+
+Then we can retrieve the `username` using `form.get` as well as the `password` and assign both to null strings if they're not present.
+
+Next we check if either the `username` or `password` are empty, then we assign the error message to be displayed on the form. If we did get the `username` and `password` we'll do some operations in the future: first, we'll check if that `username` already exists on the databse and second, we'll store the new user in the database. Let's put a `pass` at the end of the `else`.
+
+So that's the end of the `POST` section. Some of you might be asking, why aren't we using a form processor like `WTForm`, and as I explained earlier, there's no async form processor at this time for Quart and using it would require us to make the view synchronous, so we're going to need to do the assignments and validations manually for now. And as a matter of fact, we're going to implement `CSRF` in the next lesson, since we don't want to have a form vulnerability open in this application.
+
+The final step is to add the `error` and the `username` to the context of the template, that way the template can read the error message if there is one, as well as pre-populate the `username` in case there is an error with whatever the user entered. That is enabled thanks to this Jinja if/else section in the register form.
+
+{lang=html,line-numbers=on,starting-line-number=23}
+```
+<input name="username" type="text" class="form-control" id="username" 
+value="{% if username %}{{ username }}{% endif %}"
+```
+
+We don't want do the same with the `password` for security reasons.
+
+So [save the file](https://fmze.co/fftq-5.4.1), and let's go ahead and run the application.
+
+First let's trigger an error by not putting any information, and we can see that we get the error. Now if we enter the username with no password, notice that the username is preloaded. But if we leave username empty and enter the password, the password doesn't come back pre-populated which is what we want.
+
+On the next lesson we'll implement `CSRF` and the password hashing mechanism.
 
 
 ## User Registration - CSRF, check existing user and Password Hashing (step-3) <!-- 5.5 -->
@@ -466,7 +522,35 @@ We’ll generate a UUID and store it in the session, and then check that the tok
 
 We’ll then check that the username hasn’t been used earlier.
 
-Finally, before we register the user, we don’t want to store clear passwords. Normally I would use Werkzeug, but Quart doesn’t include it, so we’ll install the passlib library. So do: `pipenv install passlib==1.7.1 `
+Finally, before we register the user, we don’t want to store clear passwords. Normally I would use Werkzeug, but Quart doesn’t include it, so we’ll install the `passlib` library. 
+
+So let's install Passlib first by doing: `poetry add passlib`.
+
+The first thing we'll do is check that the username being sent in the form hasn't been taken by anoother user before we save it in the database.
+
+We're going to grab the database connection that we have in the application context. 
+
+Then we build a query using the `select` method from SQLAlchemy. The select has a `where` clause to match records that have the same username.
+
+We now send the query to the connection, using the `fetch_one` method, since we only need one record to hit for the username to be found.
+
+We then check if a row is set. If it is, that means there is a user in the database with the same username and so we set an error for us to stop the operation.
+
+Notice, however, we don't have any error checks in the code below that. We're just checking if the username and password have been set.
+
+So I'm going to move that check all the way to the top right below where we fetch the values from the form and then create the "not error" section which is where we will save the user if no errors were found.
+
+There's one more thing. notice the squiggly line we have in line 20? It's a bit misleading but if we hover over the error you'll notice it says "Quart has no attribute 'dbc'". This is a complicated issue to solve, because the linter can't see we've added this `dbc` property to the context, and there are ways to solve this using some convoluted ways, but since I know this is not a real error, I will add the following comment so that the type checker ignores this error.
+
+Okay, now we're ready to save the user record. Let's add the hasher we'll use from the passlib library, and create a hash from the password string. This hash will be stored in the database instead of the actual password string and not even us we'll be able to tell what the password string is.
+
+We then create an SQLAlchemy insert statement, send it to the database connection and then commit it so that the record is actually created.
+
+
+
+
+
+Before we save the user, we want to check if that username is already taken.
 
 Now let’s encode the password for the database.
 
