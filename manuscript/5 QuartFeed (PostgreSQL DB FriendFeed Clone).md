@@ -588,11 +588,11 @@ Now let's run the application to see if the form has the new CRSF token in it. W
 
 Ok, this is the last step. We now need to check if the token value stored in the session we set on the initial render matches the one being sent by the form. If it's not, this means a hacker is trying to make a POST from a server other than ours, so we just throw an error message.
 
-Finally, if there are no errors, se delete the session token so that we don't have it around, and it there was an error, we need to reset the session token to the one we just generated in this new request. Save the file.
+Finally, if there are no errors, we delete the session token so that we don't have it around, and if there was an error, we need to reset the session token to the one we just generated in this new request. Save the file.
 
 Now let's run the application and register a new user. Looks like everything worked. If we check on the database, we'll see the new user is in the database.
 
-And now let's try to register a new user that's being sent by a hacker and modify the csrf token on the form by editing the HTML. When we POST this form, we get the "Invalid POST contents" error, which is what we want. 
+And now let's try to register a new user that's being sent by a hacker and modify the CSRF token on the form by editing the HTML. When we POST this form, we get the "Invalid POST contents" error, which is what we want. 
 
 Congratulations! Now we have a register form with CSRF protection that can now be used to register users.
 
