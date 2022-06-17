@@ -576,13 +576,13 @@ Next we check if the request method is a `GET`. If that's the case, this is the 
 
 We also need to pass this `csrf_token` to the template's context. 
 
-This value will need to be added to the form as a hidden input. so let's add it to the form like this. Save the file.
+This value will need to be added to the form as a hidden input. so let's add it to the form like this. [Save the file](https://fmze.co/fftq-5.5.1).
 
 Now let's run the application to see if the form has the new CRSF token in it. We go to the register page and view the source. As you can see, the hidden field is now in the form, properly set.
 
 Ok, this is the last step. We now need to check if the token value stored in the session we set on the initial render matches the one being sent by the form. If it's not, this means a hacker is trying to make a POST from a server other than ours, so we just throw an error message.
 
-Finally, if there are no errors, we delete the session token so that we don't have it around, and if there was an error, we need to reset the session token to the one we just generated in this new request. Save the file.
+Finally, if there are no errors, we delete the session token so that we don't have it around, and if there was an error, we need to reset the session token to the one we just generated in this new request. [Save the file](https://fmze.co/fftq-5.5.2).
 
 Now let's run the application and register a new user. Looks like everything worked. If we check on the database, we'll see the new user is in the database.
 
@@ -608,7 +608,7 @@ We’ll also check in the database (e2e testing)
 
 Then we’ll test registering a user without email or password
 
-I notice that the test :
+I notice that the test:
 ```python
     # missing password
     response = await create_test_client.post(
