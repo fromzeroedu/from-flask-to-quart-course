@@ -594,6 +594,12 @@ In the next lesson we'll see how we can login to the application.
 
 ## User Login (step-4) <!-- 5.6 -->
 
+In this lesson we will implement the login and logout functionality for the QuartFeed users. We will add those functions to the `view` file, create a login user template and also alter the navbar template hyperlinks to point to these endpoints.
+
+First let's create the login template, as follows:
+
+
+
 Implement Login and Logout using sessions and update navbar.
 
 ## Testing User Registration and User Login (step-5) <!-- 5.7 -->
