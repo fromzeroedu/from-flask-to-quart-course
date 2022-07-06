@@ -586,6 +586,7 @@ Finally, if there are no errors, we delete the session token so that we don't ha
 
 Now let's run the application and register a new user. Looks like everything worked. If we check on the database, we'll see the new user is in the database.
 
+
 And now let's try to register a new user that's being sent by a hacker and modify the CSRF token on the form by editing the HTML. When we POST this form, we get the "Invalid POST contents" error, which is what we want. 
 
 Congratulations! Now we have a register form with CSRF protection that can now be used to register users.
