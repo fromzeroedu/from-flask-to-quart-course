@@ -597,11 +597,47 @@ In the next lesson we'll see how we can login to the application.
 
 In this lesson we will implement the login and logout functionality for the QuartFeed users. We will add those functions to the `view` file, create a login user template and also alter the navbar template hyperlinks to point to these endpoints.
 
-First let's create the login template, as follows:
+First let's create the login template, as follows.
 
+To make things easier, I will copy the HTML code from the register form, since it will be very similar to the login form.
 
+Now let's update the title, the main header and now the form's action URL will be `.login` which it the function we will create. The username and password fields are the same as well as the CSRF token. Finally let's update the button text. That's our login form template, so save the file.
 
-Implement Login and Logout using sessions and update navbar.
+Now let's add the login function on the user views.
+
+We create the endpoint to be the `/login` URL with the HTTP methods `GET` and `POST`.
+
+We'll now setup the main variable, which are similar to the registration function, with an error, username, password and a CSRF toker.
+
+So if the request is a `GET`, we set the session cookie for the CSRF token. Let's return the view content with the login template and the necessary context vars so that we can see if the form is working correctly.
+
+Go ahead and run the application, making sure the Postgres instance is running, and open the localhost on port 5000 and go to the login URL. As we can see, the form is rendering correctly, and if we post the form, it goes to the login page correctly.
+
+Let's go ahead and continue adding the other functionality to the view.
+
+So if now the HTTP request method is `POST`, we read the contents of the form using the `await request.form` method, set the username and password to the form contents.
+
+Now we check for errors. First, is the username and password are empty, we'll set an error.
+
+Next we'll check the CSRF token. If the session token is not the same as the one on the form, we'll set an error.
+
+Now we need to check if the user exists. We'll grab the database connection with the typing ignore we did earlier. We then create a query where we look for users who have the username the same as the one we're getting in the form and execute it. If there's no results, we'll set an error that the user was not found.
+
+If the user exists, we now need to check the password. To do this we hash the form's password and compare it to the one on the database, but the passlib library already has a verify method, so let's use this. We just need to pass the password from the form and the one get from the database record. If the method is true, it means it's the same password, so we'll say if it's not, then return an error. We never say it's the wrong password, as this is a signal for hackers, so we'll just say that user was not found.
+
+If there are no errors, we delete the CSRF session token and we set two session cookies: the user id and the username which we'll use in the navbar. For now let's just return a string that says that the user is logged in. Otherwise, we do have an error, so we'll set the CSRF token again.
+
+So let's test this out. I'll put a breakpoint in line 79 and run the application.
+
+So head over to the login and let's try first entering a username without a password, and we get the proper error.
+
+Next we'll try a user that doesn't exist. If we `POST`, we get into the debugger and see that the query is issued but no row was returned and the proper error is returned.
+
+Now let's try with a username that does exist, but using the wrong password. As we can see, we get a row returned, and if check the username of the row, it matches the one we entered, but the password verify fails, so an error is set.
+
+Now if we use the right password, we'll see that it gets the row, the password verify passes and the user's sessions are set. Perfect!
+
+Now let's implement the logout function. (15:33)
 
 ## Testing User Registration and User Login (step-5) <!-- 5.7 -->
 
