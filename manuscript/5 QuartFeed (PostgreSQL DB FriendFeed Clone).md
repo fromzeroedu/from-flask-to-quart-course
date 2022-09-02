@@ -633,7 +633,7 @@ So head over to the login and let's try first entering a username without a pass
 
 Next we'll try a user that doesn't exist. If we `POST`, we get into the debugger and see that the query is issued but no row was returned and the proper error is returned.
 
-Now let's try with a username that does exist, but using the wrong password. As we can see, we get a row returned, and if check the username of the row, it matches the one we entered, but the password verify fails, so an error is set.
+Now let's try with a username that does exist, but using the wrong password. As we can see, we get a row returned, and if we  check the username of the row, it matches the one we entered, but the password verify fails, so an error is set.
 
 Now if we use the right password, we'll see that it gets the row, the password verify passes and the user's sessions are set. Perfect!
 
@@ -645,7 +645,7 @@ Next we want to delete the two sessions we're currently using: `user_id` and `us
 
 But notice we're having a type checking issue, and I believe it's because we're not importing the right `Response` class, so we'll use the `werkzeug.Response` class.
 
-I also want to add a redirect at the end of the register function, where if the user is succesfully registered, it's redirected to the login page. However, we can potentially have two return types to the function: a string, which is the HTML content of the form either at first load or when there's an error, or a `Response`. So we need to a Typing method called a `Union` which allows me to signify it's either one or the other type being returned. Notice that we use brackets in the Union, and not parenthesis.
+I also want to add a redirect at the end of the register function, where if the user is succesfully registered, it's redirected to the login page. However, we can potentially have two return types to the function: a string, which is the HTML content of the form either at first load or when there's an error, or a `Response`. So we need to do a Typing method called a `Union` which allows me to signify it's either one or the other type being returned. Notice that we use brackets in the Union, and not parenthesis.
 
 The last thing we want to do is update the navigation, so we'll use `url_for`, which is a Jinja global and specify the login and register functions. Notice we use the full blueprint name, `user_app`.
 
