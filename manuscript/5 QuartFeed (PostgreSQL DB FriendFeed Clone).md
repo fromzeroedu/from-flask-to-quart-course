@@ -601,13 +601,13 @@ First let's create the login template, as follows.
 
 To make things easier, I will copy the HTML code from the register form, since it will be very similar to the login form.
 
-Now let's update the title, the main header and now the form's action URL will be `.login` which it the function we will create. The username and password fields are the same as well as the CSRF token. Finally let's update the button text. That's our login form template, so save the file.
+Now let's update the title, the main header and now the form's action URL will be `.login` which is the function we will create. The username and password fields are the same as well as the CSRF token. Finally let's update the button text. That's our login form template, so save the file.
 
 Now let's add the login function on the user views.
 
 We create the endpoint to be the `/login` URL with the HTTP methods `GET` and `POST`.
 
-We'll now setup the main variable, which are similar to the registration function, with an error, username, password and a CSRF toker.
+We'll now setup the main variables, which are similar to the registration function, with an error, username, password and a CSRF toker.
 
 So if the request is a `GET`, we set the session cookie for the CSRF token. Let's return the view content with the login template and the necessary context vars so that we can see if the form is working correctly.
 
@@ -615,15 +615,15 @@ Go ahead and run the application, making sure the Postgres instance is running, 
 
 Let's go ahead and continue adding the other functionality to the view.
 
-So if now the HTTP request method is `POST`, we read the contents of the form using the `await request.form` method, set the username and password to the form contents.
+So if now the HTTP request method is `POST`, we read the contents of the form using the `await request.form` method, setting the username and password to the form contents.
 
-Now we check for errors. First, is the username and password are empty, we'll set an error.
+Now we check for errors. First, if the username and password are empty, we'll set an error.
 
 Next we'll check the CSRF token. If the session token is not the same as the one on the form, we'll set an error.
 
-Now we need to check if the user exists. We'll grab the database connection with the typing ignore we did earlier. We then create a query where we look for users who have the username the same as the one we're getting in the form and execute it. If there's no results, we'll set an error that the user was not found.
+Now we need to check if the user exists. We'll grab the database connection with the typing ignore we did earlier. We then create a query where we look for users who have the username equal to the one we're getting in the form and execute it. If there's no results, we'll set an error that the user was not found.
 
-If the user exists, we now need to check the password. To do this we hash the form's password and compare it to the one on the database, but the passlib library already has a verify method, so let's use this. We just need to pass the password from the form and the one get from the database record. If the method is true, it means it's the same password, so we'll say if it's not, then return an error. We never say it's the wrong password, as this is a signal for hackers, so we'll just say that user was not found.
+If the user exists, we now need to check the password. To do this we hash the form's password and compare it to the one on the database, but the passlib library already has a verify method, so let's use this. We just need to pass the password from the form and the one we get from the database record. If the method is true, it means it's the same password, so we'll say if it's not, then return an error. We never say it's the wrong password, as this is a signal for hackers, so we'll just say that the user was not found.
 
 If there are no errors, we delete the CSRF session token and we set two session cookies: the user id and the username which we'll use in the navbar. For now let's just return a string that says that the user is logged in. Otherwise, we do have an error, so we'll set the CSRF token again.
 
@@ -637,7 +637,30 @@ Now let's try with a username that does exist, but using the wrong password. As 
 
 Now if we use the right password, we'll see that it gets the row, the password verify passes and the user's sessions are set. Perfect!
 
-Now let's implement the logout function. (15:33)
+Now let's implement the logout function. Essentially what we need to do is delete the session cookies to signal that the user has logged out.
+
+So let's copy the login function's first two lines, and change the URL to `/logout` as well as the function name. Since this returns a `Response` but I don't need to import the class to be used and just need it for type checking, I will just add the class name as a string surrounded by quotes, and at the top we'll use a very typical pattern which is to check if type checking is being run, we'll test against a condition variable called `TYPE_CHECKING`, and if it's true, we'll import the `Response` class name, otherwise if it's running on the server, the class won't be imported, saving memory and speed in the process.
+
+Next we want to delete the two sessions we're currently using: `user_id` and `username` by using `del` and finally return the user to the login function using the `redirect` and `url_for` functions.
+
+But notice we're having a type checking issue, and I believe it's because we're not importing the right `Response` class, so we'll use the `werkzeug.Response` class.
+
+I also want to add a redirect at the end of the register function, where if the user is succesfully registered, it's redirected to the login page. However, we can potentially have two return types to the function: a string, which is the HTML content of the form either at first load or when there's an error, or a `Response`. So we need to a Typing method called a `Union` which allows me to signify it's either one or the other type being returned. Notice that we use brackets in the Union, and not parenthesis.
+
+The last thing we want to do is update the navigation, so we'll use `url_for`, which is a Jinja global and specify the login and register functions. Notice we use the full blueprint name, `user_app`.
+
+However, we want to check on the login status of the user, since it doesn't make sense to have a link to `logout`, if the user in not logged in.
+
+For that, we check if the session username is set and put a conditional with an else block if the user is not logged in. Now we can add the `logout` only if the user is logged in. 
+
+We can also add the username on the navbar for the user to be sure he's logged in. We'll eventually link this to the user's profile, so let's add a dummy link for now.
+
+So save the file and let's check if the logout functionality is working.
+
+Start the server, and go to the login page. Enter your credentials, and go back to the login page after submit and you'll see your username reflected, and now if you press logout, the username disappears.
+
+We have implemented the login and logout, so we want now to be able to start writing some tests for the user operations, and that is what we'll do in the next lesson.
+
 
 ## Testing User Registration and User Login (step-5) <!-- 5.7 -->
 
@@ -703,7 +726,7 @@ Which goes to show you, testing makes your application better and safer.
 
 Run the tests using `pipenv run pytest`
 
-# Relationship Module (step-6)
+## Relationship Module (step-6)
 
 - Relationship: set relationships `fm_userid -> to_userid`
 
