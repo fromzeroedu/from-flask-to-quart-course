@@ -9,7 +9,7 @@ python = "^3.7"
 quart = "^0.17.0"
 python-dotenv = "^0.10.1"
 psycopg2-binary = "^2.9.1"
-databases = {version = "^0.4.1", extras = ["postgresql"]}
+databases = {version = "^0.6.1", extras = ["asyncpg"]}
 sqlalchemy = "^1.4"
 alembic = "^1.6.5"
 pytest = "^6.2.1"
