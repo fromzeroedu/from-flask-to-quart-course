@@ -74,3 +74,11 @@ async def create_test_app(create_db):
 def create_test_client(create_test_app):
     print("Creating test client")
     return create_test_app.test_client()
+
+
+@pytest.fixture()
+def create_all(create_db):
+    print("Creating Models")
+    engine = create_engine(create_db["DB_URI"])
+    metadata.bind = engine
+    metadata.create_all()
