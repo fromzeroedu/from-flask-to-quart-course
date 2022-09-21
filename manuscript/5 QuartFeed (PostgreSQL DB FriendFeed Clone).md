@@ -664,9 +664,12 @@ We have implemented the login and logout, so we want now to be able to start wri
 
 ## Testing User Registration and User Login (step-5) <!-- 5.7 -->
 
+### Creating Our Tests Setup <!-- 5.7.0 -->
 Add the `create_all` method from the `test_counter` file and make it use the UserMetadata from the user model
 
-Let’s first test the initial response and see that we get the registration page
+Let’s first test the initial response and see that we get the login page
+
+### Testing the User Regisration <!-- 5.7.1 -->
 
 We’re going to modify the login page and add a flash message if the user is coming from a successful registration. We’ll use this string to test if users are being registered.
 
