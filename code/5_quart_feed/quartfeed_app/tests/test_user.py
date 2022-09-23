@@ -44,4 +44,22 @@ async def test_missing_fields_registration(create_test_client, create_all):
         "/register", form={"username": "testuser", "password": ""}
     )
     body = await response.get_data()
-    assert "Please enter username and password" in str(body)    
+    assert "Please enter username and password" in str(body)
+
+    # missing username
+    response = await create_test_client.post(
+        "/register", form={"username": "", "password": "test123"}
+    )
+    body = await response.get_data()
+    assert "Please enter username and password" in str(body)
+
+
+@pytest.mark.asyncio
+async def test_existing_user_registration(create_test_client, create_all):
+    # create user for the first time
+    response = await create_test_client.post("/register", form=user_dict(), follow_redirects=True)
+
+    # create the same user a second time
+    response = await create_test_client.post("/register", form=user_dict(), follow_redirects=True)
+    body = await response.get_data()
+    assert "Username already exists" in str(body)
