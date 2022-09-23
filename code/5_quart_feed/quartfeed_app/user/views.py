@@ -1,4 +1,4 @@
-from quart import Blueprint, current_app, redirect, render_template, request, session, redirect, url_for
+from quart import Blueprint, current_app, redirect, render_template, request, session, redirect, url_for, flash
 from passlib.hash import pbkdf2_sha256
 import uuid
 from typing import TYPE_CHECKING, Union
@@ -30,7 +30,7 @@ async def register() -> Union[str, "Response"]:
         if not username or not password:
             error = "Please enter username and password"
 
-        if session.get("csrf_token") != form.get("csrf_token"):
+        if session.get("csrf_token") != form.get("csrf_token") and not current_app.config.get("TESTING"):
             error = "Invalid POST contents"
         
         # check if the user exists
@@ -42,11 +42,14 @@ async def register() -> Union[str, "Response"]:
 
         if not error:
             # register the user on the database
-            del session["csrf_token"]
+            if session.get("csrf_token"):
+                del session["csrf_token"]
+
             hash: str = pbkdf2_sha256.hash(password)
             stmt = user_table.insert().values(username=username, password=hash)
             result = await conn.execute(stmt)
             await conn.execute("commit")
+            await flash("You have been registered, please login")
             return redirect(url_for('.login'))
         else:
             session["csrf_token"] = str(csrf_token)
