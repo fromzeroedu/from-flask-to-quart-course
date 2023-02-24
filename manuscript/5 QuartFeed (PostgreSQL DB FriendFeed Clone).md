@@ -782,7 +782,7 @@ Create a simple profile user view so that you can follow other users:
 
 ## Profile Edit (step-8)
 
-# Profile edit
+### Profile edit
  - Setup form
 - Views processing
 
