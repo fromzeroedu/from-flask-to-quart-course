@@ -731,6 +731,8 @@ Run the tests using `pipenv run pytest`
 
 ## Relationship Module (step-6)
 
+https://github.com/esfoobar/quart-feed/compare/step-5...step-6
+
 - Relationship: set relationships `fm_userid -> to_userid`
 
 We’ll create the relationship between users. We can enforce bi-directional (like Facebook friends) or unidirectional (like Twitter followers). We’ll do the second to simplify the code.
