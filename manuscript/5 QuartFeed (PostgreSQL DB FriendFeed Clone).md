@@ -772,7 +772,7 @@ Create a simple profile user view so that you can follow other users:
 - Add `relationshp` blueprint to `application`
 - Add `login_required` decorator
 
-# Follow/Unfollow users (step-7)
+## Follow/Unfollow users (step-7)
 
 - Added  common methods to get users and check relationships to start a DRY pattern
 - Created relationship add and remove
@@ -780,13 +780,13 @@ Create a simple profile user view so that you can follow other users:
 	- Need to change she scope of the `event_loop` scope to session, otherwise the relationship module runs and closes the loop
 
 
-# Profile Edit (step-8)
+## Profile Edit (step-8)
 
 # Profile edit
  - Setup form
 - Views processing
 
-# Add a profile image (step-9)
+## Add a profile image (step-9)
 
 - Add a profile image
 	- [Profile template](https://github.com/esfoobar/flaskbook/blob/master/templates/user/profile.html), [view processing](https://github.com/esfoobar/flaskbook/blob/master/user/views.py#L144-L149), [resize utility](https://github.com/esfoobar/flaskbook/blob/68fbd6ebd5344ff5a9a45dc2b607187a39490562/utilities/imaging.py)
@@ -803,7 +803,7 @@ Create a simple profile user view so that you can follow other users:
 - Added image to profile edit and to profile page
 - Added empty profile image to repo
 
-# Create a Post  (step-10)
+## Create a Post  (step-10)
 
 - created the post blueprint with the basic view controller
 - created post model
@@ -813,7 +813,7 @@ Create a simple profile user view so that you can follow other users:
 - did a migration
 
 
-# Friends Posts on Homepage using SSE (step-11)
+## Friends Posts on Homepage using SSE (step-11)
 
 - added broadcast.js
 - added broadcast.js on home page
@@ -824,26 +824,26 @@ Create a simple profile user view so that you can follow other users:
 - user image url method (`image_url_from_image_ts`)
 - IMPORTANT: This step just prints out the events to the JS Console, no templating yet. The initial render does work on the home page
 
-# Template Literals (step-12)
+## Template Literals (step-12)
 
 - Create template literal for the whole section
 - Pass the full post information on the context
 - To print the actual statement: `print(stmt.compile(compile_kwargs={"literal_binds": True}))`
 - NOTE: I've noticed that if you do code changes while the Quart application is running and the SSE page is open, erratic behavior can appear. Make sure to do the code changes, save, then stop and start Docker and do a HARD RELOAD of the browser page
 
-# Databases Migration (step-13)
+## Databases Migration (step-13)
 
 - Moved database connectivity over to [databases](https://www.encode.io/databases/)
 - Testing and migrations updates
 
-# Comments (step-14)
+## Comments (step-14)
 
 - Setup comments form toggle display and entry
 - Post comment to backend
 - Get comments query and add to context
 - Render new comments from SSE
 
-# Likes (step-15)
+## Likes (step-15)
 
 - Post likes to backend
 - Finish frontend
