@@ -25,24 +25,19 @@
       ]
     },
     {
-      "label": "Start PostgreSQL Mac",
+      "label": "Log in to Docker Postgres container",
       "type": "shell",
-      "command": "pg_ctl",
+      "command": "docker",
       "args": [
-        "-D",
-        "/usr/local/var/postgres",
-        "start"
+        "exec",
+        "-it",
+        "app_db_1",
+        "psql",
+        "postgres",
+        "-U",
+        "app_user"
       ]
     },
-    {
-      "label": "Stop PostgreSQL Mac",
-      "type": "shell",
-      "command": "pg_ctl",
-      "args": [
-        "-D",
-        "/usr/local/var/postgres",
-        "stop"
-      ]
-    }
+
   ]
 }

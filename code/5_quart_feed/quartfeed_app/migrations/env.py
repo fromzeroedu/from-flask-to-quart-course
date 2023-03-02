@@ -20,11 +20,12 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-fileConfig(config.config_file_name)
+fileConfig(config.config_file_name)  # type: ignore
 
 from db import metadata
 
 from user.models import user_table
+from relationship.models import relationship_table
 
 target_metadata = metadata
 
@@ -34,15 +35,15 @@ target_metadata = metadata
 # ... etc.
 
 section = config.config_ini_section
-config.set_section_option(section, "DB_USERNAME", os.environ.get("DB_USERNAME"))
-config.set_section_option(section, "DB_PASSWORD", os.environ.get("DB_PASSWORD"))
-config.set_section_option(section, "DB_HOST", os.environ.get("DB_HOST"))
+config.set_section_option(section, "DB_USERNAME", os.environ["DB_USERNAME"])
+config.set_section_option(section, "DB_PASSWORD", os.environ["DB_PASSWORD"])
+config.set_section_option(section, "DB_HOST", os.environ["DB_HOST"])
 config.set_section_option(
-    section, "DATABASE_NAME", os.environ.get("DATABASE_NAME")
+    section, "DATABASE_NAME", os.environ["DATABASE_NAME"]
 )
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
 
     This configures the context with just a URL
@@ -66,7 +67,7 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def run_migrations_online():
+def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
