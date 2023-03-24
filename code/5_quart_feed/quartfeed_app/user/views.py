@@ -137,7 +137,7 @@ async def profile(username: str) -> Union[str, "Response"]:
             (relationship_table.c.fm_user_id == session.get("user_id"))
             & (relationship_table.c.to_user_id == profile_user.id)
         )
-        relationship_record = await conn.fetchone(query=query)
+        relationship_record = await conn.fetch_one(query=query)
         if relationship_record:
             relationship = "following"
         else:
