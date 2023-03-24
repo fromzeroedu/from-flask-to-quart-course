@@ -1,4 +1,4 @@
-from quart import Blueprint, current_app, redirect, render_template, request, session, redirect, url_for, flash
+from quart import Blueprint, current_app, redirect, render_template, request, session, redirect, url_for, flash, abort
 from passlib.hash import pbkdf2_sha256
 import uuid
 from typing import TYPE_CHECKING, Union
@@ -7,6 +7,7 @@ if TYPE_CHECKING:
     from werkzeug.wrappers.response import Response
 
 from user.models import user_table
+from relationship.models import relationship_table
 
 user_app = Blueprint("user_app", __name__)
 
@@ -22,7 +23,7 @@ async def register() -> Union[str, "Response"]:
         session["csrf_token"] = str(csrf_token)
 
     if request.method == "POST":
-        form: dict = await request.form
+        form = await request.form
         username = form.get("username", "")
         password = form.get("password", "")
 
@@ -70,7 +71,7 @@ async def login() -> str:
         session["csrf_token"] = str(csrf_token)
 
     if request.method == "POST":
-        form: dict = await request.form
+        form = await request.form
         username = form.get("username", "")
         password = form.get("password", "")
 
@@ -113,3 +114,35 @@ async def logout() -> "Response":
     del session["user_id"]
     del session["username"]
     return redirect(url_for(".login"))
+
+
+@user_app.route("/user/<username>")
+async def profile(username: str) -> Union[str, "Response"]:
+    # fetch the user
+    conn = current_app.dbc  # type: ignore
+    query = user_table.select().where(user_table.c.username == username)
+    profile_user = await conn.fetch_one(query=query)
+
+    # user not found
+    if not profile_user:
+        abort(404)
+
+    relationship: str = ""
+
+    # see if we're looking at our own profile
+    if profile_user.id == session.get("user_id"):
+        relationship = "self"
+    else:
+        stmt = relationship_table.select().where(
+            (relationship_table.c.fm_user_id == session.get("user_id"))
+            & (relationship_table.c.to_user_id == profile_user.id)
+        )
+        relationship_record = await conn.fetchone()
+        if relationship_record:
+            relationship = "following"
+        else:
+            relationship = "not_following"
+
+    return await render_template(
+        "user/profile.html", username=username, relationship=relationship
+    )
