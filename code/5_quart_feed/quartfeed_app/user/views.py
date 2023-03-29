@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 
 from user.models import user_table
 from relationship.models import relationship_table
+from user.decorators import login_required
 
 user_app = Blueprint("user_app", __name__)
 
@@ -61,7 +62,7 @@ async def register() -> Union[str, "Response"]:
 
 
 @user_app.route("/login", methods=["GET", "POST"])
-async def login() -> str:
+async def login() -> Union[str, "Response"]:
     error: str = ""
     username: str = ""
     password: str = ""
@@ -69,6 +70,8 @@ async def login() -> str:
 
     if request.method == "GET":
         session["csrf_token"] = str(csrf_token)
+        if request.args.get("next"):
+            session["next"] = request.args.get("next")
 
     if request.method == "POST":
         form = await request.form
@@ -100,7 +103,14 @@ async def login() -> str:
             del session["csrf_token"]
             session["user_id"] = row["id"]
             session["username"] = row["username"]
-            return "User logged in"
+            
+            if "next" in session:
+                next = session["next"]
+                session.pop("next")
+                return redirect(next)
+            else:
+                return "User logged in"
+            
         else:
             session["csrf_token"] = str(csrf_token)
 
@@ -117,6 +127,7 @@ async def logout() -> "Response":
 
 
 @user_app.route("/user/<username>")
+@login_required
 async def profile(username: str) -> Union[str, "Response"]:
     # fetch the user
     conn = current_app.dbc  # type: ignore
