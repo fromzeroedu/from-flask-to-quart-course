@@ -729,7 +729,7 @@ Which goes to show you, testing makes your application better and safer.
 
 Run the tests using `pipenv run pytest`
 
-## Relationship Module (step-6)
+## Relationship Module (step-6) <!-- 5.8 -->
 
 https://github.com/esfoobar/quart-feed/compare/step-5...step-6
 
@@ -762,19 +762,20 @@ from relationship.models import relationship_table
 target_metadata = [UserMetadata]
 ```
 We import it so that the auto-discovery can “see” the new table. However, notice we don’t add anything to the `target_metadata`_ 
+
 Migration Execution
 - Create the commit with `pipenv run alembic revision --autogenerate -m "create relationship table"`
 - Check that the versions file was created properly, and then,
-- Run the first migration with `pipenv run alembic upgrade head `
+- Run the first migration with `pipenv run alembic upgrade head`
 
 Create a simple profile user view so that you can follow other users:
 - Created a `profile` route function, where we fetch the username and if we don’t find him, return a 404, and then fetch the relationship status
 - Created a basic `profile.html` with a follow/unfollow/edit profile button
 - Create `relationship.views` with the routes
-- Add `relationshp` blueprint to `application`
+- Add `relationship` blueprint to `application`
 - Add `login_required` decorator
 
-## Follow/Unfollow users (step-7)
+## Follow/Unfollow users (step-7) <!-- 5.9 -->
 
 - Added  common methods to get users and check relationships to start a DRY pattern
 - Created relationship add and remove
@@ -782,7 +783,7 @@ Create a simple profile user view so that you can follow other users:
 	- Need to change she scope of the `event_loop` scope to session, otherwise the relationship module runs and closes the loop
 
 
-## Profile Edit (step-8)
+## Profile Edit (step-8) <!-- 5.10 -->
 
 ### Profile edit
  - Setup form
@@ -805,7 +806,7 @@ Create a simple profile user view so that you can follow other users:
 - Added image to profile edit and to profile page
 - Added empty profile image to repo
 
-## Create a Post  (step-10)
+## Create a Post (step-10) <!-- 5.11 -->
 
 - created the post blueprint with the basic view controller
 - created post model
@@ -815,7 +816,7 @@ Create a simple profile user view so that you can follow other users:
 - did a migration
 
 
-## Friends Posts on Homepage using SSE (step-11)
+## Friends Posts on Homepage using SSE (step-11) <!-- 5.12 -->
 
 - added broadcast.js
 - added broadcast.js on home page
@@ -826,26 +827,26 @@ Create a simple profile user view so that you can follow other users:
 - user image url method (`image_url_from_image_ts`)
 - IMPORTANT: This step just prints out the events to the JS Console, no templating yet. The initial render does work on the home page
 
-## Template Literals (step-12)
+## Template Literals (step-12) <!-- 5.13 -->
 
 - Create template literal for the whole section
 - Pass the full post information on the context
 - To print the actual statement: `print(stmt.compile(compile_kwargs={"literal_binds": True}))`
 - NOTE: I've noticed that if you do code changes while the Quart application is running and the SSE page is open, erratic behavior can appear. Make sure to do the code changes, save, then stop and start Docker and do a HARD RELOAD of the browser page
 
-## Databases Migration (step-13)
+## Databases Migration (step-13) <!-- Not necessary -->
 
 - Moved database connectivity over to [databases](https://www.encode.io/databases/)
 - Testing and migrations updates
 
-## Comments (step-14)
+## Comments (step-14) <!-- 5.14 -->
 
 - Setup comments form toggle display and entry
 - Post comment to backend
 - Get comments query and add to context
 - Render new comments from SSE
 
-## Likes (step-15)
+## Likes (step-15) <!-- 5.15 -->
 
 - Post likes to backend
 - Finish frontend
