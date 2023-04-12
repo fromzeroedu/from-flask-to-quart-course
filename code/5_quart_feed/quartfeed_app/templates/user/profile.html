@@ -26,7 +26,7 @@
         {% endif %}
 
         {% if relationship == "not_following" %}
-        <a href="#" 
+        <a href="{{ url_for('relationship_app.add_friend', username=username)}}" 
             role="button" class="btn btn-success">
             <i class="fa fa-plus"></i>
             Add Friend

@@ -6,7 +6,7 @@ import sqlalchemy
 metadata = sqlalchemy.MetaData()
 
 
-async def db_connection():
+async def db_connection() -> Database:
     database_url = f"postgresql+asyncpg://{current_app.config['DB_USERNAME']}:"
     database_url += f"{current_app.config['DB_PASSWORD']}@"
     database_url += f"{current_app.config['DB_HOST']}:5432/"

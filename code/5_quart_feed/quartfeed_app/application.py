@@ -1,9 +1,10 @@
+from typing import Any, TYPE_CHECKING
 from quart import Quart
 
 from db import db_connection
 
 
-def create_app(**config_overrides):
+def create_app(**config_overrides: dict[str, Any]) -> Quart:
     app = Quart(__name__)
 
     # Load config
@@ -14,18 +15,20 @@ def create_app(**config_overrides):
 
     # Import Blueprints
     from user.views import user_app
+    from relationship.views import relationship_app
 
     # Register Blueprints
     app.register_blueprint(user_app)
+    app.register_blueprint(relationship_app)
 
     @app.before_serving
-    async def create_db_conn():
+    async def create_db_conn() -> None:
         database = await db_connection()
         await database.connect()
-        app.dbc = database
+        app.dbc = database  # type: ignore
 
     @app.after_serving
-    async def close_db_conn():
-        await app.dbc.disconnect()
+    async def close_db_conn() -> None:
+        await app.dbc.disconnect()  # type: ignore
 
     return app
