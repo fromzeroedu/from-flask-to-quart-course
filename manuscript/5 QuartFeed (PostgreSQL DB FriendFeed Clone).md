@@ -777,7 +777,7 @@ Create a simple profile user view so that you can follow other users:
 
 ## Follow/Unfollow users (step-7) <!-- 5.9 -->
 
-- Added  common methods to get users and check relationships to start a DRY pattern
+- Added common methods to get users and check relationships to start a DRY pattern
 - Created relationship add and remove
 - Write tests
 	- Need to change she scope of the `event_loop` scope to session, otherwise the relationship module runs and closes the loop
@@ -789,7 +789,7 @@ Create a simple profile user view so that you can follow other users:
  - Setup form
 - Views processing
 
-## Add a profile image (step-9)
+## Add a profile image (step-9) <!-- 5.11 -->
 
 - Add a profile image
 	- [Profile template](https://github.com/esfoobar/flaskbook/blob/master/templates/user/profile.html), [view processing](https://github.com/esfoobar/flaskbook/blob/master/user/views.py#L144-L149), [resize utility](https://github.com/esfoobar/flaskbook/blob/68fbd6ebd5344ff5a9a45dc2b607187a39490562/utilities/imaging.py)
@@ -806,7 +806,9 @@ Create a simple profile user view so that you can follow other users:
 - Added image to profile edit and to profile page
 - Added empty profile image to repo
 
-## Create a Post (step-10) <!-- 5.11 -->
+## Add user login tests (missed) <!-- 5.12 -->
+
+## Create a Post (step-10) <!-- 5.13 -->
 
 - created the post blueprint with the basic view controller
 - created post model
@@ -816,7 +818,7 @@ Create a simple profile user view so that you can follow other users:
 - did a migration
 
 
-## Friends Posts on Homepage using SSE (step-11) <!-- 5.12 -->
+## Friends Posts on Homepage using SSE (step-11) <!-- 5.14 -->
 
 - added broadcast.js
 - added broadcast.js on home page
@@ -827,7 +829,7 @@ Create a simple profile user view so that you can follow other users:
 - user image url method (`image_url_from_image_ts`)
 - IMPORTANT: This step just prints out the events to the JS Console, no templating yet. The initial render does work on the home page
 
-## Template Literals (step-12) <!-- 5.13 -->
+## Template Literals (step-12) <!-- 5.15 -->
 
 - Create template literal for the whole section
 - Pass the full post information on the context
@@ -839,17 +841,17 @@ Create a simple profile user view so that you can follow other users:
 - Moved database connectivity over to [databases](https://www.encode.io/databases/)
 - Testing and migrations updates
 
-## Comments (step-14) <!-- 5.14 -->
+## Comments (step-14) <!-- 5.16 -->
 
 - Setup comments form toggle display and entry
 - Post comment to backend
 - Get comments query and add to context
 - Render new comments from SSE
 
-## Likes (step-15) <!-- 5.15 -->
+## Likes (step-15) <!-- 5.17 -->
 
 - Post likes to backend
 - Finish frontend
 
-- Test posts. comments and likes
+- Test posts, comments and likes
 
