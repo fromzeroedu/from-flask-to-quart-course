@@ -807,6 +807,7 @@ Create a simple profile user view so that you can follow other users:
 - Added empty profile image to repo
 
 ## Add user login tests (missed) <!-- 5.12 -->
+https://github.com/esfoobar/quart-feed/blob/9a30be612ed2905468f777b6f05de7fd0dbe5de7/user/test_user.py#L77
 
 ## Create a Post (step-10) <!-- 5.13 -->
 
