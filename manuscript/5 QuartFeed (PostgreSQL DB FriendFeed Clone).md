@@ -731,8 +731,6 @@ Run the tests using `pipenv run pytest`
 
 ## Relationship Module (step-6) <!-- 5.8 -->
 
-https://github.com/esfoobar/quart-feed/compare/step-5...step-6
-
 - Relationship: set relationships `fm_userid -> to_userid`
 
 We’ll create the relationship between users. We can enforce bi-directional (like Facebook friends) or unidirectional (like Twitter followers). We’ll do the second to simplify the code.
@@ -776,6 +774,8 @@ Create a simple profile user view so that you can follow other users:
 - Add `login_required` decorator
 
 ## Follow/Unfollow users (step-7) <!-- 5.9 -->
+
+https://github.com/esfoobar/quart-feed/compare/step-6...step-7
 
 - Added common methods to get users and check relationships to start a DRY pattern
 - Created relationship add and remove
