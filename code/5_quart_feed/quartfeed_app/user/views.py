@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Union
 if TYPE_CHECKING:
     from werkzeug.wrappers.response import Response
 
-from user.models import user_table
+from user.models import user_table, get_user_by_username
 from relationship.models import relationship_table
 from user.decorators import login_required
 
@@ -37,9 +37,8 @@ async def register() -> Union[str, "Response"]:
         
         # check if the user exists
         conn = current_app.dbc  # type: ignore
-        query = user_table.select().where(user_table.c.username == username)
-        row = await conn.fetch_one(query=query)
-        if row:
+        user_row = await get_user_by_username(conn, username)
+        if user_row:
             error = "Username already exists"
 
         if not error:
@@ -89,20 +88,19 @@ async def login() -> Union[str, "Response"]:
         # check if user exists
         else:
             conn = current_app.dbc  # type: ignore
-            query = user_table.select().where(user_table.c.username == username)
-            row = await conn.fetch_one(query=query)
-            if not row:
+            user_row = await get_user_by_username(conn, username)
+            if not user_row:
                 error = "User not found"
             else:
                 # check the password
-                if not pbkdf2_sha256.verify(password, row["password"]):
+                if not pbkdf2_sha256.verify(password, user_row["password"]):
                     error = "User not found"
 
         if not error:
             # login the user
             del session["csrf_token"]
-            session["user_id"] = row["id"]
-            session["username"] = row["username"]
+            session["user_id"] = user_row["id"]
+            session["username"] = user_row["username"]
             
             if "next" in session:
                 next = session["next"]
@@ -131,8 +129,7 @@ async def logout() -> "Response":
 async def profile(username: str) -> Union[str, "Response"]:
     # fetch the user
     conn = current_app.dbc  # type: ignore
-    query = user_table.select().where(user_table.c.username == username)
-    profile_user = await conn.fetch_one(query=query)
+    profile_user = await get_user_by_username(conn, username)
 
     # user not found
     if not profile_user:

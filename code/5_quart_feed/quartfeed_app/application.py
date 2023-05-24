@@ -1,10 +1,10 @@
-from typing import Any, TYPE_CHECKING
+from typing import Any
 from quart import Quart
 
 from db import db_connection
 
 
-def create_app(**config_overrides: dict[str, Any]) -> Quart:
+def create_app(**config_overrides: Any) -> Quart:
     app = Quart(__name__)
 
     # Load config
