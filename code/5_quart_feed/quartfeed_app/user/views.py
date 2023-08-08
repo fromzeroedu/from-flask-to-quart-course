@@ -1,4 +1,15 @@
-from quart import Blueprint, current_app, redirect, render_template, request, session, redirect, url_for, flash, abort
+from quart import (
+    Blueprint,
+    current_app,
+    redirect,
+    render_template,
+    request,
+    session,
+    redirect,
+    url_for,
+    flash,
+    abort,
+)
 from passlib.hash import pbkdf2_sha256
 import uuid
 from typing import TYPE_CHECKING, Union
@@ -32,9 +43,11 @@ async def register() -> Union[str, "Response"]:
         if not username or not password:
             error = "Please enter username and password"
 
-        if session.get("csrf_token") != form.get("csrf_token") and not current_app.config.get("TESTING"):
+        if session.get("csrf_token") != form.get(
+            "csrf_token"
+        ) and not current_app.config.get("TESTING"):
             error = "Invalid POST contents"
-        
+
         # check if the user exists
         conn = current_app.dbc  # type: ignore
         user_row = await get_user_by_username(conn, username)
@@ -51,12 +64,15 @@ async def register() -> Union[str, "Response"]:
             result = await conn.execute(stmt)
             await conn.execute("commit")
             await flash("You have been registered, please login")
-            return redirect(url_for('.login'))
+            return redirect(url_for(".login"))
         else:
             session["csrf_token"] = str(csrf_token)
 
     return await render_template(
-        "user/register.html", error=error, username=username, csrf_token=csrf_token
+        "user/register.html",
+        error=error,
+        username=username,
+        csrf_token=csrf_token,
     )
 
 
@@ -82,7 +98,9 @@ async def login() -> Union[str, "Response"]:
             error = "Please enter username and password"
 
         # check CSRF token
-        elif session.get("csrf_token") != form.get("csrf_token"):
+        elif (
+            session.get("csrf_token") != form.get("csrf_token")
+        ) and not current_app.testing:
             error = "Invalid POST contents"
 
         # check if user exists
@@ -96,19 +114,22 @@ async def login() -> Union[str, "Response"]:
                 if not pbkdf2_sha256.verify(password, user_row["password"]):
                     error = "User not found"
 
-        if not error:
+        if user_row and not error:
             # login the user
-            del session["csrf_token"]
+
+            if not current_app.testing:
+                del session["csrf_token"]
+
             session["user_id"] = user_row["id"]
             session["username"] = user_row["username"]
-            
+
             if "next" in session:
                 next = session["next"]
                 session.pop("next")
                 return redirect(next)
             else:
-                return "User logged in"
-            
+                return f"User @{session['username']} logged in"
+
         else:
             session["csrf_token"] = str(csrf_token)
 
@@ -117,7 +138,12 @@ async def login() -> Union[str, "Response"]:
     )
 
 
-@user_app.route("/logout", methods=["GET",])
+@user_app.route(
+    "/logout",
+    methods=[
+        "GET",
+    ],
+)
 async def logout() -> "Response":
     del session["user_id"]
     del session["username"]
@@ -138,12 +164,12 @@ async def profile(username: str) -> Union[str, "Response"]:
     relationship: str = ""
 
     # see if we're looking at our own profile
-    if profile_user.id == session.get("user_id"):
+    if profile_user.id == session.get("user_id"):  # type: ignore
         relationship = "self"
     else:
         query = relationship_table.select().where(
             (relationship_table.c.fm_user_id == session.get("user_id"))
-            & (relationship_table.c.to_user_id == profile_user.id)
+            & (relationship_table.c.to_user_id == profile_user.id)  # type: ignore
         )
         relationship_record = await conn.fetch_one(query=query)
         if relationship_record:
