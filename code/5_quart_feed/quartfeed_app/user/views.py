@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from werkzeug.wrappers.response import Response
 
 from user.models import user_table, get_user_by_username
-from relationship.models import relationship_table
+from relationship.models import relationship_table, existing_relationship
 from user.decorators import login_required
 
 user_app = Blueprint("user_app", __name__)
@@ -167,12 +167,9 @@ async def profile(username: str) -> Union[str, "Response"]:
     if profile_user.id == session.get("user_id"):  # type: ignore
         relationship = "self"
     else:
-        query = relationship_table.select().where(
-            (relationship_table.c.fm_user_id == session.get("user_id"))
-            & (relationship_table.c.to_user_id == profile_user.id)  # type: ignore
-        )
-        relationship_record = await conn.fetch_one(query=query)
-        if relationship_record:
+        if await existing_relationship(
+            conn, session["user_id"], profile_user.id  # type: ignore
+        ):
             relationship = "following"
         else:
             relationship = "not_following"
