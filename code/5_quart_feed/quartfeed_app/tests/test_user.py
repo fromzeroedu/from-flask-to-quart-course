@@ -128,3 +128,51 @@ async def test_wrong_password_login(
     )
     body = await response.get_data()
     assert "User not found" in str(body)
+
+
+@pytest.mark.asyncio
+async def test_profile_edit(create_test_client: Any, create_all: Any) -> None:
+    # creste test user
+    response = await create_test_client.post(
+        "/register", form=user_dict(), follow_redirects=True
+    )
+
+    # login with testuser
+    response = await create_test_client.post(
+        "/login", form=user_dict(), follow_redirects=True
+    )
+
+    # no fields entered
+    response = await create_test_client.post(
+        "/profile/edit", form={"username": ""}, follow_redirects=True
+    )
+    body = await response.get_data()
+    assert "Please enter username" in str(body)
+
+    # username already exists
+    test_user_2 = user_dict()
+    test_user_2["username"] = "testuser2"
+    await create_test_client.post(
+        "/register", form=test_user_2, follow_redirects=True
+    )
+
+    # try editing with testuser2
+    response = await create_test_client.post(
+        "/profile/edit", form=test_user_2, follow_redirects=True
+    )
+    body = await response.get_data()
+    assert "Username already exists" in str(body)
+
+    # edit username
+    response = await create_test_client.post(
+        "/profile/edit",
+        form={"username": "testuser_edited"},
+        follow_redirects=True,
+    )
+    body = await response.get_data()
+    assert "Profile updated" in str(body)
+    assert "@testuser_edited" in str(body)
+
+    # check that the session is being set
+    async with create_test_client.session_transaction() as sess:
+        assert sess["username"] == "testuser_edited"
