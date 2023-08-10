@@ -779,17 +779,25 @@ https://github.com/esfoobar/quart-feed/compare/step-6...step-7
 
 - Added common methods to get users and check relationships to start a DRY pattern
 - Created relationship add and remove
-- Write tests
-	- Need to change she scope of the `event_loop` scope to session, otherwise the relationship module runs and closes the loop
 
 
-## Profile Edit (step-8) <!-- 5.10 -->
+## Add relationship tests <!-- 5.10 -->
+User tests: https://github.com/esfoobar/quart-feed/blob/9a30be612ed2905468f777b6f05de7fd0dbe5de7/user/test_user.py
+
+Relationship tests: https://github.com/esfoobar/quart-feed/blob/9a30be612ed2905468f777b6f05de7fd0dbe5de7/relationship/test_relationship.py
+
+
+## Profile Edit (step-8) <!-- 5.11 -->
+
+https://github.com/esfoobar/quart-feed/compare/step-7...step-8
 
 ### Profile edit
  - Setup form
 - Views processing
 
-## Add a profile image (step-9) <!-- 5.11 -->
+## Add a profile image (step-9) <!-- 5.12 -->
+
+https://github.com/esfoobar/quart-feed/compare/step-8...step-9
 
 - Add a profile image
 	- [Profile template](https://github.com/esfoobar/flaskbook/blob/master/templates/user/profile.html), [view processing](https://github.com/esfoobar/flaskbook/blob/master/user/views.py#L144-L149), [resize utility](https://github.com/esfoobar/flaskbook/blob/68fbd6ebd5344ff5a9a45dc2b607187a39490562/utilities/imaging.py)
@@ -805,9 +813,6 @@ https://github.com/esfoobar/quart-feed/compare/step-6...step-7
 	- `docker-compose run --rm web pipenv run alembic revision --autogenerate -m "added new image field user"` and then `docker-compose run --rm web pipenv run alembic upgrade head`
 - Added image to profile edit and to profile page
 - Added empty profile image to repo
-
-## Add user login tests (missed) <!-- 5.12 -->
-https://github.com/esfoobar/quart-feed/blob/9a30be612ed2905468f777b6f05de7fd0dbe5de7/user/test_user.py#L77
 
 ## Create a Post (step-10) <!-- 5.13 -->
 

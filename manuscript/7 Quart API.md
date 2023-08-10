@@ -3,6 +3,7 @@
 ## Initial setup (step-0) <!-- 7.1 -->
 - Clone the `qapi` repo @ step-0
 - Explain the overall structure of the counter app
+- NOTE: INVESTIGATE QUART-SCHEMA: https://quart-schema.readthedocs.io/en/latest/tutorials/quickstart.html
 
 ## API Auth (step-1) <!-- 7.2 -->
 - Add the views, models for the app API routes, expaling the Quart MethodView
