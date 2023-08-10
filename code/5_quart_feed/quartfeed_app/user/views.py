@@ -164,7 +164,7 @@ async def profile(username: str) -> Union[str, "Response"]:
     relationship: str = ""
 
     # see if we're looking at our own profile
-    if profile_user.id == session.get("user_id"):  # type: ignore
+    if profile_user["id"] == session.get("user_id"):
         relationship = "self"
     else:
         if await existing_relationship(
@@ -176,4 +176,66 @@ async def profile(username: str) -> Union[str, "Response"]:
 
     return await render_template(
         "user/profile.html", username=username, relationship=relationship
+    )
+
+
+@user_app.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+async def profile_edit() -> Union[str, "Response"]:
+    error: str = ""
+    username: str = session["username"]
+    csrf_token: uuid.UUID = uuid.uuid4()
+
+    if request.method == "GET":
+        session["csrf_token"] = str(csrf_token)
+
+    if request.method == "POST":
+        form = await request.form
+        username = form.get("username", "")
+
+        # check empty values
+        if not username:
+            error = "Please enter username"
+
+        # check CSRF token
+        elif (
+            session.get("csrf_token") != form.get("csrf_token")
+        ) and not current_app.testing:
+            error = "Invalid POST contents"
+
+        conn = current_app.dbc  # type: ignore
+
+        # check if user exists and if username changed
+        if not error and session["username"] != username:
+            user_row = await get_user_by_username(conn, username)
+            if user_row and user_row["id"]:
+                error = "Username already exists"
+
+        # update the user
+        if not error:
+            if not current_app.testing:
+                del session["csrf_token"]
+
+            stmt = (
+                user_table.update()
+                .where(user_table.c.id == session["user_id"])
+                .values(username=username)
+            )
+            await conn.execute(stmt)
+            await conn.execute("commit")
+
+            # update session with new username
+            session["username"] = username
+
+            # redirect to profile
+            await flash("Profile updated")
+            return redirect(url_for(".profile", username=username))
+        else:
+            session["csrf_token"] = str(csrf_token)
+
+    return await render_template(
+        "user/profile_edit.html",
+        error=error,
+        username=username,
+        csrf_token=csrf_token,
     )

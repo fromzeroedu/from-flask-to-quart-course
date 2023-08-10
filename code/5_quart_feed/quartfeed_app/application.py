@@ -14,10 +14,12 @@ def create_app(**config_overrides: Any) -> Quart:
     app.config.update(config_overrides)
 
     # Import Blueprints
+    from home.views import home_app
     from user.views import user_app
     from relationship.views import relationship_app
 
     # Register Blueprints
+    app.register_blueprint(home_app)
     app.register_blueprint(user_app)
     app.register_blueprint(relationship_app)
 
