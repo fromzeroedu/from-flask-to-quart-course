@@ -15,6 +15,7 @@ alembic = "^1.6.5"
 pytest = "^6.2.1"
 pytest-asyncio = "^0.15.1"
 passlib = "^1.7.4"
+wand = "^0.6.11"
 
 [tool.poetry.dev-dependencies]
 mypy = "^0.931"

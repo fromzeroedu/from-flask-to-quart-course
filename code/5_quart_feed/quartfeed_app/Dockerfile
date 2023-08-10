@@ -1,5 +1,8 @@
 FROM ubuntu:20.04
 
+ENV TZ=America/Los_Angeles
+ENV DEBIAN_FRONTEND=noninteractive
+
 # Install packages
 RUN apt-get update && apt-get install -y \
     build-essential \
@@ -10,6 +13,11 @@ RUN apt-get update && apt-get install -y \
     python3-dev \
     python3-pip \
     python-is-python3
+
+# Install ImageMagick
+RUN apt-get install -y \
+    imagemagick \
+    libmagickwand-dev
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=on
 
