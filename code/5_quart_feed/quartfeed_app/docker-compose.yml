@@ -21,6 +21,9 @@ services:
       DB_PASSWORD: app_password
       DB_HOST: postgres
       DATABASE_NAME: app
+      UPLOAD_FOLDER: "/quartfeed_app/static/uploads"
+      IMAGES_FOLDER: "/quartfeed_app/static/images"
+      IMAGES_URL: "http://localhost:5000/static/images"
   db:
     image: postgres:13-alpine
     restart: always

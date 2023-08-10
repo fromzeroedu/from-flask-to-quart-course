@@ -5,3 +5,6 @@ DB_USERNAME=app_user
 DB_PASSWORD=app_password
 DB_HOST=localhost
 DATABASE_NAME=app
+UPLOAD_FOLDER='/Users/jorescobar/Projects/from-flask-to-quart-course/code/5_quart_feed/quartfeed_app/static/uploads'
+IMAGES_FOLDER='/Users/jorescobar/Projects/from-flask-to-quart-course/code/5_quart_feed/quartfeed_app/static/images'
+IMAGES_URL='http://localhost:5000/static/images/'
