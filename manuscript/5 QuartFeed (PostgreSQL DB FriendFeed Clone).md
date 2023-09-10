@@ -814,6 +814,10 @@ https://github.com/esfoobar/quart-feed/compare/step-8...step-9
 - Added image to profile edit and to profile page
 - Added empty profile image to repo
 
+## Fix tests (hotfix) <!-- 5.12.x -->
+- Take out create_all from conftest
+- Take create_all and create_test_app from all tests
+
 ## Create a Post (step-10) <!-- 5.13 -->
 
 - created the post blueprint with the basic view controller
