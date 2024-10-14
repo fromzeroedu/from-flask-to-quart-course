@@ -134,4 +134,7 @@ else
   fi
 fi
 
+echo "Pushing any remaining changes to 'origin/main'"
+git push origin main
+
 echo "Merge completed successfully!"
