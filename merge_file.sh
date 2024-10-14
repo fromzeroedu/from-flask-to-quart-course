@@ -20,6 +20,16 @@ if [ -z "$CURRENT_BRANCH" ]; then
   exit 1
 fi
 
+# Commit any uncommitted changes for the specified file
+if [ -n "$(git status --porcelain $FILENAME)" ]; then
+  echo "Committing changes in '$FILENAME' on branch '$CURRENT_BRANCH'"
+  git add "$FILENAME"
+  git commit -m "Updated $FILENAME"
+fi
+
+# Get the latest commit for the specified file
+FILE_COMMIT=$(git log -n 1 --pretty=format:"%H" -- "$FILENAME")
+
 # Find branches greater than the current one
 MERGE_BRANCHES=false
 for BRANCH in $BRANCHES; do
@@ -29,26 +39,29 @@ for BRANCH in $BRANCHES; do
   fi
 
   if [ "$MERGE_BRANCHES" = true ]; then
-    echo "Merging changes in '$FILENAME' from '$CURRENT_BRANCH' to '$BRANCH'"
+    echo "Cherry-picking changes in '$FILENAME' from commit '$FILE_COMMIT' to branch '$BRANCH'"
     git checkout $BRANCH
-    git merge $CURRENT_BRANCH --no-commit --no-ff -- "$FILENAME"
+    git cherry-pick $FILE_COMMIT
     if [ $? -ne 0 ]; then
-      echo "Error: Merge failed for branch '$BRANCH'"
+      echo "Error: Cherry-pick failed for branch '$BRANCH'. Aborting."
+      git cherry-pick --abort
       exit 1
     fi
-    git commit -m "Merged changes in '$FILENAME' from '$CURRENT_BRANCH'"
     CURRENT_BRANCH=$BRANCH
   fi
 done
 
-# Finally, merge to the main branch
-echo "Merging changes in '$FILENAME' to 'main' branch"
+# Finally, cherry-pick to the main branch
+echo "Pulling latest changes from 'origin/main'"
 git checkout main
-git merge $CURRENT_BRANCH --no-commit --no-ff -- "$FILENAME"
+git pull origin main
+
+echo "Cherry-picking changes in '$FILENAME' to 'main' branch"
+git cherry-pick $FILE_COMMIT
 if [ $? -ne 0 ]; then
-  echo "Error: Merge failed for 'main' branch"
+  echo "Error: Cherry-pick failed for 'main' branch. Aborting."
+  git cherry-pick --abort
   exit 1
 fi
-git commit -m "Merged changes in '$FILENAME' from '$CURRENT_BRANCH'"
 
 echo "Merge completed successfully!"
