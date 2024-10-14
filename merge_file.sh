@@ -1,5 +1,26 @@
 #!/bin/bash
 
+# Function to pull all remote branches to local
+pull_all_branches() {
+  echo "Fetching all remote branches..."
+  git fetch --all
+  for REMOTE_BRANCH in $(git branch -r | grep -v '\->'); do
+    LOCAL_BRANCH=$(echo $REMOTE_BRANCH | sed 's/origin\///')
+    if ! git show-ref --verify --quiet refs/heads/$LOCAL_BRANCH; then
+      echo "Creating local branch '$LOCAL_BRANCH' from '$REMOTE_BRANCH'"
+      git checkout -b $LOCAL_BRANCH $REMOTE_BRANCH
+    else
+      echo "Pulling latest changes for '$LOCAL_BRANCH'"
+      git checkout $LOCAL_BRANCH
+      git pull origin $LOCAL_BRANCH
+    fi
+  done
+  git checkout $CURRENT_BRANCH
+}
+
+# Call the function to pull all branches
+pull_all_branches
+
 # Check if the filename argument is provided
 if [ -z "$1" ]; then
   echo "Usage: $0 <filename>"
