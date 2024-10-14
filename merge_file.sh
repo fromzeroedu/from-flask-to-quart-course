@@ -44,7 +44,7 @@ for BRANCH in $BRANCHES; do
     git cherry-pick $FILE_COMMIT
     if [ $? -ne 0 ]; then
       if git status | grep -q "The previous cherry-pick is now empty"; then
-        echo "No changes to apply. Skipping cherry-pick for branch '$BRANCH'"
+        echo "No changes to apply. Skipping cherry-pick for branch '$BRANCH'. Otherwise, please use 'git cherry-pick --skip' if the merge makes no sense."
         git cherry-pick --skip
       else
         echo "Error: Cherry-pick failed for branch '$BRANCH'. Aborting."
@@ -52,6 +52,8 @@ for BRANCH in $BRANCHES; do
         exit 1
       fi
     fi
+        echo "Pushing changes to 'origin/$BRANCH'"
+    git push origin $BRANCH
     CURRENT_BRANCH=$BRANCH
   fi
 done
@@ -65,7 +67,7 @@ echo "Cherry-picking changes in '$FILENAME' to 'main' branch"
 git cherry-pick $FILE_COMMIT
 if [ $? -ne 0 ]; then
   if git status | grep -q "The previous cherry-pick is now empty"; then
-    echo "No changes to apply. Skipping cherry-pick for 'main' branch."
+    echo "No changes to apply. Skipping cherry-pick for 'main' branch. Otherwise, please use 'git cherry-pick --skip' if the merge makes no sense."
     git cherry-pick --skip
   else
     echo "Error: Cherry-pick failed for 'main' branch. Aborting."
@@ -73,5 +75,8 @@ if [ $? -ne 0 ]; then
     exit 1
   fi
 fi
+
+echo "Pushing changes to 'origin/main'"
+git push origin main
 
 echo "Merge completed successfully!"
