@@ -4,19 +4,27 @@
 pull_all_branches() {
   echo "Fetching all remote branches..."
   git fetch --all
-  for REMOTE_BRANCH in $(git branch -r | grep -v '\->'); do
-    LOCAL_BRANCH=$(echo $REMOTE_BRANCH | sed 's/origin\///')
-    if ! git show-ref --verify --quiet refs/heads/$LOCAL_BRANCH; then
-      echo "Creating local branch '$LOCAL_BRANCH' from '$REMOTE_BRANCH'"
-      git checkout -b $LOCAL_BRANCH $REMOTE_BRANCH
+  for REMOTE_BRANCH in $(git branch -r | grep -v '\->' | grep 'origin/' | sed 's/origin\///'); do
+    if ! git show-ref --verify --quiet refs/heads/$REMOTE_BRANCH; then
+      echo "Creating local branch '$REMOTE_BRANCH' from 'origin/$REMOTE_BRANCH'"
+      git checkout -b $REMOTE_BRANCH origin/$REMOTE_BRANCH
     else
-      echo "Pulling latest changes for '$LOCAL_BRANCH'"
-      git checkout $LOCAL_BRANCH
-      git pull origin $LOCAL_BRANCH
+      echo "Pulling latest changes for '$REMOTE_BRANCH'"
+      git checkout $REMOTE_BRANCH
+      git pull origin $REMOTE_BRANCH
     fi
   done
   git checkout $CURRENT_BRANCH
 }
+
+# Get the current branch
+CURRENT_BRANCH=$(git branch --show-current)
+
+# Ensure we are on a valid branch
+if [ -z "$CURRENT_BRANCH" ]; then
+  echo "Error: Not on a valid branch."
+  exit 1
+fi
 
 # Call the function to pull all branches
 pull_all_branches
@@ -32,15 +40,6 @@ FILENAME=$1
 # Fetch all branches and sort them
 BRANCHES=$(git branch --list --format='%(refname:short)' | sort)
 
-# Get the current branch
-CURRENT_BRANCH=$(git branch --show-current)
-
-# Ensure we are on a valid branch
-if [ -z "$CURRENT_BRANCH" ]; then
-  echo "Error: Not on a valid branch."
-  exit 1
-fi
-
 # Commit any uncommitted changes for the specified file
 if [ -n "$(git status --porcelain $FILENAME)" ]; then
   echo "Committing changes in '$FILENAME' on branch '$CURRENT_BRANCH'"
@@ -51,7 +50,7 @@ fi
 # Get the latest commit for the specified file
 FILE_COMMIT=$(git log -n 1 --pretty=format:"%H" -- "$FILENAME")
 
-# Find branches greater than the current one
+# Find branches greater than the current one and cherry-pick the commit
 MERGE_BRANCHES=false
 for BRANCH in $BRANCHES; do
   if [ "$BRANCH" == "$CURRENT_BRANCH" ]; then
@@ -72,9 +71,10 @@ for BRANCH in $BRANCHES; do
         git cherry-pick --abort
         exit 1
       fi
+    else
+      echo "Pushing changes to 'origin/$BRANCH'"
+      git push origin $BRANCH
     fi
-        echo "Pushing changes to 'origin/$BRANCH'"
-    git push origin $BRANCH
     CURRENT_BRANCH=$BRANCH
   fi
 done
@@ -95,9 +95,9 @@ if [ $? -ne 0 ]; then
     git cherry-pick --abort
     exit 1
   fi
+else
+  echo "Pushing changes to 'origin/main'"
+  git push origin main
 fi
-
-echo "Pushing changes to 'origin/main'"
-git push origin main
 
 echo "Merge completed successfully!"
