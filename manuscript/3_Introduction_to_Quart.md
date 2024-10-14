@@ -95,7 +95,7 @@ We're now ready to run our first Quart app. Just type: `poetry run quart`. You w
 Running on http://127.0.0.1:5000 (CTRL + C to quit)
 ```
 
-If you now open this URL on your browser, you'll see the “Hello World!” message.
+If you now open this URL on your browser, you'll see the “Hello World” message.
 
 Now let's create a template instead of returning the string directly to the user.
 
