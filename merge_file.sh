@@ -95,9 +95,18 @@ for BRANCH in $BRANCHES; do
       echo "No changes to apply. Skipping cherry-pick for branch '$BRANCH'."
       git cherry-pick --skip
     else
-      echo "Error: Cherry-pick failed for branch '$BRANCH'. Aborting."
-      git cherry-pick --abort
-      exit 1
+      echo "Conflict detected during cherry-pick. Attempting to resolve automatically by using current branch changes."
+      git checkout --ours "$FILENAME"
+      git add "$FILENAME"
+      git cherry-pick --continue
+      if [ $? -ne 0 ]; then
+        echo "Automatic conflict resolution failed. Aborting cherry-pick for branch '$BRANCH'."
+        git cherry-pick --abort
+        exit 1
+      else
+        echo "Pushing resolved changes to 'origin/$BRANCH'"
+        git push origin $BRANCH
+      fi
     fi
     CURRENT_BRANCH=$BRANCH
   fi
@@ -128,9 +137,18 @@ else
     echo "No changes to apply. Skipping cherry-pick for 'main' branch."
     git cherry-pick --skip
   else
-    echo "Error: Cherry-pick failed for 'main' branch. Aborting."
-    git cherry-pick --abort
-    exit 1
+    echo "Conflict detected during cherry-pick. Attempting to resolve automatically by using current branch changes."
+    git checkout --ours "$FILENAME"
+    git add "$FILENAME"
+    git cherry-pick --continue
+    if [ $? -ne 0 ]; then
+      echo "Automatic conflict resolution failed. Aborting cherry-pick for 'main' branch."
+      git cherry-pick --abort
+      exit 1
+    else
+      echo "Pushing resolved changes to 'origin/main'"
+      git push origin main
+    fi
   fi
 fi
 
