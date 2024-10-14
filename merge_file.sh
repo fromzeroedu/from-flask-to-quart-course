@@ -43,9 +43,14 @@ for BRANCH in $BRANCHES; do
     git checkout $BRANCH
     git cherry-pick $FILE_COMMIT
     if [ $? -ne 0 ]; then
-      echo "Error: Cherry-pick failed for branch '$BRANCH'. Aborting."
-      git cherry-pick --abort
-      exit 1
+      if git status | grep -q "The previous cherry-pick is now empty"; then
+        echo "No changes to apply. Skipping cherry-pick for branch '$BRANCH'"
+        git cherry-pick --skip
+      else
+        echo "Error: Cherry-pick failed for branch '$BRANCH'. Aborting."
+        git cherry-pick --abort
+        exit 1
+      fi
     fi
     CURRENT_BRANCH=$BRANCH
   fi
@@ -59,9 +64,14 @@ git pull origin main
 echo "Cherry-picking changes in '$FILENAME' to 'main' branch"
 git cherry-pick $FILE_COMMIT
 if [ $? -ne 0 ]; then
-  echo "Error: Cherry-pick failed for 'main' branch. Aborting."
-  git cherry-pick --abort
-  exit 1
+  if git status | grep -q "The previous cherry-pick is now empty"; then
+    echo "No changes to apply. Skipping cherry-pick for 'main' branch."
+    git cherry-pick --skip
+  else
+    echo "Error: Cherry-pick failed for 'main' branch. Aborting."
+    git cherry-pick --abort
+    exit 1
+  fi
 fi
 
 echo "Merge completed successfully!"
