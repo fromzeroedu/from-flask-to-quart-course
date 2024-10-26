@@ -20,146 +20,24 @@ So let’s go ahead and start coding our Quart Postgres counter application.
 
 We now need two services to be running for our application: the Quart web server and a Postgres database server to store our data.
 
-<!-- for Video Course only -->
-<!-- 
 For this and all of my other courses, I will be focusing on developing locally using Docker, as this is the preferred development environment used by professional teams. If you haven't used Docker before, don't worry, just follow the instructions. I also have a Docker for Flask course if you want to learn more about Docker.
 
 So let's go ahead and set up our local Docker development environment.
--->
-
-We have two main choices: develop locally or on the cloud.
-
-For local development, we'll see how to install Postgres on Mac or Windows machines. We'll also take a look at the Windows Subsystem for Linux, which allows you to run a Linux container natively in your Windows computer.
-
-We can also develop locally using Docker, which is host OS agnostic.
-
-For the cloud, we have a new option that I've been really happy with: Github Codespaces. Although it's offered on paid plans, it's a great option if you have high speed internet and can afford to pay their monthly cost.
-
-Skip to the one that works for you.
-
-### Installing Postgres on Mac with Homebrew <!-- 4.2.1 -->
-
-Thanks to Homebrew installing MySQL on the Mac is pretty simple.
-
-If you don’t have Homebrew, please follow the instructions [on their page](https://brew.sh).
-
-Just do the following:
-`brew install postgresql`
-
-If you want Postgres to launch automatically whenever you power on your Mac, you can do: `brew services start postgresql`. I really don’t recommend that. Instead you can start it manually when you need it by doing `pg_ctl -D /usr/local/var/postgres start` and stopping with `pg_ctl -D /usr/local/var/postgres stop`.
-
-Let’s check if Postgres is working. Start the server and log in using `psql postgres`. Exit using `\q`
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres -Uapp_user`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`
-
-### Installing Postgres on Windows with Chocolatey <!-- 4.2.2 -->
-
-Thanks to Chocolatey, installing Postgres on Windows is pretty simple.
-
-If you don’t have Chocolatey, please follow the instructions [on their page](https://chocolatey.org/).
-
-Open a PowerShell as an administrator and type: `choco install postgresql --params '/Password:rootpass`.
-
-In this case we're creating root password of "rootpass", but select any password you'd like.
-
-Now close the PowerShell application completely and open a new, regular session.
-
-Let’s check if Postgres is working. Log in using `psql postgres postgres`. Exit using `\q`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with your root user:
-`psql postgres postgres`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by doing `psql postgres app_user` and entering the password `app_password`.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Installing Postgres on WSL <!-- 4.2.3-->
-
-In 2016, Windows gave a big surprise to developers by announcing the Windows Subsytem for Linux, or WSL, which allowed the user to run a real Linux OS instance in a native and seamless way inside Windows. In 2019, WSL 2 was announced which brought important changes, the most important one being the ability to run a real Linux kernel through the Windows virtualization engine, Hyper-V.
-
-This is by far my favorite development environment of all because you are interacting with a real Linux OS from a mature GUI like Windows.
-
-Installing WSL requires Windows 10 version 2004 and up, and it's really easy. You just open an administrator Powershell and use the `wsl` coomand.
-
-I personally recommend using Ubuntu, so to install it, we can do: `wsl --install -d Ubuntu-20.04`. You will be prompted to create a root user password.
-
-You can select other Linux distributions to install. You can see a list of the distributions by typing: `wsl --list --online`.
-
-Once you have Ubuntu, I recommend that you install the new [Windows Terminal](https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab), which allows you to open a WSL terminal really easily by selecting Ubuntu from the drop down.
-
-Once on the Ubuntu terminal, let's install some of our dependencies.
-
-First elevate to root by doing `sudo su -` and then install Postgres by using: `apt install -y postgresql`.
-
-After installing, we can start postgres. First exit from root by typing `exit`. You should see your user in the command propmt.
-
-Then start Postres by doing: `sudo service postgresql start`.
-
-It’s a good practice to create the database with a specific user and password and not use the root user from the application.
-
-We will create a database called "app". We will access this database with the user "app_user" and the password "app_password".
-
-So, login to Postgres with the `postgres` user by doing:
-`sudo -u postgres psql`.
-
-Create the `app_user` with its password: `CREATE ROLE app_user WITH LOGIN PASSWORD 'app_password';`.
-
-Give the user database creation permissions: `ALTER ROLE app_user CREATEDB;`.
-
-Logout using `\q` and now login using the `app_user` by typing the following: `psql -h localhost -U app_user postgres`. Enter the password: `app_password` when prompted.
-
-Next, we'll create the app database: `CREATE DATABASE app;`.
-
-You can check that the database was created by using the "list" command: `\l`. You should see that the `app` database is owned by the `app_user`.
-
-You can now connect to the database using `\connect app;` or `\c app` and list the tables using `\dt`.
-
-Logout using `\q`.
-
-### Docker Setup <!-- 4.2.4 -->
-
-In this lesson we'll be setting up our development environment using Docker.
 
 First, you need to download the Docker desktop client for Windows or Mac, which you can find in the [Docker website](https://www.docker.com/products/docker-desktop). Just follow the instructions.
 
-Once you have Docker client running, let's start by creating our `Dockerfile`.
+Once you have Docker client running, you can check if it's properly installed, by typing the following on your terminal:
+
+{lang=bash,line-numbers=off}
+```
+$ docker run hello-world
+```
+
+If you see a welcome message, everything is good to go. Let's start by creating our `Dockerfile`.
 
 First, create the directory where the application will live. You can create this directory inside your user's home directory.
 
-If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resouces on preferences.
+If you plan to use a directory outside of your personal folder and you are a Mac user, you will need to add it to the Docker client file sharing resources on preferences.
  
 So I'll call mine `counter_app`. so I will do `mkdir counter_app`.
 
@@ -219,7 +97,7 @@ Right after that, we copy the contents of the local directory into the `counter_
 
 Once all the code in is place, we open the `5000` port and invoke the `poetry run` command.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.2.1).
 
 Now we need to create a `docker-compose` file that will build up both our application instance as well as the Postgres instance.
 
@@ -245,7 +123,7 @@ services:
     environment:
       PORT: 5000
       SECRET_KEY: "you-will-never-guess"
-      DEBUG: 1 # can't pass True here, but 1 works
+      QUART_ENV: development
       DB_USERNAME: app_user
       DB_PASSWORD: app_password
       DB_HOST: postgres
@@ -286,7 +164,7 @@ Next we'll define the Postgres database docker instance:
 
 This file is pretty much self-explanatory. We will use the Postgres 13 alpine image, instruct the container to always restart, put a name for it and open port 5432 to the host, which is the standard Postgres port.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.2.2).
 
 We won't start the Docker container yet, as we need a couple of more things in place.
 
@@ -296,17 +174,16 @@ So let’s go ahead and start setting up our Quart counter application. Like I�
 
 One new thing we’ll use here is Alembic for database migrations. Alembic is what powers Flask-Migrations under the hood. Even though it’s a bit more complicated to set it up the first time, we will be using this application as a boilerplate when we create other database-driven Quart applications down the road, so we won’t have to repeat the setup from scratch again.
 
-<!-- Skip for the videos -->
-Start by creating the folder for the project. I'll name mine `counter_app`: `mkdir counter_app`
-
-Change to that directory: `cd counter_app`.
-<!-- /Skip for the videos -->
-
 Let's initialize the Poetry environment with Quart and python-dot-env. You should have Poetry installed from the previous module, but if you haven't go ahead and install it by following the instructions [on this page](https://python-poetry.org/docs/#installation).
 
-So do: `poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+So type the following command: 
 
-This will write the `pyproject.toml` but won't install the packages.
+{lang=bash,line-numbers=off}
+```
+$ poetry init -n --name counter_app --python ^3.7 --dependency quart@0.15.1 --dependency python-dotenv@0.10.1`.
+```
+
+[This will write](https://fmze.co/fftq-4.3.1) the `pyproject.toml` but won't install the packages.
 
 Now let's create the Quart environment variables that will be loaded to our environment by `python-dotenv`.
 
@@ -323,13 +200,13 @@ DB_HOST=localhost
 DATABASE_NAME=app
 ```
 
-First, the `QUART_APP` will be small kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course.
+First, the `QUART_APP` will be the kickstarter `manage.py` file that creates an instance of our application using the Factory pattern, just like I’ve done previously on my Flask course.
 
-Next the `QUART_ENV` environment we’ll define as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
+Next we’ll define the `QUART_ENV` environment as `development` so that we have meaningful error pages. We’ll also add a `SECRET_KEY`; even though it’s not essentially needed, it’s a good practice to have it.
 
 The next five variables, `DB_USERNAME`, `DB_PASSWORD`, `DB_HOST`, and `DATABASE_NAME` will allow us to connect to the database. We'll use a generic `app` prefix for the user, password and database so that we don't have to worry when we use the same code for other applications.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.3.2).
 
 We’ll now need to create a `settings.py` file, so we’ll use very similar variables from the `.quartenv` with the following format:
 
@@ -337,6 +214,8 @@ We’ll now need to create a `settings.py` file, so we’ll use very similar var
 ```
 import os
 
+QUART_APP=os.environ['QUART_APP']
+QUART_ENV=os.environ['QUART_ENV']
 SECRET_KEY = os.environ["SECRET_KEY"]
 DB_USERNAME = os.environ["DB_USERNAME"]
 DB_PASSWORD = os.environ["DB_PASSWORD"]
@@ -344,11 +223,22 @@ DB_HOST = os.environ["DB_HOST"]
 DATABASE_NAME = os.environ["DATABASE_NAME"]
 ```
 
-As we saw earlier, `python-dotenv` will load the variables In `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. Save the file.
+As we saw earlier, `python-dotenv` will load the variables in `.quartenv` and load it as environment variables in our computer, so then `settings.py` can access them using `os.environ`. We do this so that we can then deploy to a production environment easily with the proper environment variables set in the production hosts. [Save the file](https://fmze.co/fftq-4.3.3).
 
 ## Application Setup <!-- 4.4 -->
 
-At this point we’re ready to start building our Quart counter application. You should have the Postgres server up and running with your counter database and user.
+At this point we’re ready to start building our Quart counter application. 
+
+So start the Docker client if you haven't already, and type the following on your terminal. Make sure you're on the counter application folder.
+
+{lang=bash,line-numbers=off}
+```
+docker-compose up
+```
+
+Docker will start downloading the Postgres and Ubuntu images and set up your containers. Be patient, this might take a few minutes on the first run, but should be faster after that.
+
+When everything is done, you will get an error building the web container, which is expected, but your Docker client should show the database service up and running.
 
 We’ll install some database packages we will need. The first is `psycopg2-binary`, a library that allows Python applications to connect to Postgres databases. We'll also install the `databases` package that allows async connection to databases.
 
@@ -363,7 +253,26 @@ databases = {version = "0.4.1", extras = ["postgresql"]}
 sqlalchemy = "1.4"
 ```
 
-Once that’s done, we’ll go ahead and create our database driver file, so go ahead and create a new file we’ll call `db.py`.
+[Save the file](https://fmze.co/fftq-4.4.1).
+
+We haven't initialized our local Poetry environment, and we want to do that for two reasons:
+
+First, installing the Poetry packages on the host machine allows our code editor to understand the packages and do linting so that we can see issues as we write the code.
+
+Second, this will allow us to do a "hybrid" approach where we run the application on the host machine, but connect to the database on the Docker container, which allows us to run the application as well as tests without having to rebuild the web Docker container. 
+
+For example, in my Visual Studio Code editor, I can have tests run from the UI or start/stop the application with one button. I have added the `vscode` configuration on the repository if you want to add it to your folder by heading over [to this URL](https://fmze.co/fftq-4.4.2).
+
+Once the code is good to go, you can re-build the web app container and run the whole stack from Docker.
+
+So stop the Docker compose with Control-C and go ahead and install all the Poetry packages by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ poetry install
+```
+
+Once that’s done, we’ll go ahead and create our database driver file, so create a new file we’ll call `db.py`.
 
 {lang=python,line-numbers=on}
 ```
@@ -392,7 +301,7 @@ Finally, we will import the `sqlalchemy` package to define an application-wide `
 
 Next, let’s create the database connection using the user, password, host and database from those settings. Finally we acquire the connection and return it to the caller.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.3).
 
 Now let’s go ahead and create our first and only blueprint of the application, the `counter` module.
 
@@ -420,7 +329,7 @@ We also import our `metadata` object which will allow us to do introspection abo
 
 Then, we define our `counter_table` as a table consisting of two columns: our `id` which will be the primary key and `count` which will hold the current counter of the application. Notice we define the table name as `counter` and add the `metadata` object as part of the definition.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.4).
 
 Now let’s go ahead and build the `views.py` file which will be our main controller and blueprint.
 
@@ -468,7 +377,7 @@ We begin by fetching our database connection from the `current_app.dbc`.
 
 Next we build a query which will select all the records in the `counter_table` . In this application it will always be just one record as you’ll see below. We’ll get more familiar with the `select` function from `sqlalchemy`, but for now just think of this as doing a `SELECT * FROM counter_table`.
 
-We then feed the result of the query to the `result` variable, but notice the use of the `await` keyword there. Indeed the connection execution is an asynchronous operation that will resolve into a coroutine which will eventually resolve with the data we need.
+We then feed the result of the query to the `result` variable, but notice the use of the `await` keyword there. Indeed the connection execution is an asynchronous operation that will resolve into a coroutine which will eventually return the data we need.
 
 We’ll also set an internal variable of `count` to `None`.
 
@@ -482,7 +391,7 @@ Finally we return the value of the `count` variable to the request as HTML conte
 
 As you can already notice, any database connection operations must be awaited, since they are I/O operations that can yield to the event loop.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.5).
 
 Next we’ll create the application factory, as we’ve done in the past in my Flask course. Call this file `application.py`.
 
@@ -535,7 +444,7 @@ For the `before_serving` function, we’ll `await` a database connection. We the
 
 Finally, with the `after_serving` function, we’ll close the database connection properly, so any pending database requests are taken care of.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.4.6).
 
 We’re almost done with the core application. We just need to create the bootstrap file that will spawn an instance of the application factory. We’ll call this file `manage.py`.
 
@@ -548,7 +457,7 @@ from application import create_app
 app = create_app()
 ```
 
-Save the file and let’s go ahead and start with the database migration configuration.
+[Save the file](https://fmze.co/fftq-4.4.7) and let’s go ahead and start with the database migration configuration.
 
 ## Configuring Alembic Migrations <!-- 4.5 -->
 
@@ -556,43 +465,29 @@ We’re now going to install Alembic to be able to do database migrations. If yo
 
 So we’ll install Alembic by adding it to the `pyproject.toml` as follows:
 
-{lang=bash,line-numbers=on,starting-line-number=14}
+{lang=python,line-numbers=on,starting-line-number=14}
 ```
 alembic = "1.6.5"
 ```
 
+[Save the file](https://fmze.co/fftq-4.5.1).
+
 We will now initialize the migration setup which will create both an `alembic.ini` and a `migrations` folder.
 
-First, we need to install all the Poetry packages we've added. The command is different if are using Docker or if you are running Postgres locally.
+But before that, we need to install all the Poetry packages we've added. 
 
-If you are doing local development on Mac or Windows, type:
-
-{lang=bash,line-numbers=off}
-```
-$ poetry install
-```
-
-If you are using Docker, type the following:
+So type:
 
 {lang=bash,line-numbers=off}
 ```
-$ docker-compose run --rm web poetry install
+$ poetry update
 ```
 
-Now we're ready for our first migration. Again, the command is different if are using Docker or if you are running Postgres locally.
-
-If you are doing local development on Mac or Windows, make sure you are running Postgres, and then type:
+Now we're ready for our first migration. Just type:
 
 {lang=bash,line-numbers=off}
 ```
 $ poetry run alembic init migrations
-```
-
-If you are using Docker, type the following:
-
-{lang=bash,line-numbers=off}
-```
-$ docker-compose run --rm web poetry run alembic init migrations
 ```
 
 You’ll notice there's a new file, `env.py` inside a new `migrations` folder. There's also a new file called `alembic.ini` in the root folder.
@@ -601,7 +496,7 @@ We need to tell `alembic` three things.
 
 - First, we need it to use our environment variables to connect to the database.
 - Second we need to tell it what models our application uses and finally,
-- We need to tell it how to connect to the database.
+- Third, we need to tell it how to connect to the database.
 
 So let’s begin setting up the environment variables in the `migrations/env.py` file.
 
@@ -616,7 +511,7 @@ from pathlib import Path
 
 We’ll need all these libraries for the next step.
 
-Then add this under `from alembic import context` on line 10:
+Then add this under `from alembic import context` after line 10:
 
 {lang=python,line-numbers=on,starting-line-number=12}
 ```
@@ -655,7 +550,7 @@ target_metadata = metadata
 
 This is very important to remember: any new models you add subsequently, you need to add them here.
 
-Save the file.
+[Save the file](https://fmze.com/fftq-4.5.2).
 
 With all that in place, we’ll finally move to the last step: tell Alembic how to connect to the database.
 
@@ -666,7 +561,7 @@ Open the `alembic.ini` file and change `sqlalchemy.url` on line 42 like this.
 sqlalchemy.url = postgresql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:5432/%(DATABASE_NAME)s
 ```
 
-These variables are coming from the `env.py` we edited earlier. Save the file.
+These variables are coming from the `env.py` we edited earlier. [Save the file](https://fmze.co/fftq-4.5.3).
 
 And with this, we’re ready to run our first migration.
 
@@ -674,25 +569,9 @@ And with this, we’re ready to run our first migration.
 
 We’re now ready to create the tables in the database using the Alembic migration workflow. You will notice that the commands look a bit like Git commands. Initially you’ll need to write these down, but once you do it a couple of times, you’ll remember them.
 
-So we’ll create our first “migration commit”. It will be different if you are using Docker or not, so don't type anything yet.
+But first, make sure you're Docker database container is up and running. If it isn't, just type `docker-compose up` or start it from the Docker Desktop application or from VSCode's Docker extension.
 
-For local development we will use:
-
-{lang=bash,line-numbers=off}
-```
-$ poetry run alembic revision --autogenerate -m "create counter table"
-```
-
-For Docker, you will use:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
-```
-
-Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
-
-Make sure your Postgres server is up and running, then execute the migration command according to your environment, and you should see something like the following:
+So now we're ready to create our first “migration commit”. For that just type: `poetry run alembic revision --autogenerate -m "create counter table"`
 
 {lang=bash,line-numbers=off}
 ```
@@ -703,6 +582,8 @@ INFO  [alembic.autogenerate.compare] Detected added table 'counter'
   Generating /home/jorescobar/counter_app/migrations/versions/51d999a1e262_cr
   eate_counter_table.py ...  done
 ```
+
+Thanks to the `target_metadata` setting we added earlier, Alembic can view the status of the database and compare against the table metadata in the application, generating the "obvious" migrations based on a comparison. This is achieved using the `--autogenerate` option to the alembic revision command, which places so-called candidate migrations into our new migrations file.
 
 Check that a new `versions` file was created and take a look:
 
@@ -746,18 +627,9 @@ As you can see, there are three sections: one that holds what revision this is a
 
 This looks good to me, so let’s apply these changes on the database by doing the following.
 
-For local development we will use:
-
 {lang=bash,line-numbers=off}
 ```
 $ poetry run alembic upgrade head
-```
-
-For Docker, you will use:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose run --rm web poetry run alembic upgrade head
 ```
 
 You will see the following:
@@ -771,6 +643,15 @@ INFO  [alembic.runtime.migration] Running upgrade  -> 2abbbb3287d2, create count
 ```
 
 Great, it went smoothly which means the tables were created. We can log in into Postgres and check the tables.
+
+For that, let's connect to Postgres running in our Docker container by doing:
+
+{lang=bash,line-numbers=off}
+```
+$ docker exec -it app_db_1 psql postgres -U app_user
+```
+
+And from there, you can check that the tables were created:
 
 {lang=mysql,line-numbers=off}
 ```
@@ -806,18 +687,9 @@ revision = '51d999a1e262'
 
 Exit the Postgres server and we should be ready to run our application.
 
-For local development run the application using:
-
 {lang=bash,line-numbers=off}
 ```
 $ poetry run quart run
-```
-
-For Docker, we can start the whole cluster as follows:
-
-{lang=bash,line-numbers=off}
-```
-docker-compose up
 ```
 
 If you open `localhost:5000` you will see the first number of our counter:
@@ -825,6 +697,26 @@ If you open `localhost:5000` you will see the first number of our counter:
 ![Figure 4.8.1](images/4.8.1.png)
 
 Refreshing the page will increase the counter value. And there you have it, your first Quart database-driven application.
+
+Here's something interesting I want you to notice: the Quart application is running in our host machine, and not from the Docker container, which allows us to debug easily and start and stop it quickly. For example, you can set breakpoints in your code editor and debug easily from there.
+
+But if we want to run the whole application from the Docker containers, do the following:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose up
+```
+
+You will see the application in `localhost:5000`.
+
+And this is very important: if you add any Poetry packages to the application, you will need to rebuild the web container doing the following Docker command:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose up --build
+```
+
+That will re-run the Dockerfile script and install any new packages you have added.
 
 ## Testing our Counter Application <!-- 4.7 -->
 
@@ -836,12 +728,12 @@ So let’s begin by adding those libraries to the application. So just do:
 
 {lang=bash,line-numbers=off}
 ```
-$ poetry add pytest pytest-asyncio
+$ poetry add pytest=6.2.1 pytest-asyncio=0.15.1
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
 
-The `pytest` library works in a modular fashion using reusable functions called _fixtures-_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
+The `pytest` library works in a modular fashion using reusable functions called _fixtures_. Fixtures allow you to put the repetitive stuff in one function and then add them to the tests that need them.
 
 The cool thing about these fixtures is that they can be used in a layered format, allowing you to build very complex foundations. Unfortunately this is also `pytest`’s Achilles’ heel, as some teams make such complex “fixture onions” that will make any newcomer spend lots of time to learn them. My recommendation is to always make tests as readable as possible, so avoid doing more than three layers of fixtures and keep them as single-purpose as possible with very descriptive names.
 
@@ -860,7 +752,6 @@ First, we’ll add the necessary imports we’ll use.
 {lang=python,line-numbers=on}
 ```
 import pytest
-import asyncio
 import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
@@ -875,9 +766,8 @@ Make sure to place the `load_dotenv` command before the `create_app` factory ins
 
 We will now create the database instantiation fixture for all our tests, so let’s write that:
 
-{lang=python,line-numbers=on,starting-line-number=13}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
-@pytest.mark.asyncio
 @pytest.fixture
 async def create_db():
     print("Creating db")
@@ -914,8 +804,6 @@ async def create_db():
     metadata.create_all()
 ```
 
-First we need two decorators: one called `mark.asyncio` which will tell `pytest` that we have async operations in the test or fixture.
-
 By default all pytest fixtures are function level, which means that pytest will create the database from scrath at the beginning of the function and destroy it at the end of the function. This works well for testing purposes, since each test function will work on isolation. For more complex applications, we can leverage fixtures to pre-load data for some of the tests, but we'll see examples of that later on.
 
 We then load the credentials from the `dotenv` file. We then connect to the database and create the test database, which will be called the same as our application database with the string "_test" appended.
@@ -926,7 +814,7 @@ Finally we will create all the tables from the models in the application, using 
 
 Now here’s something you will see often with `pytest` fixtures and that’s the use of the `yield` statement. 
 
-{lang=python,line-numbers=on,starting-line-number=49}
+{lang=python,line-numbers=on,starting-line-number=47}
 ```
     yield {
         "DB_USERNAME": db_username,
@@ -952,7 +840,7 @@ Essentially what yield does is to send the control back to the calling test, and
 
 Next, let’s create the Quart application itself.
 
-{lang=python,line-numbers=on,starting-line-number=67}
+{lang=python,line-numbers=on,starting-line-number=65}
 ```
 @pytest.fixture
 async def create_test_app(create_db):
@@ -988,7 +876,7 @@ One thing I want you to notice, in the instantiation of the `create_app` we are 
 
 {lang=python,line-numbers=on,starting-line-number=57}
 ```
-app = create_app(\*\*create_db)
+app = create_app(**create_db)
 ```
 
 The way this works is that the `create_db` fixture is returning a dictionary of variables which line up with our settings variables. Remember how `create_app` takes overrides as a parameter?
@@ -1008,12 +896,12 @@ app = create_app(DB_USERNAME=create_db['DB_USERNAME'], DB_PASSWORD=create_db['DB
 
 We’re almost there. We’ll create our last fixture, which will allow us to create a test client that we can use to hit the endpoints. This looks like this:
 
-{lang=python,line-numbers=on,starting-line-number=75}
+{lang=python,line-numbers=on,starting-line-number=73}
 ```
 @pytest.fixture
 def create_test_client(create_test_app):
-print("Creating test client")
-return create_test_app.test_client()
+    print("Creating test client")
+    return create_test_app.test_client()
 ```
 
 We will inject the `create_test_app` fixture from above. Yes, that means we’re already at two fixture levels from the first fixture in the file, but this is the only fixture we will need in our tests, so we’re good.
@@ -1022,9 +910,9 @@ I just want to highlight how cool fixtures are. We can now just include `create_
 
 We don’t need to yield anything in this case since we don’t need to run any cleanups after the test is done.
 
-Save the file.
+[Save the file](https://fmze.co/fftq-4.7.1).
 
-Now let’s create our actual test. Create a file called `test_counter` inside the `counter` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
+Now let’s create our actual test. Create a file called `test_counter` inside the `tests` folder. Any file that starts with the word `test_` will be automatically discovered by `pytest`.
 
 For our first test, We want to be able to see that the counter is started when we first hit the page.
 
@@ -1044,10 +932,15 @@ We need to decorate it as an `asyncio` test, since we’ll be doing I/O operatio
 
 We then hit the test client with a request and await for the response. The data we get back is stored in the `body` variable and then check that the string “Counter: 1” is in the body.
 
-Save the file and run the test using `poetry run pytest`.
+[Save the file](https://fmze.co/fftq-4.7.2) and run the test using `poetry run pytest`. 
+
+Make sure you're running your Docker Postgres container.
 
 {lang=bash,line-numbers=off}
 ```
+$ docker-compose up db -d
+[+] Running 1/1
+ ⠿ Container app_db_1  Started 
 $ poetry run pytest
 ================================== test session starts ==================================
 platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
@@ -1073,11 +966,11 @@ So on line 3 of the `test_counter.py` file, add the following:
 from counter.models import counter_table
 ```
 
-Save the file and run the test again.
+[Save the file](https://fmze.co/fftq-4.7.3) and run the test again.
 
 {lang=bash,line-numbers=off}
 ```
-$ pipenv run pytest
+$ poetry run pytest
 ============================= test session starts ==============================
 platform darwin -- Python 3.7.3, pytest-4.5.0, py-1.8.0, pluggy-0.13.0
 rootdir: /opt/quart-mysql-boilerplate
@@ -1089,9 +982,9 @@ counter/test_counter.py . [100%]
 =========================== 1 passed in 0.19 seconds ===========================
 ```
 
-Perfect! We now get a green line and the test passed label. So remember to add the models you will be testing on that file as an import at the top.
+ ## Completing our tests <!-- 4.8 -->
 
-If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a flag to the command, like so: `pipenv run pytest -s`.
+We now get a green line and the "tests passed label". If you look closer, you'll notice that the print statements we added aren’t being printed. For those to be printed, you need to add a `-s` flag to the command, like so: `poetry run pytest -s`.
 
 {lang=bash,line-numbers=off}
 ```
@@ -1130,7 +1023,7 @@ async def test_second_response(create_test_client):
 
 We’ll mark the test as async and we will also need the `create_test_client` fixture we used in the previous test.
 
-First, we generate a response from the homepage which should set to counter's value to "1".  That is because the database is being destroyed and created with each new `pytest` function that runs.
+First, we generate a response from the homepage which should set the counter's value to "1".  That is because the database is being destroyed and created with each new `pytest` function that runs.
 
 Since we test that the counter value is set to "1" on the first run within the previous test, there's no need to check the value.
 
@@ -1194,11 +1087,11 @@ Then, let's add the code to read the counter value directly from the counter col
 
 First we create an async context with the `with` Python keyword. Inside the block we can now get the Quart `current_app` context’s SQL connection object `dbc`. We can then build the query, execute it, get the first row and then check that the count column’s value is equal to two.
 
-Save the file and run the tests.
+[Save the file](https://fmze.co/fftq-4.7.4) and run the tests.
 
 {lang=bash,line-numbers=on}
 ```
-poetry run pytest -s
+$ poetry run pytest -s
 ================================== test session starts ==================================
 platform darwin -- Python 3.9.7, pytest-6.2.5, py-1.11.0, pluggy-1.0.0
 rootdir: /opt/quart-db-boilerplate
@@ -1220,4 +1113,27 @@ Creating test client
 
 Looks good!
 
+However, we haven't updated our Web app Docker instance yet, so let's go ahead and do that. On the terminal, type:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose up --build
+```
+
+This tells Docker to build all the services on the `docker-compose.yml` file. All the changes we've done to the Poetry packages will now be installed.
+
+The web Docker container should now be up and running and you can visit `localhost:5000` in your browser to see the whole application running.
+
+If you want to run the tests from the Docker quart web container, you can do:
+
+```
+docker-compose run --rm web poetry run pytest -s
+```
+
+If you are using VSCode, I have added the settings to run tests from the application. Just look for the "bottle" icon and click on it. You will see that in the first run it will detect the tests and add a testing tree.
+
+At this point you can run all the tests by cllicking the run tests doble triangle, or debug using the triangle with the gear. Debugging will respect any breakpoint you add, so the test will stop at that point, and you can further introspect the stack.
+
 And with that we have a working database powered Quart application with testing. We can use this as a boilerplate for any project that uses Quart and Postgres.
+
+If you want to grab the updated boilerplate at any time, just visit [this Github repo](https://github.com/fromzeroedu/quart-postgres-boilerplate).
