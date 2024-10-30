@@ -36,9 +36,9 @@ And with that, let's go ahead and install Quart.
 
 ## Installing Quart and Hello World <!-- 3.2 -->
 
-In this lesson we're going to install Quart. Make sure you have at least Python 3.7 installed.
+In this lesson we're going to install Quart. Make sure you have at least Python 3.10 installed.
 
-Next, we're going to install the Poetry package manager. Poetry allows us to handle package management for our Python applications and replaces the previous `virtualenv` workflow. It's better than using a `requirements.txt` because it tracks package dependencies in more detail, avoiding the issues we had sometimes where package upgrades would break our application.
+First, we're going to install the Poetry package manager. Poetry allows us to handle package management for our Python applications and replaces the previous `virtualenv` workflow. It's better than using a `requirements.txt` because it tracks package dependencies in more detail, avoiding the issues we had sometimes where package upgrades would break our application.
 
 Check if you have Poetry installed by typing `poetry --version` in your terminal. If you don't, follow the Poetry installation instructions in the [Poetry docs page](https://python-poetry.org/docs/#installation).
 
@@ -46,13 +46,26 @@ To create our first Quart application folder, we will use Poetry to set that up 
 
 Next, let's create a folder for our Quart project, with `mkdir quart-hello` and type `cd quart-hello` to start the process.
 
-Now we'll initialize this folder to be a Poetry project. Poetry has an `init` module that can ask some details about the project, but for this time, we'll just initialize it with a simple configuration, so type `poetry init -n`. This will create a `pyproject.toml` without too much information.
+Now we'll initialize this folder to be a Poetry project. Poetry has an `init` module that can ask some details about the project, but for this time, we'll just initialize it with a simple configuration, so type `poetry init -n`. This will create a `pyproject.toml`. 
 
-Next, we want to create the virtual environment that Poetry will use, so type `poetry shell`. Poetry will create the virtual environment folder in your User directory and enable it automatically.
+We're going to now create a Poetry package folder for our Quart application files. This has a few benefits including the ability to create a standalone project for distribution. So create a directory called `quart_hello` (notice it's an underscore, not a dash).
+ 
+Now update the `pyproject.toml` and add the following to the `tool.poetry` section:
+
+{lang=python,line-numbers=on,starting-line-number=6}
+```
+packages = [{include = "quart_hello"}]
+```
+
+Notice it's `quart_hello`, again with an underscore.
+
+Since it's best practice to have a `README.md` on the root of the package, go ahead and create one with a bit of a description of the project. Save the file.
+
+Next, we want to create the virtual environment that Poetry will use, so type `poetry shell`. Poetry will create the virtual environment folder in your User directory and activate it automatically.
 
 We now install `Quart` by doing `poetry add quart`. Poetry will add Quart and a bunch of other dependencies.
 
-Open your favorite code editor and create a file called `hello.py` in the root folder.
+Next we'll create a file called `hello.py` in the `quart_hello` folder.
 
 We'll write the following code in `hello.py`:
 
@@ -88,7 +101,11 @@ QUART_ENV=development
 SECRET_KEY='my_secret_key'
 ```
 
-We're now ready to run our first Quart app. Just type: `poetry run quart`. You will be notified that the application is running on port 5000.
+Since we now have updated the files in `quart_hello`, we need to update the poetry lock file, so do: `poetry install`. Don't worry, you'll need to do this just this once.
+
+We're now ready to run our first Quart app. 
+
+But first, cd into the `quart_hello` folder and now type: `poetry run quart`. You will be notified that the application is running on port 5000.
 
 {lang=bash,line-numbers=off}
 ```
@@ -103,16 +120,7 @@ For that, we'll create a template folder so that we can render the page more dyn
 
 {lang=html,line-numbers=on}
 ```
-<HTML>
-<header>
-    <title>Home Page</title>
-</header>
-
-<body>
-    <h1>Hello {{ name }}</h1>
-</body>
-
-</HTML>
+template
 ```
 
 In the `hello.py` file add `render_template` to the Quart import on line 1:
