@@ -2,17 +2,17 @@
 name = "quart-hello"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Jorge Escobar <jorge@fromzero.io>"]
+readme = "README.md"
+packages = [{include = "quart_hello"}]
+
 
 [tool.poetry.dependencies]
-python = "^3.8"
-quart = "^0.16.2"
-python-dotenv = "^0.19.2"
+python = "^3.10"
+quart = "^0.19.8"
+python-dotenv = "^1.0.1"
 
-[tool.poetry.dev-dependencies]
-black = "^21.12b0"
-mypy = "^0.930"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
