@@ -728,7 +728,7 @@ So let’s begin by adding those libraries to the application. So just do:
 
 {lang=bash,line-numbers=off}
 ```
-$ poetry add pytest=6.2.1 pytest-asyncio=0.15.1
+$ poetry add pytest pytest-asyncio
 ```
 
 Ok, with that out of the way let’s see how `pytest` works.
