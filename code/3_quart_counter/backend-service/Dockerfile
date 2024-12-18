@@ -66,4 +66,4 @@ RUN poetry install
 EXPOSE 5001
 
 # Define our command to be run when launching the container
-CMD poetry run hypercorn my_app.asgi:app -b 0.0.0.0:5001
+CMD poetry run hypercorn my_app.asgi:app -b 0.0.0.0:5001 --reload
