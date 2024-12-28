@@ -277,30 +277,6 @@ Dynaconf is smart enough to know which section to use based on the `ENV_FOR_DYNA
 
 [Save the file](https://fmze.co/fftq-4.3.2)
 
-***===
-
-Before we start creating our application structure, it's a good idea to set up a local poetry environment. Even though we'll be running our application in Docker, we want to install our dependencies locally as well. This will enable our IDE to provide proper code completion, linting, and type checking while we're coding.
-
-Since the application is expecting Python 3.10, we need to create the Poetry virtual environment with that version, otherwise we could get unexpected results. You need to have Python 3.10 locally available for this to work. If you don't, I recommend you install the excellent `pyenv` library and then add Python 3.10 to the list of executables.
-
-Close your code editor. From your terminal, navigate to the `backend-service` folder and run:
-
-{lang=bash,line-numbers=off}
-```
-$ poetry env use python3.10 && poetry install
-$ poetry shell
-```
-
-The first command sets Poetry to use Python 3.10 and then installs all the application dependencies based on that Python version, including development dependencies like black and mypy, into this environment. Now your IDE will be able to use these tools to provide real-time feedback as you code.
-
-The second command creates and activates a virtual environment specifically for our project.
-
-Notice Poetry complains thet `my_app` does not contain any element. This is fine, as we haven't started writing our application yet.
-
-Make sure to open your code editor from the `backend-service` this time and not from the root folder. It will automatically identify the virtual environment created by Poetry. We'll check that in a moment once we start writing Python code.
-
-***===
-
 Now let's create our first blueprint that will handle our home routes. Blueprints are a powerful feature in Quart, just like in Flask, that allow us to organize related routes and functionality into separate components. Think of blueprints as mini-applications that can be reused across different parts of your main application. For example, you might have a blueprint for user operations, another for admin functions and so on.
 
 First let's create the main application folder and call it `my_app`. Add an `__init__.py` inside. This file is what makes Python treat our directory as a package - it's a special file that marks a directory as a Python package directory. Even though it's empty, its presence is what allows us to import modules from this directory.
@@ -336,11 +312,11 @@ Just like in Flask, we use the `@route` decorator to define our routes, but here
 
 Notice how we're using the `async` keyword here - this is because in Quart, all route handlers must be asynchronous. Even though we're not doing any I/O operations in this route yet, we still need to declare it as async.
 
-Let's check that code linting and intellisense is working. In VSCode you should see the Poetry package's Python interpreter with something like "my-app" in its name. If it doesn't, open a terminal with the Poetry shell enabled and type: `which python` and copy that folder in the code editor's Python settings. You can tell intellisense is working if you hover over a library name and you get a hint of the package description.
+We now finish the route by returning the environment variables for Dynaconf and the Database Host. The idea is that we have an endpoint to check that everything's working as intended.
 
 [Save the file](https://fmze.co/fftq-4.3.3)
 
-Now let's create our `application.py` file in the `my_app` directory. This file will serve as our application factory, which is a best practice in Flask/Quart applications as it allows us to create multiple instances of our application with different configurations:
+Now let's create our `application.py` file in the `my_app` directory. This file will serve as our application factory, which is a best practice in Flask and Quart applications as it allows us to create multiple instances of our application with different configurations:
 
 {lang=python,line-numbers=on}
 ```
@@ -422,12 +398,11 @@ if __name__ == "__main__":
     app.run()
 ```
 
-While this looks similar to our manage.py file, there are a few key differences. First, we're explicitly adding our parent directory to Python's path with `sys.path.append`. This ensures that our application can be found when Hypercorn runs it. 
+While this looks similar to our manage.py file, there are a couple of key differences. 
 
-Remember the line in our Dockerfile where we specified the command:
-`CMD poetry run hypercorn my_app.asgi:app -b 0.0.0.0:5001`
+First, we're explicitly adding our parent directory to Python's path with `sys.path.append`. This ensures that our application can be found when Hypercorn runs it.  
 
-This is what tells Hypercorn to look for this file and use the `app` object we're creating here. The `-b 0.0.0.0:5001` part tells Hypercorn to bind to all network interfaces on port 5001, which is necessary for Docker networking to work properly.
+Second, notice that we create the app task but then run it immediately after that.
 
 [Save the file](https://fmze.co/fftq-4.3.6)
 
@@ -462,8 +437,10 @@ You should see Docker building your images and then starting both your web servi
 http://localhost:5001/app-settings
 ```
 
-You should see a page showing "Home: Hello World!" along with your Dynaconf environment settings and DB_HOST. The DB_HOST should show "db" since we're running in the Docker environment.
+If all went well, you will see a page showing "Home: Hello World!" along with your Dynaconf environment setting and DB_HOST. The DB_HOST should show "db" since we're running in the Docker environment.
 
 Congratulations! You've just built a solid foundation for a modern, async Python web application. We've set up a proper project structure using Poetry for dependency management, implemented configuration management with Dynaconf that adapts to different environments, and created a modular application using Blueprints.
 
 In the next module, we'll build upon this foundation by adding database migrations. This will allow us to version control our database schema and make it easy to make changes to our database structure as our application evolves. Get ready to explore the powerful combination of Quart and database management!
+
+## Linting and Debugging with VSCode <!-- 4.x -->
