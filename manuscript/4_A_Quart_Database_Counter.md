@@ -443,4 +443,234 @@ Congratulations! You've just built a solid foundation for a modern, async Python
 
 In the next module, we'll build upon this foundation by adding database migrations. This will allow us to version control our database schema and make it easy to make changes to our database structure as our application evolves. Get ready to explore the powerful combination of Quart and database management!
 
+## Database Operations and Alembic Migrations <!-- 4.4 -->
+
+Now that we have our basic application structure in place, let's add database support to our Quart application. We'll be using PostgreSQL as our database, and we'll set up a complete database migration workflow using Alembic. This is a crucial part of any production application as it allows us to version control our database schema changes.
+
+Let's start by adding the required packages to our Poetry environment. Open up the `pyproject.toml` file and add the following dependencies:
+
+{lang=python,line-numbers=on,starting-line-number=10}
+```
+psycopg2-binary = "^2.9.10"
+databases = {version = "^0.9.0", extras = ["asyncpg"]}
+sqlalchemy = "^2.0.36"
+alembic = "^1.13.3"
+```
+
+Let's understand what each package does. The `psycopg2-binary` package is the PostgreSQL adapter for Python - it's what allows our Python code to talk to PostgreSQL. The `databases` package with the `asyncpg` extra provides async database support, which is crucial for our Quart application. SQLAlchemy is our ORM (Object Relational Mapper) that allows us to work with databases using Python objects instead of raw SQL. Finally, Alembic is SQLAlchemy's database migration tool, which helps us manage database schema changes over time.
+
+[Save the file](https://fmze.co/fftq-4.4.1)
+
+Now let's install these new packages:
+
+{lang=bash,line-numbers=off}
+```
+$ poetry install
+```
+
+Let's set up our database connection management. Create a new file `my_app/db.py`:
+
+{lang=python,line-numbers=on}
+```
+import sqlalchemy
+from databases import Database
+from dynaconf import settings
+
+metadata = sqlalchemy.MetaData()
+
+async def db_connection() -> Database:
+    database_url = f"postgresql+asyncpg://{settings['DB_USERNAME']}:"
+    database_url += f"{settings['DB_PASSWORD']}@"
+    database_url += f"{settings['DB_HOST']}:5432/"
+    database_url += f"{settings['DATABASE_NAME']}"
+    database = Database(database_url, min_size=5, max_size=20)
+    
+    return database
+```
+
+This file does several important things. First, it creates a metadata object that will store the schema information for all our models. Then, it provides an async function that creates and returns a database connection pool. Notice we're using connection pooling with `min_size=5` and `max_size=20` - this is a performance optimization that keeps a set of connections ready for use.
+
+[Save the file](https://fmze.co/fftq-4.4.2)
+
+Before we create our counter model, let's set up our application structure. Create a new directory called `counter_app` inside `my_app` and add an empty `__init__.py` file to make it a Python package:
+
+{lang=bash,line-numbers=off}
+```
+$ mkdir my_app/counter_app
+$ touch my_app/counter_app/__init__.py
+```
+
+Now let's create our counter model. This will be a simple table with just an ID and a count field. Create a new file in `my_app/counter_app/models.py`:
+
+{lang=python,line-numbers=on}
+```
+from sqlalchemy import Column, Integer, Table
+
+from my_app.db import metadata
+
+counter_table = Table(
+    "counter",
+    metadata,
+    Column("id", Integer, primary_key=True),
+    Column("count", Integer),
+)
+```
+
+In this model, we're using SQLAlchemy Core instead of the ORM. Why? Because when working with async applications, the Core API provides better performance and is more straightforward to use with async drivers. We define a table named 'counter' with two columns: an auto-incrementing ID and a count field that will store our counter value.
+
+[Save the file](https://fmze.co/fftq-4.4.3)
+
+With our model in place, let's set up Alembic for database migrations. First, we'll initialize Alembic in our project:
+
+{lang=bash,line-numbers=off}
+```
+$ poetry run alembic init migrations
+```
+
+This command creates a migrations directory and an `alembic.ini` file. Let's configure Alembic by updating the `alembic.ini` file. Find the `sqlalchemy.url` line and update it to use our configuration:
+
+{lang=ini,line-numbers=on,starting-line-number=65}
+```
+sqlalchemy.url = postgresql://%(DB_USERNAME)s:%(DB_PASSWORD)s@%(DB_HOST)s:5432/%(DATABASE_NAME)s
+```
+
+We're using variable interpolation here to make our configuration environment-agnostic. These variables will be populated from our settings.
+
+[Save the file](https://fmze.co/fftq-4.4.4)
+
+Now we need to add a few lines to `migrations/env.py` to connect our models to Alembic. First, we'll add these imports at the top of the file:
+
+{lang=python,line-numbers=on}
+```
+from my_app.counter_app.models import counter_table
+from my_app.db import metadata as my_app_metadata
+```
+
+Then near line 27, we'll set our metadata:
+
+{lang=python,line-numbers=on}
+```
+target_metadata = my_app_metadata
+```
+
+Finally, we'll add the configuration section that will allow Alembic to read our environment variables:
+
+{lang=python,line-numbers=on}
+```
+section = config.config_ini_section
+config.set_section_option(section, "DB_USERNAME", settings.get("DB_USERNAME", ""))
+config.set_section_option(section, "DB_PASSWORD", settings.get("DB_PASSWORD", ""))
+config.set_section_option(section, "DB_HOST", settings.get("DB_HOST", ""))
+config.set_section_option(section, "DATABASE_NAME", settings.get("DATABASE_NAME", ""))
+```
+
+[Save the file](https://fmze.co/fftq-4.4.5)
+
+Now let's create our counter blueprint and views. Create `my_app/counter_app/views.py`:
+
+{lang=python,line-numbers=on}
+```
+from quart import Blueprint, current_app
+
+from my_app.counter_app.models import counter_table
+
+counter_app = Blueprint("counter_app", __name__)
+
+@counter_app.route("/")
+async def init() -> str:
+    conn = current_app.dbc  # type: ignore
+    counter_query = counter_table.select()
+    result = await conn.fetch_all(query=counter_query)
+    count = None
+
+    if not len(result):
+        stmt = counter_table.insert().values(count=1)
+        result = await conn.execute(stmt)
+        await conn.execute("commit")
+        count = 1
+    else:
+        row = result[0]
+        count = row["count"] + 1
+        update_stmt = (
+            counter_table.update()
+            .where(counter_table.c.id == row["id"])
+            .values({"count": count})
+        )
+        result = await conn.execute(update_stmt)
+        await conn.execute("commit")
+    return f"<h1>Counter: {str(count)}</h1>"
+```
+
+This view manages our counter logic. When a user visits the root URL, it either initializes the counter if it doesn't exist or increments it if it does. Notice how we're using async/await syntax throughout - this is crucial for maintaining the non-blocking nature of our application.
+
+[Save the file](https://fmze.co/fftq-4.4.6)
+
+Finally, let's update our `application.py` to include our new counter blueprint and database connection management:
+
+{lang=python,line-numbers=on}
+```
+from typing import Any
+
+from dynaconf import settings
+from quart import Quart
+
+from my_app.counter_app.views import counter_app
+from my_app.db import db_connection
+
+async def create_app(**config_overrides: Any) -> Quart:
+    app = Quart(__name__)
+    app.config.from_object(settings)
+    app.config.update(config_overrides)
+
+    # register blueprints
+    app.register_blueprint(counter_app)
+
+    @app.before_serving
+    async def create_db_conn() -> None:
+        database = await db_connection()
+        await database.connect()
+        app.dbc = database
+
+    @app.after_serving
+    async def close_db_conn() -> None:
+        await app.dbc.disconnect()  # type: ignore
+
+    return app
+```
+
+We've added the counter blueprint registration and, most importantly, two special lifecycle hooks using `before_serving` and `after_serving` decorators. These decorators are specific to Quart and are crucial for proper application lifecycle management.
+
+The `before_serving` decorator runs before the first request is handled by our application. This is different from Flask's `before_first_request` in an important way: in an async application, we might have multiple workers handling requests, and we need our database connection to be available to all of them. By setting up the connection in `before_serving`, we ensure that our database connection pool is established once when the application starts, not when the first request comes in.
+
+Similarly, `after_serving` runs when we're shutting down our application. This gives us a chance to properly close our database connections. This is crucial for preventing connection leaks and ensuring all our database operations are properly completed before shutdown.
+
+Both of these hooks are asynchronous because database operations in our application are asynchronous. We store the database connection in `app.dbc` which makes it available throughout our application via the `current_app` proxy. This is a pattern that ensures we're reusing connections efficiently rather than creating new connections for each request.
+
+[Save the file](https://fmze.co/fftq-4.4.7)
+
+Now we can apply our first migration. First, let's generate it using our Docker container:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
+```
+
+This command runs inside our web service container and will create a new migration file in the migrations/versions directory. The `--rm` flag tells Docker to remove the container after the command completes.
+
+Now let's apply the migration:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose run --rm web poetry run alembic upgrade head
+```
+
+With everything in place, we can start our application. Since we're using Docker, we'll use docker-compose to bring up both our web service and the PostgreSQL database:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose up
+```
+
+This command will start both our PostgreSQL database and our Quart application. You might see quite a bit of output as both services start up - this is normal. Once you see the message that the application is running, visit http://localhost:5001 in your browser (note we're using port 5001 as configured in our docker-compose.yml), and you should see the counter starting at 1. Refresh the page, and watch it increment!
+
 ## Linting and Debugging with VSCode <!-- 4.x -->
