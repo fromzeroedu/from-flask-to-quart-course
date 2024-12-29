@@ -4,6 +4,8 @@ from dynaconf import settings
 from quart import Quart
 
 from my_app.home_app.views import home_app
+from my_app.counter_app.views import counter_app
+from my_app.db import db_connection
 
 
 def init_config(app: Quart, **config_overrides: Any) -> None:
@@ -22,5 +24,16 @@ async def create_app(**config_overrides: Any) -> Quart:
 
     # register blueprints
     app.register_blueprint(home_app)
+    app.register_blueprint(counter_app)
+
+    @app.before_serving
+    async def create_db_conn() -> None:
+        database = await db_connection()
+        await database.connect()
+        app.dbc = database
+
+    @app.after_serving
+    async def close_db_conn() -> None:
+        await app.dbc.disconnect()  # type: ignore
 
     return app
