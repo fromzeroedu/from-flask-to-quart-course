@@ -449,7 +449,7 @@ Now that we have our basic application structure in place, let's add database su
 
 Let's start by adding the required packages to our Poetry environment. Open up the `pyproject.toml` file and add the following dependencies:
 
-{lang=python,line-numbers=on,starting-line-number=10}
+{lang=python,line-numbers=on,starting-line-number=13}
 ```
 psycopg2-binary = "^2.9.10"
 databases = {version = "^0.9.0", extras = ["asyncpg"]}
@@ -492,7 +492,7 @@ This file does several important things. First, it creates a metadata object tha
 
 [Save the file](https://fmze.co/fftq-4.4.2)
 
-Before we create our counter model, let's set up our application structure. Create a new directory called `counter_app` inside `my_app` and add an empty `__init__.py` file to make it a Python package:
+Before we create our counter model, let's set up the counter structure. Create a new directory called `counter_app` inside `my_app` and add an empty `__init__.py` file to make it a Python package:
 
 {lang=bash,line-numbers=off}
 ```
@@ -540,22 +540,23 @@ We're using variable interpolation here to make our configuration environment-ag
 
 Now we need to add a few lines to `migrations/env.py` to connect our models to Alembic. First, we'll add these imports at the top of the file:
 
-{lang=python,line-numbers=on}
+{lang=python,line-numbers=on,starting-line-number=11}
 ```
+from dynaconf import settings
 from my_app.counter_app.models import counter_table
 from my_app.db import metadata as my_app_metadata
 ```
 
-Then near line 27, we'll set our metadata:
+Then near line 25, we'll set our metadata:
 
-{lang=python,line-numbers=on}
+{lang=python,line-numbers=on,starting-line-number=25}
 ```
 target_metadata = my_app_metadata
 ```
 
 Finally, we'll add the configuration section that will allow Alembic to read our environment variables:
 
-{lang=python,line-numbers=on}
+{lang=python,line-numbers=on,starting-line-number=38}
 ```
 section = config.config_ini_section
 config.set_section_option(section, "DB_USERNAME", settings.get("DB_USERNAME", ""))
@@ -571,6 +572,16 @@ Now let's generate our first migration. When we run the following command, Alemb
 {lang=bash,line-numbers=off}
 ```
 $ docker-compose run --rm web poetry run alembic revision --autogenerate -m "create counter table"
+```
+
+You should see something like the following:
+
+{lang=bash,line-numbers=off}
+```
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.autogenerate.compare] Detected added table 'counter'
+  Generating /app/migrations/versions/b515cc03d07e_create_counter_table.py ...  done
 ```
 
 This will create a new file in the migrations/versions directory. Let's look at what Alembic generated:
@@ -622,12 +633,62 @@ Now let's apply this migration:
 $ docker-compose run --rm web poetry run alembic upgrade head
 ```
 
-The `upgrade head` command tells Alembic to apply all pending migrations until it reaches the most recent version (the "head"). You can also:
-- Roll back one migration with `alembic downgrade -1`
-- Go to a specific version with `alembic upgrade <revision_id>`
-- Roll back all migrations with `alembic downgrade base`
+This results in the following output:
+{lang=bash,line-numbers=off}
+```
+INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+INFO  [alembic.runtime.migration] Will assume transactional DDL.
+INFO  [alembic.runtime.migration] Running upgrade  -> b515cc03d07e, create counter table
+```
 
-Now let's create our counter blueprint and views. Create `my_app/counter_app/views.py`:
+The `upgrade head` command tells Alembic to apply all pending migrations in the database until it reaches the most recent version (the "head").
+
+Let's verify the tables were created in our database. We can connect to PostgreSQL running in our Docker container:
+
+{lang=bash,line-numbers=off}
+```
+$ docker-compose exec db psql -U app_user app
+```
+
+This command breaks down as:
+- `docker-compose exec db`: Run a command in the running database container
+- `psql`: The PostgreSQL command-line interface
+- `-U app_user`: Connect as our application user
+- `app`: Connect to the 'app' database
+
+Once connected, let's see what tables were created:
+
+{lang=bash,line-numbers=off}
+```
+app=> \dt
+              List of relations
+ Schema |      Name       | Type  |  Owner
+--------+-----------------+-------+----------
+ public | alembic_version | table | app_user
+ public | counter         | table | app_user
+(2 rows)
+```
+
+You can see two tables: our `counter` table and an `alembic_version` table. The `alembic_version` table is special - it's how Alembic keeps track of which migrations have been applied. Let's look at its contents:
+
+{lang=bash,line-numbers=off}
+```
+app=> select * from alembic_version;
+ version_num  
+-------------
+ 47c68318259a
+(1 row)
+```
+
+This single row contains the ID of our last applied migration. Alembic uses this to know where in the migration chain we currently are, which helps it determine what migrations need to be applied when we run `upgrade` or what migrations need to be reverted when we run `downgrade`.
+
+Exit the PostgreSQL prompt by typing `\q` and pressing Enter.
+
+Now that we've verified our database is properly set up, we can move on to starting our application.
+
+Let's create our counter blueprint and views. Create `views.py` inside the `counter_app` folder:
+
+Now let's create our counter blueprint and views. This file will handle all the counter-related routes and database operations. Create `my_app/counter_app/views.py`:
 
 {lang=python,line-numbers=on}
 ```
@@ -636,19 +697,50 @@ from quart import Blueprint, current_app
 from my_app.counter_app.models import counter_table
 
 counter_app = Blueprint("counter_app", __name__)
+```
 
+First, we import what we need:
+- `Blueprint` from Quart for creating our modular component
+- `current_app` which gives us access to the application context, including our database connection
+- Our `counter_table` model that we created earlier
+
+We create a Blueprint named "counter_app" - this is what we'll register in our main application later.
+
+{lang=python,line-numbers=on,starting-line-number=6}
+```
 @counter_app.route("/")
 async def init() -> str:
     conn = current_app.dbc  # type: ignore
     counter_query = counter_table.select()
     result = await conn.fetch_all(query=counter_query)
     count = None
+```
 
+Here we define our root route ("/") and make it async since we'll be doing database operations. We:
+1. Get our database connection from the application context (the type ignore comment is for mypy)
+2. Create a SELECT query using SQLAlchemy Core's expressive syntax
+3. Fetch all rows that match our query (we expect either zero or one)
+4. Initialize our count variable
+
+Now comes the interesting part - handling the two possible scenarios:
+
+{lang=python,line-numbers=on,starting-line-number=13}
+```
     if not len(result):
         stmt = counter_table.insert().values(count=1)
         result = await conn.execute(stmt)
         await conn.execute("commit")
         count = 1
+```
+
+If we don't have any results (`not len(result)`), this is our first visit ever. We need to:
+1. Create an INSERT statement setting count to 1
+2. Execute the insert statement
+3. Explicitly commit our transaction
+4. Set our local count variable to 1
+
+{lang=python,line-numbers=on,starting-line-number=19}
+```
     else:
         row = result[0]
         count = row["count"] + 1
@@ -659,31 +751,47 @@ async def init() -> str:
         )
         result = await conn.execute(update_stmt)
         await conn.execute("commit")
+```
+
+If we do have results, we're incrementing an existing counter:
+1. Get the first (and only) row
+2. Calculate the new count by adding 1
+3. Build an UPDATE statement that:
+   - Updates our counter table
+   - Matches the row by ID (using counter_table.c.id to reference the column)
+   - Sets the count to our new value
+4. Execute the update and commit the transaction
+
+{lang=python,line-numbers=on,starting-line-number=29}
+```
     return f"<h1>Counter: {str(count)}</h1>"
 ```
 
-This view manages our counter logic. When a user visits the root URL, it either initializes the counter if it doesn't exist or increments it if it does. Notice how we're using async/await syntax throughout - this is crucial for maintaining the non-blocking nature of our application.
+Finally, we return a simple HTML response showing the current count.
+
+Notice how we use `await` for all database operations. This is crucial because:
+1. These operations take time to complete
+2. While we're waiting for the database, other requests can be processed
+3. When the database operation finishes, we resume exactly where we left off
+
+Also notice our transaction management - we explicitly commit after both INSERT and UPDATE operations. In a more complex application, we might want to use a context manager for transactions, but for this simple example, explicit commits work fine.
 
 [Save the file](https://fmze.co/fftq-4.4.6)
 
-Finally, let's update our `application.py` to include our new counter blueprint and database connection management:
+For our last step, let's update our `application.py` to include our new counter blueprint and database connection management.
 
-{lang=python,line-numbers=on}
+First we'll import the new `counter_app` blueprint and the `db_connection` from the new `db` module.
+
+{lang=python,line-numbers=on,starting-line-number=6}
 ```
-from typing import Any
-
-from dynaconf import settings
-from quart import Quart
-
 from my_app.counter_app.views import counter_app
 from my_app.db import db_connection
+```
 
-async def create_app(**config_overrides: Any) -> Quart:
-    app = Quart(__name__)
-    app.config.from_object(settings)
-    app.config.update(config_overrides)
+And then in line 27 we do the following:
 
-    # register blueprints
+{lang=python,line-numbers=on,starting-line-number=27}
+```
     app.register_blueprint(counter_app)
 
     @app.before_serving
@@ -695,8 +803,6 @@ async def create_app(**config_overrides: Any) -> Quart:
     @app.after_serving
     async def close_db_conn() -> None:
         await app.dbc.disconnect()  # type: ignore
-
-    return app
 ```
 
 We've added the counter blueprint registration and, most importantly, two special lifecycle hooks using `before_serving` and `after_serving` decorators. These decorators are specific to Quart and are crucial for proper application lifecycle management.
@@ -716,6 +822,283 @@ With everything in place, we can start our application using docker-compose to b
 $ docker-compose up
 ```
 
-This command will start both our PostgreSQL database and our Quart application. You might see quite a bit of output as both services start up - this is normal. Once you see the message that the application is running, visit http://localhost:5001 in your browser (note we're using port 5001 as configured in our docker-compose.yml), and you should see the counter starting at 1. Refresh the page, and watch it increment!
+You might see quite a bit of output as both services start up - this is normal. Once you see the message that the application is running, visit http://localhost:5001 in your browser (note we're using port 5001 as configured in our docker-compose.yml), and you should see the counter starting at 1. Refresh the page, and watch it increment!
+
+## Testing our Application <!-- 4.5 -->
+
+It's great that we have a running application, but we know that any application needs good tests to insure it won't break with new development.
+
+In our synchronous applications we had used `unittest`, but for asynchronous applications, I've found that `pytest` is a better fit. `Pytest` also has an `asyncio` library that will allow us to test our code better.
+
+Let's update our pyproject.toml file to include all the testing dependencies and configuration we'll need. First, let's add our testing libraries to the dependencies section:
+
+{lang=python,line-numbers=on,starting-line-number=18}
+```
+pytest = "^8.3.3"
+pytest-asyncio = "^0.24.0"
+sqlalchemy-utils = "^0.41.2"
+```
+
+We're adding several new packages here. First, we have `pytest`, which is our main testing framework. It provides a more modern and flexible approach to testing than unittest, with features like fixtures and better async support. 
+
+The `pytest-asyncio` package is crucial for our asynchronous tests - it provides the tools we need to properly test coroutines and async functions in our Quart application.
+
+We're also adding `sqlalchemy-utils`, which provides additional utilities for SQLAlchemy that we'll use in our testing setup, particularly for database management during tests.
+
+Next, we need to configure how Black (our code formatter) should handle our test files. We add this to the Black configuration:
+
+{lang=python,line-numbers=on,starting-line-number=33}
+```
+exclude = '''
+  /migrations/
+'''
+```
+
+The exclude pattern tells Black to ignore our migrations directory, as these files are automatically generated and shouldn't be reformatted.
+
+Finally, we'll add a new section specifically for pytest configuration:
+
+{lang=python,line-numbers=on,starting-line-number=45}
+```
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_scope = "function"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v -s"
+```
+
+The pytest configuration section contains several important settings. The asyncio_mode setting tells pytest-asyncio to automatically handle async tests. We set asyncio_default_fixture_scope to "function" which ensures our fixtures are created and destroyed for each test function, giving us clean test isolation. 
+
+We specify the testpaths setting to tell pytest where to look for our test files, in this case the "tests" directory. The python_files and python_functions settings define the naming pattern pytest will use to identify our test files and functions - they should start with "test_". 
+
+Finally, we set some default command line options with addopts. The -v flag gives us verbose output so we can see exactly what tests are running, while -s allows print statements to show up in the output, which will be helpful for debugging.
+
+[Save the file](https://fmze.co/fftq-4.5.1)
+
+Now let's configure our test settings in settings.toml. We'll need two different test environments: one for running tests on our local machine and another for running them in our Docker container:
+
+{lang=python,line-numbers=on,starting-line-number=13}
+```
+[testing]
+TESTING = true
+DB_HOST = "localhost"
+DATABASE_NAME = "app_test"
+
+[docker-testing]
+TESTING = true
+DB_HOST = "db"
+DATABASE_NAME = "app_test"
+```
+
+In this configuration, we've set up two different testing environments. The `testing` section is used when we want to run our tests directly on our host machine. In this case, we set `DB_HOST` to "localhost" since we'll be connecting to a database running locally. 
+
+We've also added a new `docker-testing` section which will be used when running tests inside our Docker container. Here, we set `DB_HOST` to "db", which matches the service name of our database container in our Docker Compose configuration.
+
+Both environments set `TESTING` to true and use a separate database named "app_test". Using a different database for testing is a best practice as it keeps our test data completely isolated from our development or production data.
+
+[Save the file](https://fmze.co/fftq-4.5.2)
+
+Next, let's update our docker-compose.yml to add a test service. First, we'll update some paths in our existing configuration, then add our test service:
+
+{lang=yaml,line-numbers=on,starting-line-number=25}
+```
+test:
+  extends: web
+  environment:
+    ENV_FOR_DYNACONF: docker-testing
+    PORT: 5001
+    SECRET_KEY: "you-will-never-guess"
+    DB_USERNAME: app_user
+    DB_PASSWORD: app_password
+  container_name: app_test_1
+```
+
+We're creating a new service called `test` that extends our web service, which means it inherits all the configuration from our web service. This is a great feature of Docker Compose that helps us avoid duplicating configuration.
+
+The key difference in the test service is that we set `ENV_FOR_DYNACONF` to "docker-testing", which tells our application to use the docker-testing configuration we just created in settings.toml. This ensures our tests run in an isolated environment with its own database.
+
+We also give it a unique container name `app_test_1` to avoid any conflicts with our development containers.
+
+[Save the file](https://fmze.co/fftq-4.5.3)
+
+Now let's set up our test fixtures using pytest's `conftest.py` mechanism. In the pytest world, fixtures are powerful tools that help us set up the state our tests need. Think of fixtures as building blocks that prepare everything your tests require - like database connections, test data, or application configuration. The great thing about fixtures is that they're reusable across multiple tests and can even build on top of each other.
+
+Unlike our previous approach of having tests inside each blueprint, we're going to create a dedicated `tests` folder in the root of our backend-service. This is a deliberate choice that brings several benefits. First, it gives us a clear separation between application code and test code. Second, it makes it easier to run all our tests with a single command. And third, it allows us to share fixtures and testing utilities across all our tests without duplicating code.
+
+Let's create our `conftest.py` file in the tests directory and walk through its implementation piece by piece. First, let's add our imports:
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+from typing import AsyncGenerator
+import pytest
+from dynaconf import settings
+from my_app.application import create_app
+from quart import Quart
+from quart.typing import TestClientProtocol
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database, database_exists, drop_database
+from typing_extensions import Never
+```
+
+We're importing everything we need to create our test environment, including SQLAlchemy utilities for database management, Quart's test client, and our application's components.
+
+Now let's create our first fixture that will handle the database setup for tests:
+
+{lang=python,line-numbers=on,starting-line-number=16}
+```
+@pytest.fixture(scope="function")
+async def create_dbi() -> AsyncGenerator[dict, Never]:
+    # We only need to switch environment when running tests locally
+    # During local development, ENV_FOR_DYNACONF is set to "DEVELOPMENT"
+    # We need to switch it to "TESTING" to use localhost database settings
+    # When running in Docker, the environment is already set to docker-testing
+    # via the docker-compose.yml configuration
+    if settings.ENV_FOR_DYNACONF == "DEVELOPMENT":
+        settings.configure(ENV_FOR_DYNACONF="TESTING")
+    
+    db_test_url = f"postgresql://{settings['DB_USERNAME']}:"
+    db_test_url += f"{settings['DB_PASSWORD']}@"
+    db_test_url += f"{settings['DB_HOST']}/"
+    db_test_url += f"{settings['DATABASE_NAME']}"
+
+    # drop the database if it exists
+    if database_exists(db_test_url):
+        drop_database(db_test_url)
+    
+    # create the testing database
+    create_database(db_test_url)
+
+    yield {
+        "db_test_url": db_test_url,
+    }
+
+    # Drop database after test is complete
+    drop_database(db_test_url)
+```
+
+This section handles the database lifecycle for both local and Docker testing environments. When running tests locally with `poetry run pytest`, the environment starts in "DEVELOPMENT" mode and needs to be switched to "TESTING". However, when running `docker-compose run --rm test poetry run pytest`, the environment is already set to "docker-testing" by our docker-compose.yml configuration. After setting up the environment, it creates a fresh test database for each test and cleans up afterward.
+
+Next, we'll create our test application fixture:
+
+{lang=python,line-numbers=on,starting-line-number=54}
+```
+@pytest.fixture(scope="function")
+async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, None]:
+    app = await create_app()
+
+    # Create engine and create all tables
+    engine = create_engine(create_dbi["db_test_url"])
+    metadata.create_all(engine)
+
+    # Start the database connection
+    await app.startup()
+    
+    yield app
+    
+    # Stop the database connection
+    await app.shutdown()
+    
+    # Clean up
+    metadata.drop_all(engine)
+```
+
+This fixture builds on top of `create_dbi` to set up our test application. It creates the application instance, sets up the database schema, and establishes connections. After the test runs, it properly shuts everything down and cleans up the database.
+
+Finally, let's create our test client fixture:
+
+{lang=python,line-numbers=on,starting-line-number=77}
+```
+@pytest.fixture(scope="function")
+def create_test_client(create_test_app: Quart) -> TestClientProtocol:
+    return create_test_app.test_client()
+```
+
+This fixture creates a test client that we'll use to make requests to our application during tests. It depends on the `create_test_app` fixture, showing how pytest fixtures can build on each other to create complex test environments.
+
+[Save the file](https://fmze.co/fftq-4.5.4)
+
+Now let's create our first test file. Create a directory called `counter_app` inside the `tests` directory and add a new file called `test_counter.py`. Let's write our first test:
+
+{lang=python,line-numbers=on,starting-line-number=1}
+```
+import pytest
+from my_app.counter_app.models import counter_table
+from quart import Quart, current_app
+from quart.testing import QuartClient
+
+@pytest.mark.asyncio
+async def test_initial_response(create_test_client: QuartClient) -> None:
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 1" in str(body)
+```
+
+First, we import pytest and Quart's testing utilities. The QuartClient type hint helps our IDE understand the test client's capabilities.
+
+The `@pytest.mark.asyncio` decorator tells pytest this is an async test, which means we can use await inside it. 
+
+Our test function injects the `create_test_client` fixture we created earlier. This fixture provides a test client that can make HTTP requests to our application. Notice that the fixture is typed as QuartClient - this helps with code completion and type checking.
+
+We then make a GET request to the root path ("/") using the test client. Since this is an async operation, we use `await`. Similarly, getting the response data is also async, so we await that too.
+
+Finally, we verify that the string "Counter: 1" appears in the response body. This checks that when we first hit our counter endpoint, it properly initializes with a value of 1.
+
+[Save the file](https://fmze.co/fftq-4.5.5)
+
+Let's run just this test to make sure it works:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose run --rm test poetry run pytest tests/counter_app/test_counter.py::test_initial_response -v
+```
+
+Now let's add our second test that checks the counter increment and database state. Our second test is more complex:
+
+{lang=python,line-numbers=on,starting-line-number=14}
+```
+@pytest.mark.asyncio
+async def test_second_response(
+    create_test_client: QuartClient,
+    create_test_app: Quart,
+) -> None:
+    # Counter 1
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+
+    # Counter 2
+    response = await create_test_client.get("/")
+    body = await response.get_data()
+    assert "Counter: 2" in str(body)
+```
+
+Here we test the counter increment. We make two requests: the first sets up our initial state, and the second verifies that the counter increments. We need both the test client for making requests and the test app for database access, so we inject both fixtures.
+
+Finally, we verify the database state:
+
+{lang=python,line-numbers=on,starting-line-number=28}
+```
+    async with create_test_app.app_context():
+        conn = current_app.dbc  # type: ignore
+        counter_query = counter_table.select()
+        result = await conn.fetch_all(counter_query)
+        result_row = result[0]
+        count = result_row["count"]
+        assert count == 2
+```
+
+This is where we ensure the data was properly saved. We need an application context to access the database connection, which is why we used the `async with` statement. We create a simple select query, fetch all records (though we know there's only one), and verify the count is 2. The `type: ignore` comment tells mypy to skip type checking for that line since we know the dbc attribute exists but mypy can't verify it.
+
+[Save the file](https://fmze.co/fftq-4.5.5)
+
+We can run these tests using:
+
+{lang=bash,line-numbers=off}
+```
+docker-compose run --rm test poetry run pytest
+```
+
+The tests should pass, confirming that our counter application is working as expected.
 
 ## Linting and Debugging with VSCode <!-- 4.x -->
