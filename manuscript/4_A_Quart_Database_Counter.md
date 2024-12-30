@@ -832,7 +832,7 @@ In our synchronous applications we had used `unittest`, but for asynchronous app
 
 Let's update our pyproject.toml file to include all the testing dependencies and configuration we'll need. First, let's add our testing libraries to the dependencies section:
 
-{lang=python,line-numbers=on,starting-line-number=18}
+{lang=python,line-numbers=on,starting-line-number=17}
 ```
 pytest = "^8.3.3"
 pytest-asyncio = "^0.24.0"
@@ -845,18 +845,7 @@ The `pytest-asyncio` package is crucial for our asynchronous tests - it provides
 
 We're also adding `sqlalchemy-utils`, which provides additional utilities for SQLAlchemy that we'll use in our testing setup, particularly for database management during tests.
 
-Next, we need to configure how Black (our code formatter) should handle our test files. We add this to the Black configuration:
-
-{lang=python,line-numbers=on,starting-line-number=33}
-```
-exclude = '''
-  /migrations/
-'''
-```
-
-The exclude pattern tells Black to ignore our migrations directory, as these files are automatically generated and shouldn't be reformatted.
-
-Finally, we'll add a new section specifically for pytest configuration:
+Next, we'll add a new section specifically for pytest configuration:
 
 {lang=python,line-numbers=on,starting-line-number=45}
 ```
@@ -925,7 +914,7 @@ We also give it a unique container name `app_test_1` to avoid any conflicts with
 
 Now let's set up our test fixtures using pytest's `conftest.py` mechanism. In the pytest world, fixtures are powerful tools that help us set up the state our tests need. Think of fixtures as building blocks that prepare everything your tests require - like database connections, test data, or application configuration. The great thing about fixtures is that they're reusable across multiple tests and can even build on top of each other.
 
-Unlike our previous approach of having tests inside each blueprint, we're going to create a dedicated `tests` folder in the root of our backend-service. This is a deliberate choice that brings several benefits. First, it gives us a clear separation between application code and test code. Second, it makes it easier to run all our tests with a single command. And third, it allows us to share fixtures and testing utilities across all our tests without duplicating code.
+Unlike our previous approach of having tests inside each blueprint, we're going to create a dedicated `tests` folder in the root of our `backend-service` foldertes. This is a deliberate choice that brings several benefits. First, it gives us a clear separation between application code and test code. Second, it makes it easier to run all our tests with a single command. And third, it allows us to share fixtures and testing utilities across all our tests without duplicating code.
 
 Let's create our `conftest.py` file in the tests directory and walk through its implementation piece by piece. First, let's add our imports:
 
@@ -935,6 +924,7 @@ from typing import AsyncGenerator
 import pytest
 from dynaconf import settings
 from my_app.application import create_app
+from my_app.db import metadata
 from quart import Quart
 from quart.typing import TestClientProtocol
 from sqlalchemy import create_engine
@@ -946,15 +936,11 @@ We're importing everything we need to create our test environment, including SQL
 
 Now let's create our first fixture that will handle the database setup for tests:
 
-{lang=python,line-numbers=on,starting-line-number=16}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
 @pytest.fixture(scope="function")
 async def create_dbi() -> AsyncGenerator[dict, Never]:
     # We only need to switch environment when running tests locally
-    # During local development, ENV_FOR_DYNACONF is set to "DEVELOPMENT"
-    # We need to switch it to "TESTING" to use localhost database settings
-    # When running in Docker, the environment is already set to docker-testing
-    # via the docker-compose.yml configuration
     if settings.ENV_FOR_DYNACONF == "DEVELOPMENT":
         settings.configure(ENV_FOR_DYNACONF="TESTING")
     
@@ -982,7 +968,7 @@ This section handles the database lifecycle for both local and Docker testing en
 
 Next, we'll create our test application fixture:
 
-{lang=python,line-numbers=on,starting-line-number=54}
+{lang=python,line-numbers=on,starting-line-number=38}
 ```
 @pytest.fixture(scope="function")
 async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, None]:
@@ -1028,6 +1014,7 @@ from my_app.counter_app.models import counter_table
 from quart import Quart, current_app
 from quart.testing import QuartClient
 
+
 @pytest.mark.asyncio
 async def test_initial_response(create_test_client: QuartClient) -> None:
     response = await create_test_client.get("/")
@@ -1051,7 +1038,14 @@ Let's run just this test to make sure it works:
 
 {lang=bash,line-numbers=off}
 ```
-docker-compose run --rm test poetry run pytest tests/counter_app/test_counter.py::test_initial_response -v
+docker-compose run --rm test poetry run pytest
+```
+
+Since this is the first time running this container, it will take a little more time as it installs the new dependencies. But as you can see here at the end it says that our test passed although there's some warnings which are not related to our tests, but things that some libraries need to update.
+
+{lang=bash,line-numbers=off}
+```
+tests/counter_app/test_counter.py::test_initial_response PASSED
 ```
 
 Now let's add our second test that checks the counter increment and database state. Our second test is more complex:
