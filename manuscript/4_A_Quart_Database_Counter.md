@@ -1093,6 +1093,14 @@ We can run these tests using:
 docker-compose run --rm test poetry run pytest
 ```
 
-The tests should pass, confirming that our counter application is working as expected.
+The tests should pass, confirming that our counter application is working as expected. 
+
+{lang=bash,line-numbers=off}
+```
+tests/counter_app/test_counter.py::test_initial_response PASSED
+tests/counter_app/test_counter.py::test_second_response PASSED
+```
+
+As you can see, this time the test docker instance started much faster. We're now confident that our application is running correctly with the support of these tests.
 
 ## Linting and Debugging with VSCode <!-- 4.x -->
