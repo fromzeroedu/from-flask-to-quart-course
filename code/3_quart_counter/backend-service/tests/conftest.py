@@ -11,7 +11,7 @@ from typing_extensions import Never
 
 
 @pytest.fixture(scope="function")
-async def create_dbi() -> AsyncGenerator[dict, Never]:
+async def create_db() -> AsyncGenerator[dict, Never]:
     # We only need to switch environment when running tests locally
     if settings.ENV_FOR_DYNACONF == "DEVELOPMENT":
         settings.configure(ENV_FOR_DYNACONF="TESTING")
@@ -37,7 +37,7 @@ async def create_dbi() -> AsyncGenerator[dict, Never]:
 
 
 @pytest.fixture(scope="function")
-async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, None]:
+async def create_test_app(create_db: dict[str, str]) -> AsyncGenerator[Quart, None]:
     app = await create_app()
 
     # Create engine and create all tables
