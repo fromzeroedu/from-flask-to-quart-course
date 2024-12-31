@@ -10,12 +10,12 @@ from sqlalchemy_utils import create_database, database_exists, drop_database
 from typing_extensions import Never
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def create_db() -> AsyncGenerator[dict, Never]:
     # We only need to switch environment when running tests locally
     if settings.ENV_FOR_DYNACONF == "DEVELOPMENT":
         settings.configure(ENV_FOR_DYNACONF="TESTING")
-    
+
     db_test_url = f"postgresql://{settings['DB_USERNAME']}:"
     db_test_url += f"{settings['DB_PASSWORD']}@"
     db_test_url += f"{settings['DB_HOST']}/"
@@ -24,7 +24,7 @@ async def create_db() -> AsyncGenerator[dict, Never]:
     # drop the database if it exists
     if database_exists(db_test_url):
         drop_database(db_test_url)
-    
+
     # create the testing database
     create_database(db_test_url)
 
@@ -36,26 +36,26 @@ async def create_db() -> AsyncGenerator[dict, Never]:
     drop_database(db_test_url)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def create_test_app(create_db: dict[str, str]) -> AsyncGenerator[Quart, None]:
     app = await create_app()
 
     # Create engine and create all tables
-    engine = create_engine(create_dbi["db_test_url"])
+    engine = create_engine(create_db["db_test_url"])
     metadata.create_all(engine)
 
     # Start the database connection
     await app.startup()
-    
+
     yield app
-    
+
     # Stop the database connection
     await app.shutdown()
-    
+
     # Clean up
     metadata.drop_all(engine)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def create_test_client(create_test_app: Quart) -> TestClientProtocol:
     return create_test_app.test_client()
