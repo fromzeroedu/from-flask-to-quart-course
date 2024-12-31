@@ -22,15 +22,15 @@ services:
       DB_HOST: postgres
       DATABASE_NAME: app
 
-test:
-  extends: web
-  environment:
-    ENV_FOR_DYNACONF: docker-testing
-    PORT: 5001
-    SECRET_KEY: "you-will-never-guess"
-    DB_USERNAME: app_user
-    DB_PASSWORD: app_password
-  container_name: app_test_1
+  test:
+    extends: web
+    environment:
+      ENV_FOR_DYNACONF: docker-testing
+      PORT: 5001
+      SECRET_KEY: "you-will-never-guess"
+      DB_USERNAME: app_user
+      DB_PASSWORD: app_password
+    container_name: app_test_1
 
   db:
     image: postgres:14-alpine

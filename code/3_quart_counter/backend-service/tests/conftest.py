@@ -2,6 +2,7 @@ from typing import AsyncGenerator
 import pytest
 from dynaconf import settings
 from my_app.application import create_app
+from my_app.db import metadata
 from quart import Quart
 from quart.typing import TestClientProtocol
 from sqlalchemy import create_engine
@@ -53,3 +54,8 @@ async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, N
     
     # Clean up
     metadata.drop_all(engine)
+
+
+@pytest.fixture(scope="function")
+def create_test_client(create_test_app: Quart) -> TestClientProtocol:
+    return create_test_app.test_client()
