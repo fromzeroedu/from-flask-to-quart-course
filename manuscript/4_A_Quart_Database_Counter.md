@@ -914,7 +914,7 @@ We also give it a unique container name `app_test_1` to avoid any conflicts with
 
 Now let's set up our test fixtures using pytest's `conftest.py` mechanism. In the pytest world, fixtures are powerful tools that help us set up the state our tests need. Think of fixtures as building blocks that prepare everything your tests require - like database connections, test data, or application configuration. The great thing about fixtures is that they're reusable across multiple tests and can even build on top of each other.
 
-Unlike our previous approach of having tests inside each blueprint, we're going to create a dedicated `tests` folder in the root of our `backend-service` foldertes. This is a deliberate choice that brings several benefits. First, it gives us a clear separation between application code and test code. Second, it makes it easier to run all our tests with a single command. And third, it allows us to share fixtures and testing utilities across all our tests without duplicating code.
+Unlike our previous approach of having tests inside each blueprint, we're going to create a dedicated `tests` folder in the root of our `backend-service` folder. This is a deliberate choice that brings several benefits. First, it gives us a clear separation between application code and test code. Second, it makes it easier to run all our tests with a single command. And third, it allows us to share fixtures and testing utilities across all our tests without duplicating code.
 
 Let's create our `conftest.py` file in the tests directory and walk through its implementation piece by piece. First, let's add our imports:
 
@@ -939,7 +939,7 @@ Now let's create our first fixture that will handle the database setup for tests
 {lang=python,line-numbers=on,starting-line-number=12}
 ```
 @pytest.fixture(scope="function")
-async def create_dbi() -> AsyncGenerator[dict, Never]:
+async def create_db() -> AsyncGenerator[dict, Never]:
     # We only need to switch environment when running tests locally
     if settings.ENV_FOR_DYNACONF == "DEVELOPMENT":
         settings.configure(ENV_FOR_DYNACONF="TESTING")
@@ -971,7 +971,7 @@ Next, we'll create our test application fixture:
 {lang=python,line-numbers=on,starting-line-number=38}
 ```
 @pytest.fixture(scope="function")
-async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, None]:
+async def create_test_app(create_db: dict[str, str]) -> AsyncGenerator[Quart, None]:
     app = await create_app()
 
     # Create engine and create all tables
@@ -990,7 +990,7 @@ async def create_test_app(create_dbi: dict[str, str]) -> AsyncGenerator[Quart, N
     metadata.drop_all(engine)
 ```
 
-This fixture builds on top of `create_dbi` to set up our test application. It creates the application instance, sets up the database schema, and establishes connections. After the test runs, it properly shuts everything down and cleans up the database.
+This fixture builds on top of `create_db` to set up our test application. It creates the application instance, sets up the database schema, and establishes connections. After the test runs, it properly shuts everything down and cleans up the database.
 
 Finally, let's create our test client fixture:
 
@@ -1067,7 +1067,9 @@ async def test_second_response(
     assert "Counter: 2" in str(body)
 ```
 
-Here we test the counter increment. We make two requests: the first sets up our initial state, and the second verifies that the counter increments. We need both the test client for making requests and the test app for database access, so we inject both fixtures.
+Here we test the counter increment. We make two requests: the first sets up our initial state, and the second verifies that the counter increments. The first hit returns the number 1 because each new test starts with a new database, as we have specified that fixtures are function scoped.
+
+We need both the test client for making requests and the test app for database access, so we inject both fixtures.
 
 Finally, we verify the database state:
 
@@ -1086,14 +1088,14 @@ This is where we ensure the data was properly saved. We need an application cont
 
 [Save the file](https://fmze.co/fftq-4.5.5)
 
-We can run these tests using:
+Let's run the tests again:
 
 {lang=bash,line-numbers=off}
 ```
 docker-compose run --rm test poetry run pytest
 ```
 
-The tests should pass, confirming that our counter application is working as expected. 
+The tests pass, confirming that our counter application is working as expected. 
 
 {lang=bash,line-numbers=off}
 ```
