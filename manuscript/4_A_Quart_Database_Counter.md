@@ -1140,7 +1140,7 @@ async def init() -> str:
 
 The `-> str` return type annotation makes it clear that this route will always return a string, even though it's doing asynchronous database operations. This helps catch errors where we might accidentally return something else, like a database result object.
 
-By combining linting and type checking, we create a powerful development environment that helps us write more reliable code. Let's set up these tools in Visual Studio Code, which has become the de facto standard for Python development thanks to its excellent debugging capabilities, extensive marketplace of extensions, and fantastic container integration.
+By combining linting and type checking, we create a powerful development environment that helps us write more reliable code. Let's set up these tools in Visual Studio Code, which has become the de facto standard for Python development thanks to its excellent debugging capabilities, extensive marketplace of extensions, and fantastic container integration. If you are not using VSCode, you can skip the rest of this module.
 
 ## Setting Up Our Development Environment <!-- 4.6.2 -->
 
@@ -1193,7 +1193,7 @@ We'll also need a `settings.json` file to configure our Python environment and t
 }
 ```
 
-These settings enable pytest as our test runner and configure automatic code formatting when we save our files. Remember that for this setup to work, you'll need to have the database container running since our application depends on it.
+These settings enable pytest as our test runner and configure automatic code formatting when we save our files. Remember that for this setup to work, you'll need to have the Docker database container running since our application depends on it.
 
 To set up the local environment, run these commands in your terminal:
 
@@ -1205,7 +1205,7 @@ poetry install
 
 This creates a new virtual environment using Python 3.10 and installs all our dependencies.
 
-Before we can start coding, we need to install some essential VSCode extensions. Open the Extensions panel (you can use Cmd+Shift+X on Mac or Ctrl+Shift+X on Windows) and install:
+Before we can start coding, we need to install some essential VSCode extensions. Open the Extensions panel (you can use Cmd+Shift+X on Mac or Ctrl+Shift+X on Windows) and install the following.
 
 The Python extension (ms-python.python) is the foundation of Python development in VSCode. It provides IntelliSense, debugging capabilities, and integration with various Python tools. It's the main extension that powers our Python development experience.
 
@@ -1213,41 +1213,45 @@ The Black Formatter extension (ms-python.black-formatter) enforces a consistent 
 
 The isort extension (ms-python.isort) automatically organizes and formats your Python imports. It sorts them into sections (standard library, third-party, and local), alphabetically within each section, and can automatically combine imports from the same module. This keeps your imports clean and consistent throughout your codebase.
 
-The mypy extension (matangover.mypy) provides real-time type checking as you code. Remember those type hints we talked about earlier? Mypy uses them to catch type-related errors before you even run your code. It's like having a very pedantic friend who's really good at spotting potential bugs related to type mismatches.
+The mypy extension (ms-python.mypy-type-checker) provides real-time type checking as you code. Remember those type hints we talked about earlier? Mypy uses them to catch type-related errors before you even run your code. It's like having a very pedantic friend who's really good at spotting potential bugs related to type mismatches.
 
-Let's see how these extensions work together. Consider this poorly formatted code:
-
-{lang=python,line-numbers=on}
-```
-from typing import Dict,List
-import json
-from my_app.counter_app.models import counter_table
-from quart import Blueprint,current_app
-import asyncio
-async def messy_function(input_data:Dict)->List[str]:
-    result=[]
-    for key,value in input_data.items():result.append(f"{key}:{value}")
-    return result
-```
-
-When you save this file with our extensions enabled, it automatically transforms into:
+Let's see how these extensions work together. Let's mess up our code in the application.py.
 
 {lang=python,line-numbers=on}
 ```
-import asyncio
-import json
-from typing import Dict, List
+from dynaconf import settings
+from quart import Quart
+from my_app.home_app.views import home_app
+from my_app.logger import get_logger
+from my_app.counter_app.views import counter_app
+from my_app.db import db_connection
 
-from quart import Blueprint, current_app
+from typing import Any
+def init_config(app:Quart,**config_overrides:Any) -> None:
+    """Initialize configuration"""
+    app.config.from_object(settings)
+    app.config.update(config_overrides)
+```
 
-from my_app.counter_app.models import counter_table
+When you save this file with our extensions enabled, it automatically transforms into the following.
+
+{lang=python,line-numbers=on}
+```
+from typing import Any
+
+from dynaconf import settings
+from quart import Quart
+
+from my_app.counter_app.views import counter_app
+from my_app.db import db_connection
+from my_app.home_app.views import home_app
+from my_app.logger import get_logger
 
 
-async def messy_function(input_data: Dict) -> List[str]:
-    result = []
-    for key, value in input_data.items():
-        result.append(f"{key}:{value}")
-    return result
+def init_config(app: Quart, **config_overrides: Any) -> None:
+    """Initialize configuration"""
+    app.config.from_object(settings)
+    app.config.update(config_overrides)
 ```
 
 Notice how the extensions have:
@@ -1259,7 +1263,19 @@ Notice how the extensions have:
 
 This automatic formatting happens every time you save a file, ensuring your code always maintains a consistent style.
 
-Let's try out VSCode's powerful debugging features. First, let's debug our running application. Open the `views.py` file in the counter_app folder and let's add a breakpoint. Click to the left of line number where we increment our counter:
+Mypy is also at play here. Let's change the return type of the `init_config` to a string instead of None.
+
+{lang=python,line-numbers=on}
+```
+def init_config(app: Quart, **config_overrides: Any) -> str:
+    """Initialize configuration"""
+    app.config.from_object(settings)
+    app.config.update(config_overrides)
+```
+
+Notice how the whole block is red? That file is also marked as red on the file tree. This is telling us that there's an issue with the file. You should not commit any files that are red into the repository.
+
+Let's try out VSCode's powerful debugging features. First, let's debug our running application. Open the `views.py` file in the counter_app folder and let's add a breakpoint. Click to the left of the line number where we increment our counter:
 
 {lang=python,line-numbers=on,starting-line-number=19}
 ```
@@ -1268,7 +1284,7 @@ Let's try out VSCode's powerful debugging features. First, let's debug our runni
         count = row["count"] + 1  # Click left of this line
 ```
 
-A red dot will appear, indicating your breakpoint. Now press F5 (or select Run > Start Debugging). VSCode will launch our Quart application in debug mode. Open your browser and navigate to http://localhost:5002. The application will pause at your breakpoint.
+A red dot will appear, indicating your breakpoint. Now press the little green button on the Run and Debug panel and make sure "Python Quart" is selected. VSCode will launch our Quart application in debug mode. Open your browser and navigate to http://localhost:5002. The application will pause at your breakpoint. Remember that you need your Docker database container for the application to run.
 
 In the Debug Console (View > Debug Console if it's not visible), you can inspect variables like `row` and `count`. Try typing `row["count"]` in the debug console to see the current counter value. You can also use the debug toolbar to step through the code line by line (F10) or step into function calls (F11).
 
@@ -1288,7 +1304,7 @@ The debug console is particularly useful for async code because you can see the 
 
 While the local setup works well, I prefer using VSCode's devcontainer feature. Development containers provide a consistent, isolated environment that matches our production setup exactly. They eliminate the "it works on my machine" problem and make it much easier to onboard new team members.
 
-Let's create a `.devcontainer/devcontainer.json` file:
+Let's create a `devcontainer.json` file in a folder we'll call `.devcontainer` on the root folder where `docker-compose.yml` lives:
 
 {lang=json,line-numbers=on}
 ```
@@ -1321,19 +1337,30 @@ Let's create a `.devcontainer/devcontainer.json` file:
 ```
 
 This configuration tells VSCode to:
+
 - Use our existing docker-compose.yml file
 - Start both our web and database services
 - Set up the workspace in the /app directory
 - Automatically install all our required extensions through the `customizations.vscode.extensions` section. Notice how we're installing the same extensions we installed manually in our local setup: Python, Black Formatter, isort, and mypy
 - Set up Poetry after the container is created
 
+Before you run this, make sure that you delete all the images and containers that have the same name, otherwise you will get an error.
+
 When you open this project in VSCode, you'll see a prompt asking if you want to reopen it in a container. Once you do, VSCode will build the container and set up a complete development environment with all our tools and dependencies ready to go.
 
 The beauty of this approach is that everyone on your team gets the exact same development environment, complete with:
+
 - The correct Python version
 - All required dependencies
 - Consistent linting and formatting rules
 - Database access already configured
 - Debug configurations ready to use
+
+Before we run the application, remember to do your first Alembic migration. Just open a terminal on VSCode and run:
+
+{lang=bash,line-numbers=off}
+```
+poetry run alembic upgrade head
+```
 
 You can now run and debug your application directly from VSCode, run tests with the built-in test explorer, and get immediate feedback from mypy and black as you code.
