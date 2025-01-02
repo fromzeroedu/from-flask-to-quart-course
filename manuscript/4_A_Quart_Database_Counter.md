@@ -1177,6 +1177,8 @@ Let's first set up our local environment. We'll start by creating a VSCode confi
 }
 ```
 
+[Save the file](https://fmze.co/fftq-4.6.1)
+
 This configuration tells VSCode how to run our Quart application in debug mode. We're specifying our manage.py file as the entry point and enabling debug mode through the QUART_DEBUG environment variable.
 
 We'll also need a `settings.json` file to configure our Python environment and testing setup:
@@ -1193,17 +1195,20 @@ We'll also need a `settings.json` file to configure our Python environment and t
 }
 ```
 
+[Save the file](https://fmze.co/fftq-4.6.1)
+
 These settings enable pytest as our test runner and configure automatic code formatting when we save our files. Remember that for this setup to work, you'll need to have the Docker database container running since our application depends on it.
 
-To set up the local environment, run these commands in your terminal:
+To set up the local environment, make sure you're on the `backend-service` folder and run these commands in your terminal. Make sure you have Python 3.10 available locally. If you don't, I recommend you install the [pyenv](https://github.com/pyenv/pyenv) package and follow the instructions.
 
 {lang=bash,line-numbers=off}
 ```
 poetry env use python3.10
+poetry lock
 poetry install
 ```
 
-This creates a new virtual environment using Python 3.10 and installs all our dependencies.
+This creates a new virtual environment using Python 3.10 and installs all our dependencies. 
 
 Before we can start coding, we need to install some essential VSCode extensions. Open the Extensions panel (you can use Cmd+Shift+X on Mac or Ctrl+Shift+X on Windows) and install the following.
 
@@ -1214,6 +1219,8 @@ The Black Formatter extension (ms-python.black-formatter) enforces a consistent 
 The isort extension (ms-python.isort) automatically organizes and formats your Python imports. It sorts them into sections (standard library, third-party, and local), alphabetically within each section, and can automatically combine imports from the same module. This keeps your imports clean and consistent throughout your codebase.
 
 The mypy extension (ms-python.mypy-type-checker) provides real-time type checking as you code. Remember those type hints we talked about earlier? Mypy uses them to catch type-related errors before you even run your code. It's like having a very pedantic friend who's really good at spotting potential bugs related to type mismatches.
+
+One last thing, make sure your VSCode is pointing to the right Python interpreter. Normally it picks up this location from the poetry install we did earlier. But in subsequent sessions you might want to do a `poetry shell` first and then start VSCode with `code dot`. You can see the location of the Poetry Python by doing `which python` after the `poetry shell` and then verify it's the same Python package by searching "Python Interpreter" on the VSCode command palette.
 
 Let's see how these extensions work together. Let's mess up our code in the application.py.
 
