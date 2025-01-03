@@ -3,9 +3,6 @@
   "python.testing.pytestEnabled": true,
   "editor.formatOnSave": true,
   "python.testing.pytestArgs": [
-    "tests",
-    "-v",
-    "-s",
-    "--tb=short",
+    "tests"
   ]
 }
