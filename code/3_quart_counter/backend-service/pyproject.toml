@@ -42,6 +42,6 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
-addopts = "-v -s --tb=short --no-cov"
+addopts = "-v -s --tb=short"
 python_files = ["test_*.py"]
 filterwarnings = ["ignore::DeprecationWarning"]
