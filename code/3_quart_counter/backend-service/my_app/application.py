@@ -3,9 +3,9 @@ from typing import Any
 from dynaconf import settings
 from quart import Quart
 
-from my_app.home_app.views import home_app
 from my_app.counter_app.views import counter_app
 from my_app.db import db_connection
+from my_app.home_app.views import home_app
 
 
 def init_config(app: Quart, **config_overrides: Any) -> None:
@@ -30,7 +30,7 @@ async def create_app(**config_overrides: Any) -> Quart:
     async def create_db_conn() -> None:
         database = await db_connection()
         await database.connect()
-        app.dbc = database
+        app.dbc = database  # type: ignore
 
     @app.after_serving
     async def close_db_conn() -> None:
