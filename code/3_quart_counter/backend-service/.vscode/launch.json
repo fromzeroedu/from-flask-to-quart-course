@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "Python: Quart",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "module": "quart",
       "env": {
@@ -18,6 +18,14 @@
         "5002"
       ],
       "jinja": true
-    }
+    },
+    {
+      "name": "Python: Test debug config",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "console": "integratedTerminal",
+      "justMyCode": false
+    },
   ]
 }

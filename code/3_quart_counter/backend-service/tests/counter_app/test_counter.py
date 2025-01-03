@@ -1,7 +1,8 @@
 import pytest
-from my_app.counter_app.models import counter_table
 from quart import Quart, current_app
 from quart.testing import QuartClient
+
+from my_app.counter_app.models import counter_table
 
 
 @pytest.mark.asyncio
