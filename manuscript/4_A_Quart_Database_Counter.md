@@ -851,7 +851,7 @@ Next, we'll add a new section specifically for pytest configuration:
 ```
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
-asyncio_default_fixture_scope = "function"
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
@@ -1195,7 +1195,7 @@ We'll also need a `settings.json` file to configure our Python environment and t
 }
 ```
 
-[Save the file](https://fmze.co/fftq-4.6.1)
+[Save the file](https://fmze.co/fftq-4.6.2)
 
 These settings enable pytest as our test runner and configure automatic code formatting when we save our files. Remember that for this setup to work, you'll need to have the Docker database container running since our application depends on it.
 
@@ -1295,7 +1295,9 @@ A red dot will appear, indicating your breakpoint. Now press the little green bu
 
 In the Debug Console (View > Debug Console if it's not visible), you can inspect variables like `row` and `count`. Try typing `row["count"]` in the debug console to see the current counter value. You can also use the debug toolbar to step through the code line by line (F10) or step into function calls (F11).
 
-We can also debug our tests this way. Open the `tests/counter_app/test_counter.py` file and set a breakpoint in our second test:
+We can also debug our tests this way. But first stop the run command and remove the breakpoint in the `views.py`.
+
+Open the `tests/counter_app/test_counter.py` file and set a breakpoint in our second test:
 
 {lang=python,line-numbers=on,starting-line-number=28}
 ```
@@ -1342,6 +1344,8 @@ Let's create a `devcontainer.json` file in a folder we'll call `.devcontainer` o
     "remoteUser": "root"
 }
 ```
+
+[Save the file](https://fmze.co/fftq-4.6.3)
 
 This configuration tells VSCode to:
 
