@@ -23,11 +23,7 @@ If you have cache files lying around after the copy, make sure to delete those f
 
 We begin by installing the requirements. Edit `pyproject.toml` and change the name of the application to "quartfeed_app". [Save the file](https://fmze.co/fftq-5.2.7).
 
-Next we install the poetry packages by doing: `poetry install`.
-
-For local development I will leave the `.quartenv` as is, since they have generic names that we can use for any Quart application.
-
-Now let's go ahead and rename the `counter` directory to `user` since that will be the first module we will be working on.
+Now let's go ahead and rename the `counter_app` directory to `user_app` since that will be the first module we will be working on.
 
 Next open the `models.py` file inside the new `user` folder.
 
@@ -88,14 +84,15 @@ Finally we'll have this function just return the string "User Registration" just
 
 [Save the file](https://fmze.co/fftq-5.2.2).
 
-Let's go ahead and update the `application.py`. On line 16 and 19, update the `counter_app` to say `user_app`:
+Let's go ahead and update the `application.py`. On line 9 and 31, update the `counter_app` to say `user_app`:
 
-{lang=python,line-numbers=on,starting-line-number=15}
+{lang=python,line-numbers=on,starting-line-number=9}
 ```
-    # Import Blueprints
-    from user.views import user_app
+from my_app.user_app.views import user_app
+```
 
-    # Register Blueprints
+{lang=python,line-numbers=on,starting-line-number=31}
+```
     app.register_blueprint(user_app)
 ```
 
@@ -113,41 +110,14 @@ There's no need to change anytthing on the `alembic.ini` since we're using the s
 
 Next, we'll take a look at the `env.py` on the `migrations` folder, and alll we need to do here is update the user model on line 27 like so:
 
-{lang=python,line-numbers=on,starting-line-number=27}
+{lang=python,line-numbers=on,starting-line-number=12}
 ```
-from user.models import user_table
+from my_app.user_app.models import user_table
 ```
 
 Also please remember if we add any new models, we need to add it here, so that the migrations script can detect any new schemas.
 
 [Save the file](https://fmze.co/fftq-5.2.4).
-
-So before we run the migration, we need to setup our Docker environment. So open the `Dockerfile` and change the references from `counter_app` to `quartfeed_app` in line 20 and 23.
-
-{lang=python,line-numbers=on,starting-line-number=19}
-```
-# set "quartfeed_app" as the working directory from which CMD, RUN, ADD references
-WORKDIR /quartfeed_app
-
-# setup poetry
-COPY pyproject.toml /quartfeed_app/
-```
-
-[Save the file](https://fmze.co/fftq-5.2.5) and next we'll update the `docker-compose.yml` with a similar change from `counter_app` to `quartfeed_app`:
-
-{lang=python,line-numbers=on,starting-line-number=1}
-```
-version: "2"
-services:
-  web:
-    build: .
-    ports:
-      - "5000:5000"
-    volumes:
-      - ./:/quartfeed_app
-```
-
-[Save the file](https://fmze.co/fftq-5.2.6).
 
 If you still have the containers and the images from the counter app, go ahead and delete them: both the web app and the database app. You can use the Docker Desktop application or the VSCode plugin.
 
@@ -450,284 +420,440 @@ First we add the `render_template` module from `Quart`, add the methods to the v
 Looking good! Now let's actually read these variables from the form on the next lesson.
 
 
-## User Registration - Parsing the Form (step-2) <!-- 5.4 -->
+## User Registration -Using Quart-WTForm (step-2) <!-- 5.4 -->
 
 So let's go ahead and check out how to read the username and password fields that we are going to get from this form. We need to process this form in a slightly different way because of our async workflow and we're going to check that out.
 
-So open the `user/views.py` file. Right now we just have this register function that returns the template, but now we want to check the variables that are coming in from the form.
+First we install the Quart-wtf package.
 
-{lang=python,line-numbers=on,starting-line-number=8}
+```poetry add quart-wtf```
+
+Create the form.py on user_app:
+
 ```
-@user_app.route("/register", methods=["GET", "POST"])
-async def register() -> str:
-    error: str = ""
-    username: str = ""
-    password: str = ""
+from quart_wtf import QuartForm
+from wtforms import PasswordField, StringField
+from wtforms.validators import DataRequired
+from wtforms.widgets import PasswordInput
 
-    if request.method == "POST":
-        form: dict = await request.form
-        username = form.get("username", "")
-        password = form.get("password", "")
 
-        if not username or not password:
-            error = "Please enter username and password"
-        else:
-            # check if the user exists
-            # register the user on the database
-            pass
-
-    return await render_template(
-        "user/register.html", error=error, username=username
+class UserRegisterForm(QuartForm):
+    username = StringField(
+        "Username", validators=[DataRequired()], render_kw={"autocomplete": "off"}
+    )
+    password = PasswordField(
+        "Password",
+        validators=[DataRequired()],
+        widget=PasswordInput(hide_value=False),
     )
 ```
 
-The first thing we'll do is to create an `error` variable, which is going to be a blank string.
+Create a `_formhelpers`
 
-Next we initialize the fields that we have in the form, assigning them to be blank strings.
-
-Then, let's check the HTTP method. The first time the function is loaded, it will be a `GET` operation, so the template will be rendered, but if it's a `POST`, that means we're getting some data from the form and we need to do some operations there.
-
-So we'll check if the request method is `POST` and open that section. Make sure to import `request` on the import list on line 1.
-
-We'll initialize a `form` variable that will hold the contents of the form. It is a dictio nary, so we'll type cast it. However, the `request.form` method is a coroutine, so we'll need to await the contents of it.
-
-Then we can retrieve the `username` using `form.get` as well as the `password` and assign both to null strings if they're not present.
-
-Next we check if either the `username` or `password` are empty, then we assign the error message to be displayed on the form. If we did get the `username` and `password` we'll do some operations in the future: first, we'll check if that `username` already exists on the databse and second, we'll store the new user in the database. Let's put a `pass` at the end of the `else`.
-
-So that's the end of the `POST` section. Some of you might be asking, why aren't we using a form processor like `WTForm`, and as I explained earlier, there's no async form processor at this time for Quart and using it would require us to make the view synchronous, so we're going to need to do the assignments and validations manually for now. And as a matter of fact, we're going to implement `CSRF` in the next lesson, since we don't want to have a form vulnerability open in this application.
-
-The final step is to add the `error` and the `username` to the context of the template, that way the template can read the error message if there is one, as well as pre-populate the `username` in case there is an error with whatever the user entered. That is enabled thanks to this Jinja if/else section in the register form.
-
-{lang=html,line-numbers=on,starting-line-number=23}
 ```
-<input name="username" type="text" class="form-control" id="username" 
-value="{% if username %}{{ username }}{% endif %}"
+{% macro render_field(field) %}
+<div class="form-group">
+    {{ field.label }}
+    {{ field(**kwargs)|safe }}
+    {% if field.errors %}
+    <ul class="text-danger">
+        {% for error in field.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endmacro %}
 ```
 
-We don't want do the same with the `password` for security reasons.
+Modify the register.html form:
 
-So [save the file](https://fmze.co/fftq-5.4.1), and let's go ahead and run the application.
+```
+{% extends "base.html" %}
 
-First let's trigger an error by not putting any information, and we can see that we get the error. Now if we enter the username with no password, notice that the username is preloaded. But if we leave username empty and enter the password, the password doesn't come back pre-populated which is what we want.
+{% block title %}Registration{% endblock %}
 
-On the next lesson we'll implement `CSRF` and the password hashing mechanism.
+{% block content %}
 
+{% include "navbar.html" %}
 
-## User Registration - CSRF, check existing user and Password Hashing (step-3) <!-- 5.5 -->
+<div class="row">
 
-Normally CSRF is included in libraries like Flask-WTForms, which don’t work in Quart, since they use the Flask request object, so we’ll do a quick implementation for it.
+    <div class="col-md-offset-3 col-md-6">
 
-We’ll generate a UUID and store it in the session, and then check that the token on the form matches it.
+        <h3>Registration</h3>
 
-We’ll then check that the username hasn’t been used earlier.
+        {% from "_formhelpers.html" import render_field %}
 
-Finally, before we register the user, we don’t want to store clear passwords. Normally I would use Werkzeug, but Quart doesn’t include it, so we’ll install the `passlib` library. 
+        <form method="POST" action="{{ url_for('.register') }}" role="form">
 
-So let's install Passlib first by doing: `poetry add passlib`.
+            <div class="mb-3">
+                {{ render_field(form.username, class='form-control') }}
+            </div>
 
-The first thing we'll do is check that the username being sent in the form hasn't been taken by anoother user before we save it in the database.
+            <div class="mb-3">
+                {{ render_field(form.password, class='form-control') }}
+            </div>
 
-We're going to grab the database connection that we have in the application context. 
+            {{ form.csrf_token }}
+            <button type="submit" class="btn btn-primary">Register</button>
 
-Then we build a query using the `select` method from SQLAlchemy. The select has a `where` clause to match records that have the same username.
+        </form>
 
-We now send the query to the connection, using the `fetch_one` method, since we only need one record to hit for the username to be found.
+    </div>
 
-We then check if a row is set. If it is, that means there is a user in the database with the same username and so we set an error for us to stop the operation.
+</div>
 
-Notice, however, we don't have any error checks in the code below that. We're just checking if the username and password have been set.
+{% endblock %}
+```
 
-So I'm going to move that check all the way to the top right below where we fetch the values from the form and then create the "not error" section which is where we will save the user if no errors were found.
+Now we're ready to process the form:
 
-There's one more thing. notice the squiggly line we have in line 20? It's a bit misleading but if we hover over the error you'll notice it says "Quart has no attribute 'dbc'". This is a complicated issue to solve, because the linter can't see we've added this `dbc` property to the context, and there are ways to solve this using some convoluted ways, but since I know this is not a real error, I will add the following comment so that the type checker ignores this error.
+```
+@user_app.route("/register", methods=["GET", "POST"])
+async def register() -> str:
+    form = await UserRegisterForm.create_form()
+    error = None
 
-Okay, now we're ready to save the user record. Let's add the hasher we'll use from the passlib library, and create a hash from the password string. This hash will be stored in the database instead of the actual password string and not even us will be able to tell what the password string is.
+    if await form.validate_on_submit():
+        return "Success"
 
-We then create an SQLAlchemy insert statement, send it to the database connection and then commit it so that the record is actually created.
-
-Let's now run the application using the debugger to see if things are working correctly. I will put a break point on line 25 and run the application.
-
-I will go to the `localhost:5000/register` URL and enter a username and password. I can now see the application is stopped on line 25 and we can step through line by line.
-
-If we now see the `row` after the `fetch_one` operation, we can see that it is a "None" value on the debug console. If we continue steppping, we can see that the execution enters the `if not error` section since no user record was found in the database with that username.
-
-Let's take a quick look at the hash. As you can see it's a very long and random string generated by the passlib module, which is what we want.
-
-Now let's check the query stament being generated by the SQLAlchemy insert. We need to cast this a string, so we use `str(stmt)` to check it out. As you can see, it's a proper SQL insert statment.
-
-So let's resume the debugger so that the code finishes running. We should have our first user record in the Docker instance. Let's go ahead and double check that.
-
-Open a new terminal and type the following command: `docker exec -it app_db_1 psql -U app_user app`. This is executing an interactive `psql` command on the Postgres container called `app_db_1` using the `app_user` user on the `app` database.
-
-We can now see the list of the databases with `\l` and see the `app` database there. Let's connect to the `app` database, so we issue `\c app`.
-
-Now we can see the contents of the user table by doing: `select * from "user";`. We need to surround the table name, "user" in double quotes because otherwise we get the internal PostgreSQL current "user".
-
-As you can see, we get the record, with the `id`, `username` and password hash, so that's good news!
-
-Now let's try registering another user with the same username. If we now debug line by line, we can see that `row` now returns a record and if we check the username, we get the existing user's username. If we continue, we'll see the application now sets an error message, and if we continue, we'll see the error on the form. Perfect.
-
-Now let's work on the CSRF component. For this, we'll need the `uuid` library that will generate a random time-stamp string for us.
-
-So first, let's generate the `csrf_token` using the `uuid` generator. This will be a new token every time we hit the URL.
-
-Next we check if the request method is a `GET`. If that's the case, this is the first hit, i.e. when we're rendering the form, so we'll set a session cookie with the name `csrf_token`. That way when we get the `POST` from the form, we can check if it's equal to the one we have from the initial render. Remember to add the `session` module to our imports from `quart`.
-
-We also need to pass this `csrf_token` to the template's context. 
-
-This value will need to be added to the form as a hidden input. so let's add it to the form like this. [Save the file](https://fmze.co/fftq-5.5.1).
-
-Now let's run the application to see if the form has the new CRSF token in it. We go to the register page and view the source. As you can see, the hidden field is now in the form, properly set.
-
-Ok, this is the last step. We now need to check if the token value stored in the session we set on the initial render matches the one being sent by the form. If it's not, this means a hacker is trying to make a POST from a server other than ours, so we just throw an error message.
-
-Finally, if there are no errors, we delete the session token so that we don't have it around, and if there was an error, we need to reset the session token to the one we just generated in this new request. [Save the file](https://fmze.co/fftq-5.5.2).
-
-Now let's run the application and register a new user. Looks like everything worked. If we check on the database, we'll see the new user is in the database.
+    return await render_template(
+        "user/register.html",
+        form=form,
+        error="",
+    )
+```
 
 
-And now let's try to register a new user that's being sent by a hacker and modify the CSRF token on the form by editing the HTML. When we POST this form, we get the "Invalid POST contents" error, which is what we want. 
+## Processing the form (step-3) <!-- 5.5 -->
 
-Congratulations! Now we have a register form with CSRF protection that can now be used to register users.
+We install passlib and explain we don't store plain text passwords.
 
-In the next lesson we'll see how we can login to the application.
+```
+@user_app.route("/register", methods=["GET", "POST"])
+async def register() -> str:
+    form = await UserRegisterForm.create_form()
+    error = None
+
+    if await form.validate_on_submit():
+        # Check if the user already exists
+        conn = current_app.dbc  # type: ignore
+        user_query = (
+            user_table.select()
+            .where(user_table.c.username == form.username.data)
+            .limit(1)
+        )
+        result = await conn.fetch_all(query=user_query)
+
+        if len(result):
+            error = "User already exists"
+
+        if not error:
+            # Hash the password
+            password_hash: str = pbkdf2_sha256.hash(form.password.data)
+
+            # Insert the user into the database
+            insert_query = user_table.insert().values(
+                username=form.username.data,
+                password=password_hash,
+            )
+            await conn.execute(insert_query)
+            await conn.commit()
+
+    return await render_template(
+        "user/register.html",
+        form=form,
+        error=error,
+    )
+```
 
 ## User Login (step-4) <!-- 5.6 -->
 
-In this lesson we will implement the login and logout functionality for the QuartFeed users. We will add those functions to the `view` file, create a login user template and also alter the navbar template hyperlinks to point to these endpoints.
+Create the login template:
 
-First let's create the login template, as follows.
+```
+{% extends "base.html" %}
 
-To make things easier, I will copy the HTML code from the register form, since it will be very similar to the login form.
+{% block title %}Login{% endblock %}
 
-Now let's update the title, the main header and now the form's action URL will be `.login` which is the function we will create. The username and password fields are the same as well as the CSRF token. Finally let's update the button text. That's our login form template, so save the file.
+{% block content %}
 
-Now let's add the login function on the user views.
+{% include "navbar.html" %}
 
-We create the endpoint to be the `/login` URL with the HTTP methods `GET` and `POST`.
+<div class="row">
 
-We'll now setup the main variables, which are similar to the registration function, with an error, username, password and a CSRF toker.
+    <div class="col-md-offset-3 col-md-6">
 
-So if the request is a `GET`, we set the session cookie for the CSRF token. Let's return the view content with the login template and the necessary context vars so that we can see if the form is working correctly.
+        <h3>Login</h3>
 
-Go ahead and run the application, making sure the Postgres instance is running, and open the localhost on port 5000 and go to the login URL. As we can see, the form is rendering correctly, and if we post the form, it goes to the login page correctly.
+        {% if error %}
+        <div class="text-danger">{{ error }}</div>
+        {% endif %}
 
-Let's go ahead and continue adding the other functionality to the view.
+        {% from "_formhelpers.html" import render_field %}
 
-So if now the HTTP request method is `POST`, we read the contents of the form using the `await request.form` method, setting the username and password to the form contents.
+        <form method="POST" action="{{ url_for('.login') }}" role="form">
 
-Now we check for errors. First, if the username and password are empty, we'll set an error.
+            <div class="mb-3">
+                {{ render_field(form.username, class='form-control') }}
+            </div>
 
-Next we'll check the CSRF token. If the session token is not the same as the one on the form, we'll set an error.
+            <div class="mb-3">
+                {{ render_field(form.password, class='form-control') }}
+            </div>
 
-Now we need to check if the user exists. We'll grab the database connection with the typing ignore we did earlier. We then create a query where we look for users who have the username equal to the one we're getting in the form and execute it. If there's no results, we'll set an error that the user was not found.
+            {{ form.csrf_token }}
+            <button type="submit" class="btn btn-primary">Login</button>
 
-If the user exists, we now need to check the password. To do this we hash the form's password and compare it to the one on the database, but the passlib library already has a verify method, so let's use this. We just need to pass the password from the form and the one we get from the database record. If the method is true, it means it's the same password, so we'll say if it's not, then return an error. We never say it's the wrong password, as this is a signal for hackers, so we'll just say that the user was not found.
+        </form>
 
-If there are no errors, we delete the CSRF session token and we set two session cookies: the user id and the username which we'll use in the navbar. For now let's just return a string that says that the user is logged in. Otherwise, we do have an error, so we'll set the CSRF token again.
+    </div>
 
-So let's test this out. I'll put a breakpoint in line 79 and run the application.
+</div>
 
-So head over to the login and let's try first entering a username without a password, and we get the proper error.
+{% endblock %}
+```
 
-Next we'll try a user that doesn't exist. If we `POST`, we get into the debugger and see that the query is issued but no row was returned and the proper error is returned.
+Add the login and logout view functions:
 
-Now let's try with a username that does exist, but using the wrong password. As we can see, we get a row returned, and if we  check the username of the row, it matches the one we entered, but the password verify fails, so an error is set.
+```
+@user_app.route("/login", methods=["GET", "POST"])
+async def login() -> str:
+    form: QuartForm = await UserRegisterForm.create_form()
+    error: Optional[str] = None
 
-Now if we use the right password, we'll see that it gets the row, the password verify passes and the user's sessions are set. Perfect!
+    if await form.validate_on_submit():
+        # Lookup the user in the database
+        conn = current_app.dbc  # type: ignore
+        user_query = (
+            user_table.select()
+            .where(user_table.c.username == form.username.data)
+            .limit(1)
+        )
+        result = await conn.fetch_all(query=user_query)
 
-Now let's implement the logout function. Essentially what we need to do is delete the session cookies to signal that the user has logged out.
+        if not len(result):
+            error = "Invalid username or password"
+        else:
+            user = result[0]
 
-So let's copy the login function's first two lines, and change the URL to `/logout` as well as the function name. Since this returns a `Response` but I don't need to import the class to be used and just need it for type checking, I will just add the class name as a string surrounded by quotes, and at the top we'll use a very typical pattern which is to check if type checking is being run, we'll test against a condition variable called `TYPE_CHECKING`, and if it's true, we'll import the `Response` class name, otherwise if it's running on the server, the class won't be imported, saving memory and speed in the process.
+        # check the password
+        if not error:
+            if not pbkdf2_sha256.verify(form.password.data, user["password"]):
+                error = "Invalid username or password"
 
-Next we want to delete the two sessions we're currently using: `user_id` and `username` by using `del` and finally return the user to the login function using the `redirect` and `url_for` functions.
+        # login the user
+        if not error:
+            session["user_id"] = user["id"]
+            session["username"] = user["username"]
+            return "User logged in"
 
-But notice we're having a type checking issue, and I believe it's because we're not importing the right `Response` class, so we'll use the `werkzeug.Response` class.
+    return await render_template(
+        "user/login.html",
+        form=form,
+        error=error,
+    )
 
-I also want to add a redirect at the end of the register function, where if the user is succesfully registered, it's redirected to the login page. However, we can potentially have two return types to the function: a string, which is the HTML content of the form either at first load or when there's an error, or a `Response`. So we need to do a Typing method called a `Union` which allows me to signify it's either one or the other type being returned. Notice that we use brackets in the Union, and not parenthesis.
 
-The last thing we want to do is update the navigation, so we'll use `url_for`, which is a Jinja global and specify the login and register functions. Notice we use the full blueprint name, `user_app`.
+@user_app.route("/logout", methods=["GET"])
+async def logout() -> "Response":
+    del session["user_id"]
+    del session["username"]
+    return redirect(url_for(".login"))
+```
 
-However, we want to check on the login status of the user, since it doesn't make sense to have a link to `logout`, if the user in not logged in.
+Show on the navbar the login status:
 
-For that, we check if the session username is set and put a conditional with an else block if the user is not logged in. Now we can add the `logout` only if the user is logged in. 
-
-We can also add the username on the navbar for the user to be sure he's logged in. We'll eventually link this to the user's profile, so let's add a dummy link for now.
-
-So save the file and let's check if the logout functionality is working.
-
-Start the server, and go to the login page. Enter your credentials, and go back to the login page after submit and you'll see your username reflected, and now if you press logout, the username disappears.
-
-We have implemented the login and logout, so we want now to be able to start writing some tests for the user operations, and that is what we'll do in the next lesson.
+```
+                {% if session.username %}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
+                        data-bs-toggle="dropdown" aria-expanded="false">
+                        @{{ session.username }}
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="userDropdown">
+                        <li><a class="dropdown-item" href="#">View profile</a></li>
+                        <li><a class="dropdown-item" href="#">Edit profile</a></li>
+                        <li><a class="dropdown-item" href="#">Change password</a></li>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{{ url_for('user_app.logout') }}">Logout</a>
+                        </li>
+                    </ul>
+                </li>
+                {% else %}
+                <a class="nav-link" href="{{ url_for('user_app.login') }}">Login</a>
+                <a class="nav-link" href="{{ url_for('user_app.register') }}">Register</a>
+                {% endif %}
+```
 
 
 ## Testing User Registration and User Login (step-5) <!-- 5.7 -->
 
-### Creating Our Tests Setup <!-- 5.7.0 -->
-Add the `create_all` method from the `test_counter` file and make it use the UserMetadata from the user model
+Add flash message on login to be able to tell if a user registered:
 
-Let’s first test the initial response and see that we get the login page
+```
+        {% for message in get_flashed_messages() %}
+        <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+```
 
-### Testing the User Regisration <!-- 5.7.1 -->
+Add the message on the register view:
 
-We’re going to modify the login page and add a flash message if the user is coming from a successful registration. We’ll use this string to test if users are being registered.
+```
+            await conn.execute("COMMIT")
 
-We’ll also check in the database (e2e testing)
+            # add a flash message
+            await flash("User registered successfully, please login")
+            return redirect(url_for(".login"))
+```
 
-Then we’ll test registering a user without email or password
+Add testing on settings.toml:
 
-I notice that the test:
-```python
-    # missing password
+```
+[testing]
+TESTING = true
+DB_HOST = "localhost"
+DATABASE_NAME = "app_test"
+WTF_CSRF_ENABLED = false
+
+[docker-testing]
+TESTING = true
+DB_HOST = "db"
+DATABASE_NAME = "app_test"
+WTF_CSRF_ENABLED = false
+
+[devcontainer-testing]
+TESTING = true
+DB_HOST = "db"
+DATABASE_NAME = "app_test"
+WTF_CSRF_ENABLED = false
+
+[testing_gha]
+TESTING = true
+DB_HOST = "localhost"
+DATABASE_NAME = "app_test"
+WTF_CSRF_ENABLED = false
+```
+
+Add the devcontainer testing on conftest:
+
+```
+    if settings.ENV_FOR_DYNACONF == "DEVCONTAINER":
+        settings.configure(FORCE_ENV_FOR_DYNACONF="DEVCONTAINER-TESTING")
+```
+
+Add the tests:
+
+```
+import pytest
+from quart import Quart, current_app
+from quart.testing import QuartClient
+
+from my_app.user_app.models import user_table
+
+
+def user_dict() -> dict:
+    return dict(username="testuser", password="test123")
+
+
+@pytest.mark.asyncio
+async def test_registration(
+    create_test_client: QuartClient, create_test_app: Quart
+) -> None:
+    # register user
     response = await create_test_client.post(
-        "/register", form={"username": "testuser", "password": ""}
+        "/register", form=user_dict(), follow_redirects=True
     )
-    body = await response.get_data()
-    assert "Please enter username and password" in str(body)
-```
+    body = await response.get_data(as_text=True)
+    assert "User registered successfully, please login" in body
 
-Is not passing. Why? Because the database lookup returns a result when passing an existing user (testuser) with no password, so I will add a “if not error” on the user exists block
+    # check if user is in database
+    async with create_test_app.app_context():
+        conn = current_app.dbc  # type: ignore
+        user_query = user_table.select().limit(1)
+        result = await conn.fetch_all(query=user_query)
+        result_row = result[0]
+        assert result_row["username"] == user_dict()["username"]
 
-```python
-        # check if the user exists
-        if not error:
-            conn = current_app.sac
-            stmt = user_table.select().where(
-                user_table.c.username == form.get("username")
-            )
-            result = await conn.execute(stmt)
-            row = await result.fetchone()
-            if row and row.id:
-                error = "Username already exists"
-```
+        # check password is not stored in plain text
+        assert result_row["password"] != user_dict()["password"]
 
-When doing the test with an unknown user:
-
-```python
+    # missing fields
     response = await create_test_client.post(
-        "/login", form={"username": "testuser2", "password": "test123"}
+        "/register", form={}, follow_redirects=True
     )
+    body = await response.get_data(as_text=True)
+    assert "This field is required" in body
+
+    response = await create_test_client.post(
+        "/register", form={"username": user_dict()["username"]}, follow_redirects=True
+    )
+    body = await response.get_data(as_text=True)
+    assert "This field is required" in body
+
+
+@pytest.mark.asyncio
+async def test_login(create_test_client: QuartClient) -> None:
+    # register user
+    response = await create_test_client.post(
+        "/register", form=user_dict(), follow_redirects=True
+    )
+
+    # login registered user
+    response = await create_test_client.post(
+        "/login", form=user_dict(), follow_redirects=True
+    )
+    body = await response.get_data(as_text=True)
+    assert "User logged in" in body  # TODO: change this when we have home page
+
+    # Check that the session is being set
+    async with create_test_client.session_transaction() as sess:
+        assert sess["username"] == user_dict()["username"]
+
+    # try to login with wrong password
+    response = await create_test_client.post(
+        "/login",
+        form={"username": user_dict()["username"], "password": "wrongpassword"},
+        follow_redirects=True,
+    )
+    body = await response.get_data(as_text=True)
+    assert "Invalid username or password" in body
+
+    # try to login with inexistent user
+    response = await create_test_client.post(
+        "/login",
+        form={"username": "inexistentuser", "password": "wrongpassword"},
+        follow_redirects=True,
+    )
+    body = await response.get_data(as_text=True)
+    assert "Invalid username or password" in body
+
+
+@pytest.mark.asyncio
+async def test_logout(create_test_client: QuartClient) -> None:
+    # register user
+    response = await create_test_client.post(
+        "/register", form=user_dict(), follow_redirects=True
+    )
+
+    # login registered user
+    response = await create_test_client.post(
+        "/login", form=user_dict(), follow_redirects=True
+    )
+
+    # logout
+    response = await create_test_client.get("/logout", follow_redirects=True)
+    body = await response.get_data(as_text=True)
+    assert "You have been logged out" in body
+
+    # Check that the session is being set
+    async with create_test_client.session_transaction() as sess:
+        assert sess.get("username") == None
 ```
-
-I notice that it’s not passing because I’m assuming there’s a row returned:
-```python
-if not pbkdf2_sha256.verify(password, row.password):
-            error = "User not found"
-```
-
-So I change it to an `elif`:
-```python
-        if not row:
-            error = "User not found"
-        # check the password
-  >>    elif not pbkdf2_sha256.verify(password, row.password):
-            error = "User not found"
-```
-
-Which goes to show you, testing makes your application better and safer.
-
-Run the tests using `pipenv run pytest`
 
 ## Relationship Module (step-6) <!-- 5.8 -->
 
